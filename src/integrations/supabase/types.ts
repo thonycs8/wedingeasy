@@ -192,6 +192,10 @@ export type Database = {
           notes: string | null
           phone: string | null
           plus_one: boolean | null
+          printed_invitation: boolean | null
+          relationship: string | null
+          special_role: string | null
+          table_number: number | null
           updated_at: string
           user_id: string
         }
@@ -206,6 +210,10 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           plus_one?: boolean | null
+          printed_invitation?: boolean | null
+          relationship?: string | null
+          special_role?: string | null
+          table_number?: number | null
           updated_at?: string
           user_id: string
         }
@@ -220,6 +228,10 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           plus_one?: boolean | null
+          printed_invitation?: boolean | null
+          relationship?: string | null
+          special_role?: string | null
+          table_number?: number | null
           updated_at?: string
           user_id?: string
         }

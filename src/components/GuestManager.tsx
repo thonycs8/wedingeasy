@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   Plus, 
@@ -21,45 +22,63 @@ import {
   XCircle,
   Search,
   Filter,
-  Download
+  Download,
+  Upload,
+  FileText,
+  Crown,
+  Heart,
+  Music,
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Guest {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  category: 'family' | 'friends' | 'work' | 'other';
+  category: 'family' | 'friends' | 'work' | 'other' | 'groomsmen' | 'bridesmaids' | 'groomsman_friends' | 'bridesmaid_friends' | 'witnesses' | 'officiant' | 'pastor' | 'musicians' | 'honor_guests';
   confirmed: boolean;
   plus_one: boolean;
   dietary_restrictions?: string;
   notes?: string;
+  printed_invitation?: boolean;
+  special_role?: string;
+  table_number?: number;
+  relationship?: string;
 }
 
 export const GuestManager = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [isAddingGuest, setIsAddingGuest] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [bulkImportText, setBulkImportText] = useState('');
+  const [importFormat, setImportFormat] = useState<'names' | 'csv'>('names');
 
-  const [newGuest, setNewGuest] = useState({
+  // Form state
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    category: 'friends' as Guest['category'],
+    category: 'family' as Guest['category'],
     confirmed: false,
     plus_one: false,
     dietary_restrictions: '',
-    notes: ''
+    notes: '',
+    printed_invitation: false,
+    special_role: '',
+    table_number: '',
+    relationship: ''
   });
 
   useEffect(() => {
@@ -73,135 +92,184 @@ export const GuestManager = () => {
       const { data, error } = await supabase
         .from('guests')
         .select('*')
-        .eq('user_id', user?.id)
         .order('name');
 
       if (error) throw error;
-      setGuests((data || []).map(guest => ({
-        ...guest,
-        category: guest.category as Guest['category']
-      })));
+      setGuests((data || []) as Guest[]);
     } catch (error) {
       console.error('Error loading guests:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os convidados.",
-        variant: "destructive"
-      });
+      toast.error('Erro ao carregar convidados');
     } finally {
       setLoading(false);
     }
   };
 
-  const addGuest = async () => {
-    if (!newGuest.name.trim()) {
-      toast({
-        title: "Erro",
-        description: "Nome é obrigatório.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('guests')
-        .insert([{
-          ...newGuest,
-          user_id: user?.id
-        }])
-        .select()
-        .single();
+      const guestData = {
+        name: formData.name.trim(),
+        email: formData.email || null,
+        phone: formData.phone || null,
+        category: formData.category,
+        confirmed: formData.confirmed,
+        plus_one: formData.plus_one,
+        dietary_restrictions: formData.dietary_restrictions || null,
+        notes: formData.notes || null,
+        printed_invitation: formData.printed_invitation,
+        special_role: formData.special_role || null,
+        table_number: formData.table_number ? parseInt(formData.table_number) : null,
+        relationship: formData.relationship || null,
+        user_id: user.id
+      };
 
-      if (error) throw error;
+      if (editingGuest) {
+        const { error } = await supabase
+          .from('guests')
+          .update(guestData)
+          .eq('id', editingGuest.id);
 
-      setGuests([...guests, { ...data, category: data.category as Guest['category'] }]);
-      setNewGuest({
-        name: '',
-        email: '',
-        phone: '',
-        category: 'friends',
-        confirmed: false,
-        plus_one: false,
-        dietary_restrictions: '',
-        notes: ''
-      });
-      setIsAddingGuest(false);
-      
-      toast({
-        title: "Sucesso",
-        description: "Convidado adicionado com sucesso!",
-      });
+        if (error) throw error;
+        toast.success('Convidado atualizado!');
+      } else {
+        const { error } = await supabase
+          .from('guests')
+          .insert([guestData]);
+
+        if (error) throw error;
+        toast.success('Convidado adicionado!');
+      }
+
+      resetForm();
+      loadGuests();
     } catch (error) {
-      console.error('Error adding guest:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o convidado.",
-        variant: "destructive"
-      });
+      console.error('Error saving guest:', error);
+      toast.error('Erro ao guardar convidado');
     }
   };
 
-  const updateGuest = async (guest: Guest) => {
+  const handleBulkImport = async () => {
+    if (!bulkImportText.trim() || !user) return;
+
     try {
+      const lines = bulkImportText.trim().split('\n');
+      const guestsToAdd: any[] = [];
+
+      if (importFormat === 'names') {
+        // Formato simples: um nome por linha
+        lines.forEach(line => {
+          const name = line.trim();
+          if (name) {
+            guestsToAdd.push({
+              name,
+              category: 'other',
+              confirmed: false,
+              plus_one: false,
+              user_id: user.id
+            });
+          }
+        });
+      } else if (importFormat === 'csv') {
+        // Formato CSV: Nome,Email,Telefone,Categoria
+        lines.forEach((line, index) => {
+          if (index === 0 && line.toLowerCase().includes('nome')) return; // Skip header
+          
+          const parts = line.split(',').map(p => p.trim());
+          if (parts.length >= 1 && parts[0]) {
+            guestsToAdd.push({
+              name: parts[0],
+              email: parts[1] || null,
+              phone: parts[2] || null,
+              category: parts[3] || 'other',
+              confirmed: false,
+              plus_one: false,
+              user_id: user.id
+            });
+          }
+        });
+      }
+
+      if (guestsToAdd.length === 0) {
+        toast.error('Nenhum convidado válido encontrado');
+        return;
+      }
+
       const { error } = await supabase
         .from('guests')
-        .update(guest)
-        .eq('id', guest.id);
+        .insert(guestsToAdd);
 
       if (error) throw error;
 
-      setGuests(guests.map(g => g.id === guest.id ? guest : g));
-      setEditingGuest(null);
-      
-      toast({
-        title: "Sucesso",
-        description: "Convidado atualizado com sucesso!",
-      });
+      toast.success(`${guestsToAdd.length} convidados importados com sucesso!`);
+      setBulkImportText('');
+      setShowImportModal(false);
+      loadGuests();
     } catch (error) {
-      console.error('Error updating guest:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o convidado.",
-        variant: "destructive"
-      });
+      console.error('Error importing guests:', error);
+      toast.error('Erro ao importar convidados');
     }
   };
 
-  const deleteGuest = async (guestId: string) => {
-    if (!confirm('Tem certeza que deseja remover este convidado?')) return;
-
+  const deleteGuest = async (id: string) => {
     try {
       const { error } = await supabase
         .from('guests')
         .delete()
-        .eq('id', guestId);
+        .eq('id', id);
 
       if (error) throw error;
 
-      setGuests(guests.filter(g => g.id !== guestId));
-      
-      toast({
-        title: "Sucesso",
-        description: "Convidado removido com sucesso!",
-      });
+      setGuests(prev => prev.filter(g => g.id !== id));
+      toast.success('Convidado removido');
     } catch (error) {
       console.error('Error deleting guest:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o convidado.",
-        variant: "destructive"
-      });
+      toast.error('Erro ao remover convidado');
     }
   };
 
-  const toggleConfirmed = async (guest: Guest) => {
-    await updateGuest({ ...guest, confirmed: !guest.confirmed });
+  const editGuest = (guest: Guest) => {
+    setFormData({
+      name: guest.name,
+      email: guest.email || '',
+      phone: guest.phone || '',
+      category: guest.category,
+      confirmed: guest.confirmed,
+      plus_one: guest.plus_one,
+      dietary_restrictions: guest.dietary_restrictions || '',
+      notes: guest.notes || '',
+      printed_invitation: guest.printed_invitation || false,
+      special_role: guest.special_role || '',
+      table_number: guest.table_number?.toString() || '',
+      relationship: guest.relationship || ''
+    });
+    setEditingGuest(guest);
+    setShowAddModal(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      category: 'family',
+      confirmed: false,
+      plus_one: false,
+      dietary_restrictions: '',
+      notes: '',
+      printed_invitation: false,
+      special_role: '',
+      table_number: '',
+      relationship: ''
+    });
+    setEditingGuest(null);
+    setShowAddModal(false);
   };
 
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         guest.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                         (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || guest.category === filterCategory;
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'confirmed' && guest.confirmed) ||
@@ -210,369 +278,325 @@ export const GuestManager = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      family: 'bg-pink-100 text-pink-800',
-      friends: 'bg-blue-100 text-blue-800',
-      work: 'bg-green-100 text-green-800',
-      other: 'bg-gray-100 text-gray-800'
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'groomsmen':
+      case 'bridesmaids':
+        return Crown;
+      case 'witnesses':
+        return UserCheck;
+      case 'officiant':
+      case 'pastor':
+        return Heart;
+      case 'musicians':
+        return Music;
+      case 'honor_guests':
+        return Sparkles;
+      default:
+        return Users;
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      family: 'Família',
+      friends: 'Amigos',
+      work: 'Trabalho',
+      other: 'Outros',
+      groomsmen: 'Padrinhos do Noivo',
+      bridesmaids: 'Madrinhas da Noiva',
+      groomsman_friends: 'Amigos do Noivo',
+      bridesmaid_friends: 'Amigas da Noiva',
+      witnesses: 'Testemunhas',
+      officiant: 'Celebrante',
+      pastor: 'Pastor',
+      musicians: 'Músicos',
+      honor_guests: 'Convidados de Honra'
     };
-    return colors[category as keyof typeof colors] || colors.other;
+    return labels[category] || category;
   };
 
-  const exportGuestList = () => {
-    const csv = [
-      ['Nome', 'Email', 'Telefone', 'Categoria', 'Confirmado', '+1', 'Restrições', 'Notas'],
-      ...filteredGuests.map(guest => [
-        guest.name,
-        guest.email || '',
-        guest.phone || '',
-        guest.category,
-        guest.confirmed ? 'Sim' : 'Não',
-        guest.plus_one ? 'Sim' : 'Não',
-        guest.dietary_restrictions || '',
-        guest.notes || ''
-      ])
-    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lista-convidados.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  const getSpecialRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      best_man: 'Padrinho de Casamento',
+      maid_of_honor: 'Madrinha de Casamento',
+      groomsman: 'Padrinho',
+      bridesmaid: 'Madrinha',
+      witness: 'Testemunha',
+      officiant: 'Celebrante',
+      pastor: 'Pastor',
+      musician: 'Músico',
+      honor_guest: 'Convidado de Honra',
+      flower_girl: 'Menina das Flores',
+      ring_bearer: 'Menino das Alianças',
+      reader: 'Leitor',
+      usher: 'Recepcionista'
+    };
+    return labels[role] || role;
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">A carregar convidados...</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const confirmedCount = guests.filter(g => g.confirmed).length;
-  const totalWithPlusOnes = guests.reduce((sum, g) => sum + 1 + (g.plus_one ? 1 : 0), 0);
+  const specialCategories = guests.filter(g => 
+    ['groomsmen', 'bridesmaids', 'witnesses', 'officiant', 'pastor', 'musicians', 'honor_guests'].includes(g.category)
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary">{guests.length}</div>
-            <div className="text-sm text-muted-foreground">Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{confirmedCount}</div>
-            <div className="text-sm text-muted-foreground">Confirmados</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{guests.length - confirmedCount}</div>
-            <div className="text-sm text-muted-foreground">Pendentes</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{totalWithPlusOnes}</div>
-            <div className="text-sm text-muted-foreground">Com +1</div>
-          </CardContent>
-        </Card>
-      </div>
+    <Card className="card-romantic">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          {t('guests.title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-primary">{guests.length}</p>
+            <p className="text-sm text-muted-foreground">{t('guests.total')}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-success">{guests.filter(g => g.confirmed).length}</p>
+            <p className="text-sm text-muted-foreground">{t('guests.confirmed')}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-warning">{guests.filter(g => g.plus_one).length}</p>
+            <p className="text-sm text-muted-foreground">Com Acompanhante</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-info">{specialCategories.length}</p>
+            <p className="text-sm text-muted-foreground">Funções Especiais</p>
+          </div>
+        </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Pesquisar convidados..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Controls */}
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-2">
+            <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+              <DialogTrigger asChild>
+                <Button className="btn-gradient">
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t('guests.addGuest')}
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+
+            <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Lista
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar convidados..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64"
+              />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue placeholder="Categoria" />
+              <SelectTrigger className="w-40">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="all">Todas categorias</SelectItem>
                 <SelectItem value="family">Família</SelectItem>
                 <SelectItem value="friends">Amigos</SelectItem>
                 <SelectItem value="work">Trabalho</SelectItem>
-                <SelectItem value="other">Outros</SelectItem>
+                <SelectItem value="groomsmen">Padrinhos do Noivo</SelectItem>
+                <SelectItem value="bridesmaids">Madrinhas da Noiva</SelectItem>
+                <SelectItem value="witnesses">Testemunhas</SelectItem>
+                <SelectItem value="officiant">Celebrante</SelectItem>
+                <SelectItem value="musicians">Músicos</SelectItem>
+                <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="confirmed">Confirmados</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={exportGuestList} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Dialog open={isAddingGuest} onOpenChange={setIsAddingGuest}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Convidado</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Nome *</Label>
-                    <Input
-                      id="name"
-                      value={newGuest.name}
-                      onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
-                      placeholder="Nome do convidado"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newGuest.email}
-                        onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
-                        placeholder="email@exemplo.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Telefone</Label>
-                      <Input
-                        id="phone"
-                        value={newGuest.phone}
-                        onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
-                        placeholder="+351 123 456 789"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select value={newGuest.category} onValueChange={(value: Guest['category']) => setNewGuest({ ...newGuest, category: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="family">Família</SelectItem>
-                        <SelectItem value="friends">Amigos</SelectItem>
-                        <SelectItem value="work">Trabalho</SelectItem>
-                        <SelectItem value="other">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="confirmed"
-                        checked={newGuest.confirmed}
-                        onCheckedChange={(checked) => setNewGuest({ ...newGuest, confirmed: checked })}
-                      />
-                      <Label htmlFor="confirmed">Confirmado</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="plus_one"
-                        checked={newGuest.plus_one}
-                        onCheckedChange={(checked) => setNewGuest({ ...newGuest, plus_one: checked })}
-                      />
-                      <Label htmlFor="plus_one">+1</Label>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="dietary">Restrições Alimentares</Label>
-                    <Input
-                      id="dietary"
-                      value={newGuest.dietary_restrictions}
-                      onChange={(e) => setNewGuest({ ...newGuest, dietary_restrictions: e.target.value })}
-                      placeholder="Vegetariano, alergia a nozes, etc."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Notas</Label>
-                    <Textarea
-                      id="notes"
-                      value={newGuest.notes}
-                      onChange={(e) => setNewGuest({ ...newGuest, notes: e.target.value })}
-                      placeholder="Notas adicionais..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddingGuest(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={addGuest}>
-                      Adicionar
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Guest List */}
-      <div className="grid gap-4">
-        {filteredGuests.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum convidado encontrado</h3>
-              <p className="text-muted-foreground mb-4">
-                {guests.length === 0 
-                  ? "Comece a adicionar os seus convidados para organizar a lista."
-                  : "Tente ajustar os filtros ou termo de pesquisa."
-                }
-              </p>
-              {guests.length === 0 && (
-                <Button onClick={() => setIsAddingGuest(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Primeiro Convidado
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          filteredGuests.map((guest) => (
-            <Card key={guest.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{guest.name}</h3>
-                      <Badge className={getCategoryColor(guest.category)}>
-                        {guest.category === 'family' ? 'Família' :
-                         guest.category === 'friends' ? 'Amigos' :
-                         guest.category === 'work' ? 'Trabalho' : 'Outros'}
-                      </Badge>
-                      {guest.plus_one && (
-                        <Badge variant="outline">+1</Badge>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleConfirmed(guest)}
-                        className={guest.confirmed ? 'text-green-600' : 'text-orange-600'}
-                      >
-                        {guest.confirmed ? (
-                          <CheckCircle className="w-4 h-4" />
-                        ) : (
-                          <XCircle className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      {guest.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {guest.email}
-                        </div>
-                      )}
-                      {guest.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {guest.phone}
-                        </div>
-                      )}
-                    </div>
-                    {guest.dietary_restrictions && (
-                      <div className="mt-2 text-sm">
-                        <span className="font-medium">Restrições:</span> {guest.dietary_restrictions}
-                      </div>
-                    )}
-                    {guest.notes && (
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        {guest.notes}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingGuest(guest)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteGuest(guest.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+        {/* Guests List */}
+        <Tabs defaultValue="all" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="all">Todos ({filteredGuests.length})</TabsTrigger>
+            <TabsTrigger value="special">Funções Especiais ({specialCategories.length})</TabsTrigger>
+          </TabsList>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingGuest} onOpenChange={() => setEditingGuest(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+          <TabsContent value="all" className="space-y-4">
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Carregando convidados...</p>
+              </div>
+            ) : filteredGuests.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Nenhum convidado encontrado</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredGuests.map((guest) => {
+                  const CategoryIcon = getCategoryIcon(guest.category);
+                  return (
+                    <div key={guest.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
+                      <div className="flex items-center gap-4">
+                        <CategoryIcon className="w-5 h-5 text-primary" />
+                        <div>
+                          <h4 className="font-medium">{guest.name}</h4>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Badge variant="secondary" className="text-xs">
+                              {getCategoryLabel(guest.category)}
+                            </Badge>
+                            {guest.special_role && (
+                              <Badge variant="outline" className="text-xs">
+                                {getSpecialRoleLabel(guest.special_role)}
+                              </Badge>
+                            )}
+                            {guest.confirmed ? (
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-muted-foreground" />
+                            )}
+                            {guest.plus_one && <span>+1</span>}
+                            {guest.printed_invitation && <span>📜</span>}
+                          </div>
+                          {guest.email && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Mail className="w-3 h-3" />
+                              {guest.email}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteGuest(guest.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="special" className="space-y-6">
+            {specialCategories.length === 0 ? (
+              <div className="text-center py-8">
+                <Crown className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Nenhuma função especial definida</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Adicione padrinhos, madrinhas, testemunhas e outras funções especiais
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Group by category */}
+                {['groomsmen', 'bridesmaids', 'witnesses', 'officiant', 'pastor', 'musicians', 'honor_guests'].map(category => {
+                  const categoryGuests = specialCategories.filter(g => g.category === category);
+                  if (categoryGuests.length === 0) return null;
+
+                  const CategoryIcon = getCategoryIcon(category);
+                  
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold text-lg">{getCategoryLabel(category)}</h3>
+                        <Badge variant="secondary">{categoryGuests.length}</Badge>
+                      </div>
+                      <div className="grid gap-3">
+                        {categoryGuests.map(guest => (
+                          <div key={guest.id} className="flex items-center justify-between p-3 border rounded-lg bg-primary/5">
+                            <div>
+                              <h4 className="font-medium">{guest.name}</h4>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                {guest.special_role && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {getSpecialRoleLabel(guest.special_role)}
+                                  </Badge>
+                                )}
+                                {guest.confirmed ? (
+                                  <span className="text-success">Confirmado</span>
+                                ) : (
+                                  <span className="text-muted-foreground">Pendente</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => deleteGuest(guest.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Add/Edit Guest Modal */}
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Convidado</DialogTitle>
+            <DialogTitle>
+              {editingGuest ? 'Editar Convidado' : 'Adicionar Convidado'}
+            </DialogTitle>
           </DialogHeader>
-          {editingGuest && (
-            <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-name">Nome *</Label>
+                <Label htmlFor="name">Nome *</Label>
                 <Input
-                  id="edit-name"
-                  value={editingGuest.name}
-                  onChange={(e) => setEditingGuest({ ...editingGuest, name: e.target.value })}
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-email">Email</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={editingGuest.email || ''}
-                    onChange={(e) => setEditingGuest({ ...editingGuest, email: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input
-                    id="edit-phone"
-                    value={editingGuest.phone || ''}
-                    onChange={(e) => setEditingGuest({ ...editingGuest, phone: e.target.value })}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                />
               </div>
               <div>
-                <Label htmlFor="edit-category">Categoria</Label>
-                <Select value={editingGuest.category} onValueChange={(value: Guest['category']) => setEditingGuest({ ...editingGuest, category: value })}>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="relationship">Parentesco/Relação</Label>
+                <Input
+                  id="relationship"
+                  value={formData.relationship}
+                  onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value }))}
+                  placeholder="Ex: Irmão, Primo, Amigo..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="category">Categoria</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value as Guest['category'] }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -581,56 +605,179 @@ export const GuestManager = () => {
                     <SelectItem value="friends">Amigos</SelectItem>
                     <SelectItem value="work">Trabalho</SelectItem>
                     <SelectItem value="other">Outros</SelectItem>
+                    <SelectItem value="groomsmen">Padrinhos do Noivo</SelectItem>
+                    <SelectItem value="bridesmaids">Madrinhas da Noiva</SelectItem>
+                    <SelectItem value="groomsman_friends">Amigos do Noivo</SelectItem>
+                    <SelectItem value="bridesmaid_friends">Amigas da Noiva</SelectItem>
+                    <SelectItem value="witnesses">Testemunhas</SelectItem>
+                    <SelectItem value="officiant">Celebrante</SelectItem>
+                    <SelectItem value="pastor">Pastor</SelectItem>
+                    <SelectItem value="musicians">Músicos</SelectItem>
+                    <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="edit-confirmed"
-                    checked={editingGuest.confirmed}
-                    onCheckedChange={(checked) => setEditingGuest({ ...editingGuest, confirmed: checked })}
-                  />
-                  <Label htmlFor="edit-confirmed">Confirmado</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="edit-plus_one"
-                    checked={editingGuest.plus_one}
-                    onCheckedChange={(checked) => setEditingGuest({ ...editingGuest, plus_one: checked })}
-                  />
-                  <Label htmlFor="edit-plus_one">+1</Label>
-                </div>
+              <div>
+                <Label htmlFor="special_role">Função Especial</Label>
+                <Select value={formData.special_role} onValueChange={(value) => setFormData(prev => ({ ...prev, special_role: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar função..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="best_man">Padrinho de Casamento</SelectItem>
+                    <SelectItem value="maid_of_honor">Madrinha de Casamento</SelectItem>
+                    <SelectItem value="groomsman">Padrinho</SelectItem>
+                    <SelectItem value="bridesmaid">Madrinha</SelectItem>
+                    <SelectItem value="witness">Testemunha</SelectItem>
+                    <SelectItem value="officiant">Celebrante</SelectItem>
+                    <SelectItem value="pastor">Pastor</SelectItem>
+                    <SelectItem value="musician">Músico</SelectItem>
+                    <SelectItem value="honor_guest">Convidado de Honra</SelectItem>
+                    <SelectItem value="flower_girl">Menina das Flores</SelectItem>
+                    <SelectItem value="ring_bearer">Menino das Alianças</SelectItem>
+                    <SelectItem value="reader">Leitor</SelectItem>
+                    <SelectItem value="usher">Recepcionista</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label htmlFor="edit-dietary">Restrições Alimentares</Label>
+                <Label htmlFor="table_number">Número da Mesa</Label>
                 <Input
-                  id="edit-dietary"
-                  value={editingGuest.dietary_restrictions || ''}
-                  onChange={(e) => setEditingGuest({ ...editingGuest, dietary_restrictions: e.target.value })}
+                  id="table_number"
+                  type="number"
+                  value={formData.table_number}
+                  onChange={(e) => setFormData(prev => ({ ...prev, table_number: e.target.value }))}
+                  placeholder="Ex: 1, 2, 3..."
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="dietary_restrictions">Restrições Alimentares</Label>
+              <Input
+                id="dietary_restrictions"
+                value={formData.dietary_restrictions}
+                onChange={(e) => setFormData(prev => ({ ...prev, dietary_restrictions: e.target.value }))}
+                placeholder="Ex: Vegetariano, Sem glúten..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Observações adicionais..."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="confirmed"
+                  checked={formData.confirmed}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, confirmed: checked }))}
+                />
+                <Label htmlFor="confirmed">Presença confirmada</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="plus_one"
+                  checked={formData.plus_one}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, plus_one: checked }))}
+                />
+                <Label htmlFor="plus_one">Vem com acompanhante</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="printed_invitation"
+                  checked={formData.printed_invitation}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, printed_invitation: checked }))}
+                />
+                <Label htmlFor="printed_invitation">Recebe convite impresso</Label>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button type="submit" className="btn-gradient">
+                {editingGuest ? 'Atualizar' : 'Adicionar'}
+              </Button>
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+
+        {/* Import Modal */}
+        <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Importar Lista de Convidados
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="edit-notes">Notas</Label>
+                <Label>Formato de Importação</Label>
+                <Select value={importFormat} onValueChange={(value: 'names' | 'csv') => setImportFormat(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="names">Lista de Nomes (um por linha)</SelectItem>
+                    <SelectItem value="csv">Formato CSV (Nome,Email,Telefone,Categoria)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="bulk_import">
+                  {importFormat === 'names' ? 'Lista de Nomes' : 'Dados CSV'}
+                </Label>
                 <Textarea
-                  id="edit-notes"
-                  value={editingGuest.notes || ''}
-                  onChange={(e) => setEditingGuest({ ...editingGuest, notes: e.target.value })}
-                  rows={3}
+                  id="bulk_import"
+                  value={bulkImportText}
+                  onChange={(e) => setBulkImportText(e.target.value)}
+                  placeholder={
+                    importFormat === 'names' 
+                      ? "João Silva\nMaria Santos\nCarlos Oliveira\n..."
+                      : "Nome,Email,Telefone,Categoria\nJoão Silva,joao@email.com,123456789,family\nMaria Santos,maria@email.com,987654321,friends\n..."
+                  }
+                  rows={10}
+                  className="font-mono text-sm"
                 />
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setEditingGuest(null)}>
-                  Cancelar
+
+              {importFormat === 'csv' && (
+                <Alert>
+                  <FileText className="w-4 h-4" />
+                  <AlertDescription>
+                    <strong>Formato CSV:</strong> Nome,Email,Telefone,Categoria<br/>
+                    <strong>Categorias válidas:</strong> family, friends, work, other, groomsmen, bridesmaids, witnesses, officiant, pastor, musicians, honor_guests
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleBulkImport} className="btn-gradient" disabled={!bulkImportText.trim()}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Convidados
                 </Button>
-                <Button onClick={() => updateGuest(editingGuest)}>
-                  Guardar
+                <Button variant="outline" onClick={() => {setBulkImportText(''); setShowImportModal(false);}}>
+                  Cancelar
                 </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
   );
 };
