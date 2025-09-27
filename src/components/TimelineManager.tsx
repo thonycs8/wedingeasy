@@ -297,7 +297,9 @@ export const TimelineManager = () => {
                             variant={task.priority === 'alta' ? 'destructive' : 'secondary'}
                             className="text-xs"
                           >
-                            {t(`timeline.priority.${task.priority === 'alta' ? 'high' : task.priority === 'media' ? 'medium' : 'low'}`)}
+                            {task.priority === 'alta' ? t('timeline.priority.high') : 
+                             task.priority === 'media' ? t('timeline.priority.medium') : 
+                             t('timeline.priority.low')}
                           </Badge>
                           <Button size="sm" variant="ghost" onClick={() => deleteTask(task.id)}>
                             <Trash2 className="w-3 h-3" />
