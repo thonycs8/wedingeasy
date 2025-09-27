@@ -324,6 +324,48 @@ export type Database = {
         }
         Relationships: []
       }
+      timeline_tasks: {
+        Row: {
+          category: string
+          completed: boolean
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          priority: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          priority?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          priority?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wedding_data: {
         Row: {
           couple_name: string | null
