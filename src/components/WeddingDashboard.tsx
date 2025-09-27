@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +16,14 @@ import {
   TrendingUp
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
+import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
+import { formatCurrency } from "@/i18n";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface Guest {
   id: string;
   name: string;
-  category: 'familia' | 'amigos' | 'trabalho';
+  category: 'family' | 'friends' | 'work';
   confirmed: boolean;
 }
 
@@ -32,19 +36,22 @@ interface BudgetItem {
 }
 
 const WeddingDashboard = () => {
+  const { t } = useTranslation();
+  const { currency } = useSettings();
+  
   const [guests, setGuests] = useState<Guest[]>([
-    { id: '1', name: 'Maria Silva', category: 'familia', confirmed: true },
-    { id: '2', name: 'João Santos', category: 'amigos', confirmed: false },
-    { id: '3', name: 'Ana Costa', category: 'trabalho', confirmed: true },
+    { id: '1', name: 'Maria Silva', category: 'family', confirmed: true },
+    { id: '2', name: 'João Santos', category: 'friends', confirmed: false },
+    { id: '3', name: 'Ana Costa', category: 'work', confirmed: true },
   ]);
 
   const [budget, setBudget] = useState<BudgetItem[]>([
-    { id: '1', category: 'Local da Cerimônia', budgeted: 8000, spent: 7500, priority: 'alta' },
-    { id: '2', category: 'Vestido de Noiva', budgeted: 3000, spent: 2800, priority: 'alta' },
-    { id: '3', category: 'Catering', budgeted: 12000, spent: 0, priority: 'alta' },
-    { id: '4', category: 'Flores & Decoração', budgeted: 4000, spent: 1200, priority: 'media' },
-    { id: '5', category: 'Fotografia', budgeted: 5000, spent: 5000, priority: 'alta' },
-    { id: '6', category: 'Música', budgeted: 2000, spent: 0, priority: 'media' },
+    { id: '1', category: t('budget.venue'), budgeted: 8000, spent: 7500, priority: 'alta' },
+    { id: '2', category: t('budget.dress'), budgeted: 3000, spent: 2800, priority: 'alta' },
+    { id: '3', category: t('budget.catering'), budgeted: 12000, spent: 0, priority: 'alta' },
+    { id: '4', category: t('budget.flowers'), budgeted: 4000, spent: 1200, priority: 'media' },
+    { id: '5', category: t('budget.photography'), budgeted: 5000, spent: 5000, priority: 'alta' },
+    { id: '6', category: t('budget.music'), budgeted: 2000, spent: 0, priority: 'media' },
   ]);
 
   const [guestCount, setGuestCount] = useState(120);
@@ -57,12 +64,12 @@ const WeddingDashboard = () => {
   const guestProgress = (confirmedGuests / guests.length) * 100;
 
   const checklistItems = [
-    { task: 'Escolher local da cerimônia', completed: true },
-    { task: 'Comprar vestido de noiva', completed: true },
-    { task: 'Contratar fotógrafo', completed: true },
-    { task: 'Enviar convites', completed: false },
-    { task: 'Escolher cardápio', completed: false },
-    { task: 'Definir decoração', completed: false },
+    { task: t('tasks.chooseVenue'), completed: true },
+    { task: t('tasks.buyDress'), completed: true },
+    { task: t('tasks.hirePhotographer'), completed: true },
+    { task: t('tasks.sendInvites'), completed: false },
+    { task: t('tasks.chooseMenu'), completed: false },
+    { task: t('tasks.defineDecoration'), completed: false },
   ];
 
   const completedTasks = checklistItems.filter(item => item.completed).length;
@@ -70,6 +77,11 @@ const WeddingDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+      {/* Header with Language/Currency Selector */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageCurrencySelector />
+      </div>
+
       {/* Hero Section */}
       <div className="relative h-80 overflow-hidden rounded-b-3xl">
         <img 
@@ -81,19 +93,19 @@ const WeddingDashboard = () => {
         <div className="absolute inset-0 flex items-center justify-center text-center">
           <div className="animate-fade-in-up">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-              Nosso Casamento dos Sonhos
+              {t('hero.title')}
             </h1>
             <p className="text-xl text-white/90 mb-6">
-              Planeje cada detalhe do seu dia especial
+              {t('hero.subtitle')}
             </p>
             <div className="flex items-center justify-center gap-6">
               <Badge className="bg-white/20 text-white text-lg px-4 py-2">
                 <Heart className="w-5 h-5 mr-2" />
-                {guests.length} Convidados
+                {guests.length} {t('hero.guests')}
               </Badge>
               <Badge className="bg-white/20 text-white text-lg px-4 py-2">
                 <Calendar className="w-5 h-5 mr-2" />
-                6 meses restantes
+                6 {t('hero.remaining')}
               </Badge>
             </div>
           </div>
@@ -109,7 +121,7 @@ const WeddingDashboard = () => {
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">{guests.length}</h3>
-              <p className="text-muted-foreground">Convidados</p>
+              <p className="text-muted-foreground">{t('stats.guests')}</p>
             </CardContent>
           </Card>
 
@@ -119,9 +131,9 @@ const WeddingDashboard = () => {
                 <DollarSign className="w-6 h-6 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">
-                R$ {totalBudget.toLocaleString()}
+                {formatCurrency(totalBudget, currency)}
               </h3>
-              <p className="text-muted-foreground">Orçamento Total</p>
+              <p className="text-muted-foreground">{t('stats.totalBudget')}</p>
             </CardContent>
           </Card>
 
@@ -131,7 +143,7 @@ const WeddingDashboard = () => {
                 <CheckCircle className="w-6 h-6 text-success" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">{completedTasks}</h3>
-              <p className="text-muted-foreground">Tarefas Concluídas</p>
+              <p className="text-muted-foreground">{t('stats.completedTasks')}</p>
             </CardContent>
           </Card>
 
@@ -141,7 +153,7 @@ const WeddingDashboard = () => {
                 <Target className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">{Math.round(progressPercentage)}%</h3>
-              <p className="text-muted-foreground">Progresso Geral</p>
+              <p className="text-muted-foreground">{t('stats.overallProgress')}</p>
             </CardContent>
           </Card>
         </div>
@@ -153,12 +165,12 @@ const WeddingDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
-                Gerenciar Convidados
+                {t('guests.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total de convidados</span>
+                <span className="text-sm text-muted-foreground">{t('guests.total')}</span>
                 <div className="flex items-center gap-2">
                   <Button 
                     size="sm" 
@@ -180,20 +192,20 @@ const WeddingDashboard = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Confirmados</span>
+                  <span>{t('guests.confirmed')}</span>
                   <span>{confirmedGuests}/{guests.length}</span>
                 </div>
                 <Progress value={guestProgress} className="h-2" />
               </div>
 
               <div className="space-y-3">
-                {['familia', 'amigos', 'trabalho'].map((category) => {
+                {['family', 'friends', 'work'].map((category) => {
                   const categoryGuests = guests.filter(g => g.category === category);
                   const categoryCount = categoryGuests.length;
                   
                   return (
                     <div key={category} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <span className="capitalize font-medium">{category}</span>
+                      <span className="capitalize font-medium">{t(`guests.${category}`)}</span>
                       <Badge variant="secondary">{categoryCount}</Badge>
                     </div>
                   );
@@ -202,7 +214,7 @@ const WeddingDashboard = () => {
 
               <Button className="btn-gradient w-full">
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Convidado
+                {t('guests.addGuest')}
               </Button>
             </CardContent>
           </Card>
@@ -212,18 +224,18 @@ const WeddingDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-accent" />
-                Controle de Orçamento
+                {t('budget.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Gasto atual</span>
-                  <span>R$ {totalSpent.toLocaleString()} / R$ {totalBudget.toLocaleString()}</span>
+                  <span>{t('budget.current')}</span>
+                  <span>{formatCurrency(totalSpent, currency)} / {formatCurrency(totalBudget, currency)}</span>
                 </div>
                 <Progress value={budgetProgress} className="h-3" />
                 <p className="text-xs text-muted-foreground">
-                  {budgetProgress < 80 ? '✅ Dentro do orçamento' : '⚠️ Atenção ao orçamento'}
+                  {budgetProgress < 80 ? t('budget.withinBudget') : t('budget.overBudget')}
                 </p>
               </div>
 
@@ -238,14 +250,14 @@ const WeddingDashboard = () => {
                         <div>
                           <h4 className="font-medium text-sm">{item.category}</h4>
                           <p className="text-xs text-muted-foreground">
-                            R$ {item.spent.toLocaleString()} / R$ {item.budgeted.toLocaleString()}
+                            {formatCurrency(item.spent, currency)} / {formatCurrency(item.budgeted, currency)}
                           </p>
                         </div>
                         <Badge 
                           variant={item.priority === 'alta' ? 'default' : 'secondary'}
                           className="text-xs"
                         >
-                          {item.priority}
+                          {t(`budget.priority.${item.priority === 'alta' ? 'high' : item.priority === 'media' ? 'medium' : 'low'}`)}
                         </Badge>
                       </div>
                       <Progress 
@@ -259,7 +271,7 @@ const WeddingDashboard = () => {
 
               <Button className="btn-gradient w-full">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Adicionar Despesa
+                {t('budget.addExpense')}
               </Button>
             </CardContent>
           </Card>
@@ -269,14 +281,14 @@ const WeddingDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-primary" />
-                Timeline de Preparação
+                {t('timeline.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-6">
-                  <span className="text-sm text-muted-foreground">Progresso geral</span>
-                  <span className="font-semibold">{Math.round(progressPercentage)}% concluído</span>
+                  <span className="text-sm text-muted-foreground">{t('timeline.progress')}</span>
+                  <span className="font-semibold">{Math.round(progressPercentage)}% {t('timeline.completed')}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-3 mb-6" />
                 
