@@ -81,8 +81,8 @@ const LandingPage = () => {
       <header className="absolute top-0 left-0 right-0 z-50 p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">{t('landing.brand')}</span>
+            <Heart className="w-8 h-8 text-white" />
+            <span className="text-xl font-bold text-white">{t('landing.brand')}</span>
           </div>
           <LanguageCurrencySelector />
         </div>
