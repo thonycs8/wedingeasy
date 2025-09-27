@@ -86,7 +86,16 @@ const LandingPage = () => {
             <Heart className="w-8 h-8 text-white" />
             <span className="text-xl font-bold text-white">{t('landing.brand')}</span>
           </div>
-          <LanguageCurrencySelector />
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/auth')}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              Entrar / Registar
+            </Button>
+            <LanguageCurrencySelector />
+          </div>
         </div>
       </header>
 
