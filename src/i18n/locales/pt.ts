@@ -182,5 +182,14 @@ export const ptTranslations = {
     "questionnaire.summary.style": "Estilo",
     "questionnaire.summary.region": "Região",
     "questionnaire.summary.season": "Estação",
+
+    // Dashboard Welcome
+    "dashboard.welcome.title": "Comece o Seu Planeamento",
+    "dashboard.welcome.subtitle": "Para aceder ao painel personalizado, complete primeiro o questionário sobre o seu casamento.",
+    "dashboard.welcome.cta": "Começar Questionário",
+
+    // Dashboard Reset
+    "dashboard.reset.button": "Recomeçar",
+    "dashboard.reset.confirm": "Tem a certeza que quer recomeçar? Todos os dados serão perdidos.",
   }
 };

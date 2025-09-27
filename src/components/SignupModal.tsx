@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ interface SignupModalProps {
 
 export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [step, setStep] = useState<'signup' | 'questionnaire' | 'dashboard'>('signup');
   const [formData, setFormData] = useState({
     name: '',
@@ -48,8 +50,8 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
     setTimeout(() => {
       onOpenChange(false);
       setStep('signup');
-      // Here you would normally navigate to the dashboard
-      window.location.href = '/dashboard';
+      // Navigate using React Router instead of window.location
+      navigate('/dashboard');
     }, 2000);
   };
 

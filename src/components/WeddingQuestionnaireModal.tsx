@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/i18n";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useWeddingData } from "@/contexts/WeddingContext";
 
 interface WeddingQuestionnaireModalProps {
   open: boolean;
@@ -107,6 +108,7 @@ export const WeddingQuestionnaireModal = ({
 }: WeddingQuestionnaireModalProps) => {
   const { t } = useTranslation();
   const { currency } = useSettings();
+  const { setWeddingData: saveWeddingData } = useWeddingData();
   const [currentStep, setCurrentStep] = useState(0);
   const [weddingData, setWeddingData] = useState<WeddingData>({
     date: '',
@@ -143,6 +145,16 @@ export const WeddingQuestionnaireModal = ({
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      // Save wedding data before completing
+      const completeWeddingData = {
+        couple: coupleData,
+        wedding: {
+          ...weddingData,
+          estimatedBudget: calculateBudget()
+        },
+        isSetupComplete: true
+      };
+      saveWeddingData(completeWeddingData);
       onComplete();
     }
   };

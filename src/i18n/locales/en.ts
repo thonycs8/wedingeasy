@@ -182,5 +182,14 @@ export const enTranslations = {
     "questionnaire.summary.style": "Style",
     "questionnaire.summary.region": "Region",
     "questionnaire.summary.season": "Season",
+
+    // Dashboard Welcome
+    "dashboard.welcome.title": "Start Your Planning",
+    "dashboard.welcome.subtitle": "To access your personalized dashboard, please complete the wedding questionnaire first.",
+    "dashboard.welcome.cta": "Start Questionnaire",
+
+    // Dashboard Reset
+    "dashboard.reset.button": "Start Over",
+    "dashboard.reset.confirm": "Are you sure you want to start over? All data will be lost.",
   }
 };

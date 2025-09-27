@@ -19,6 +19,7 @@ import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
 import { formatCurrency } from "@/i18n";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useWeddingData } from "@/contexts/WeddingContext";
 
 interface Guest {
   id: string;
@@ -38,23 +39,30 @@ interface BudgetItem {
 const WeddingDashboard = () => {
   const { t } = useTranslation();
   const { currency } = useSettings();
+  const { weddingData } = useWeddingData();
   
+  // Use data from questionnaire if available, otherwise use defaults
   const [guests, setGuests] = useState<Guest[]>([
     { id: '1', name: 'Maria Silva', category: 'family', confirmed: true },
     { id: '2', name: 'João Santos', category: 'friends', confirmed: false },
     { id: '3', name: 'Ana Costa', category: 'work', confirmed: true },
   ]);
 
+  // Use questionnaire data if available
+  const actualGuestCount = weddingData?.wedding.guestCount || 120;
+  const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
+  const estimatedBudget = weddingData?.wedding.estimatedBudget || 34000;
+
   const [budget, setBudget] = useState<BudgetItem[]>([
-    { id: '1', category: t('budget.venue'), budgeted: 8000, spent: 7500, priority: 'alta' },
-    { id: '2', category: t('budget.dress'), budgeted: 3000, spent: 2800, priority: 'alta' },
-    { id: '3', category: t('budget.catering'), budgeted: 12000, spent: 0, priority: 'alta' },
-    { id: '4', category: t('budget.flowers'), budgeted: 4000, spent: 1200, priority: 'media' },
-    { id: '5', category: t('budget.photography'), budgeted: 5000, spent: 5000, priority: 'alta' },
-    { id: '6', category: t('budget.music'), budgeted: 2000, spent: 0, priority: 'media' },
+    { id: '1', category: t('budget.venue'), budgeted: Math.round(estimatedBudget * 0.35), spent: Math.round(estimatedBudget * 0.30), priority: 'alta' },
+    { id: '2', category: t('budget.dress'), budgeted: Math.round(estimatedBudget * 0.15), spent: Math.round(estimatedBudget * 0.12), priority: 'alta' },
+    { id: '3', category: t('budget.catering'), budgeted: Math.round(estimatedBudget * 0.25), spent: 0, priority: 'alta' },
+    { id: '4', category: t('budget.flowers'), budgeted: Math.round(estimatedBudget * 0.10), spent: Math.round(estimatedBudget * 0.05), priority: 'media' },
+    { id: '5', category: t('budget.photography'), budgeted: Math.round(estimatedBudget * 0.10), spent: Math.round(estimatedBudget * 0.10), priority: 'alta' },
+    { id: '6', category: t('budget.music'), budgeted: Math.round(estimatedBudget * 0.05), spent: 0, priority: 'media' },
   ]);
 
-  const [guestCount, setGuestCount] = useState(120);
+  const [guestCount, setGuestCount] = useState(actualGuestCount);
   
   const totalBudget = budget.reduce((sum, item) => sum + item.budgeted, 0);
   const totalSpent = budget.reduce((sum, item) => sum + item.spent, 0);
@@ -77,8 +85,22 @@ const WeddingDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      {/* Header with Language/Currency Selector */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Header with Language/Currency Selector and Wedding Data Actions */}
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {weddingData && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              if (confirm(t('dashboard.reset.confirm'))) {
+                window.location.href = '/';
+              }
+            }}
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            {t('dashboard.reset.button')}
+          </Button>
+        )}
         <LanguageCurrencySelector />
       </div>
 
@@ -93,7 +115,7 @@ const WeddingDashboard = () => {
         <div className="absolute inset-0 flex items-center justify-center text-center">
           <div className="animate-fade-in-up">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-              {t('hero.title')}
+              {coupleNames}
             </h1>
             <p className="text-xl text-white/90 mb-6">
               {t('hero.subtitle')}
