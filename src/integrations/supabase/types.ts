@@ -14,6 +14,172 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_categories: {
+        Row: {
+          budgeted_amount: number | null
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          priority: string | null
+          spent_amount: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budgeted_amount?: number | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          priority?: string | null
+          spent_amount?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budgeted_amount?: number | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          priority?: string | null
+          spent_amount?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budget_expenses: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          name: string
+          receipt_url: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name: string
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name?: string
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_options: {
+        Row: {
+          address: string | null
+          category_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_favorite: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          price_max: number | null
+          price_min: number | null
+          rating: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          vendor: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          rating?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          vendor?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          rating?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_options_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guests: {
         Row: {
           category: string
