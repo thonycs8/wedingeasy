@@ -7,46 +7,46 @@
 @layer base {
   :root {
     /* Main background and text */
-    --background: 350 25% 98%;
-    --foreground: 340 15% 15%;
+    --background: 320 20% 97%;
+    --foreground: 260 15% 15%;
 
     /* Card and surface colors */
-    --card: 0 0% 100%;
-    --card-foreground: 340 15% 15%;
+    --card: 320 30% 98%;
+    --card-foreground: 260 15% 15%;
 
     /* Popover colors */
-    --popover: 0 0% 100%;
-    --popover-foreground: 340 15% 15%;
+    --popover: 320 30% 98%;
+    --popover-foreground: 260 15% 15%;
 
-    /* Primary - Romantic Rose */
-    --primary: 350 70% 60%;
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 350 40% 85%;
+    /* Primary - Beautiful Lilac */
+    --primary: 280 65% 65%;
+    --primary-foreground: 320 25% 98%;
+    --primary-soft: 285 45% 85%;
 
-    /* Secondary - Soft Blush */
-    --secondary: 340 30% 92%;
-    --secondary-foreground: 340 50% 25%;
+    /* Secondary - Soft Lavender */
+    --secondary: 290 25% 90%;
+    --secondary-foreground: 280 60% 30%;
 
     /* Muted colors */
-    --muted: 340 15% 95%;
-    --muted-foreground: 340 10% 50%;
+    --muted: 285 20% 93%;
+    --muted-foreground: 280 15% 50%;
 
-    /* Accent - Golden */
-    --accent: 45 85% 70%;
-    --accent-foreground: 45 60% 15%;
+    /* Accent - Warm Rose Gold */
+    --accent: 320 50% 75%;
+    --accent-foreground: 320 60% 20%;
     
-    /* Success - Soft Green */
-    --success: 140 40% 60%;
-    --success-foreground: 140 50% 15%;
+    /* Success - Soft Mint */
+    --success: 150 35% 65%;
+    --success-foreground: 150 50% 20%;
 
     /* Destructive colors */
     --destructive: 0 70% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 320 25% 98%;
 
     /* Border and input */
-    --border: 340 20% 90%;
-    --input: 340 20% 90%;
-    --ring: 350 70% 60%;
+    --border: 285 25% 88%;
+    --input: 285 25% 88%;
+    --ring: 280 65% 65%;
 
     --radius: 1rem;
     
@@ -64,59 +64,64 @@
     --transition-romantic: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.3s ease-out;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar colors - Lilac theme */
+    --sidebar-background: 285 20% 95%;
+    --sidebar-foreground: 280 30% 30%;
+    --sidebar-primary: 280 65% 65%;
+    --sidebar-primary-foreground: 320 25% 98%;
+    --sidebar-accent: 290 25% 90%;
+    --sidebar-accent-foreground: 280 60% 30%;
+    --sidebar-border: 285 25% 88%;
+    --sidebar-ring: 280 65% 65%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode with deep purples */
+    --background: 270 25% 8%;
+    --foreground: 285 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    /* Dark cards and surfaces */
+    --card: 270 30% 10%;
+    --card-foreground: 285 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    /* Dark popovers */
+    --popover: 270 30% 10%;
+    --popover-foreground: 285 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Dark primary - Bright lilac */
+    --primary: 285 70% 75%;
+    --primary-foreground: 270 25% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Dark secondary */
+    --secondary: 275 20% 15%;
+    --secondary-foreground: 285 20% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Dark muted */
+    --muted: 275 20% 15%;
+    --muted-foreground: 280 15% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Dark accent */
+    --accent: 320 45% 65%;
+    --accent-foreground: 285 20% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Dark destructive */
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 285 20% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Dark borders */
+    --border: 275 20% 15%;
+    --input: 275 20% 15%;
+    --ring: 285 70% 75%;
+    
+    /* Dark sidebar */
+    --sidebar-background: 270 30% 10%;
+    --sidebar-foreground: 285 20% 95%;
+    --sidebar-primary: 285 70% 75%;
+    --sidebar-primary-foreground: 270 25% 8%;
+    --sidebar-accent: 275 20% 15%;
+    --sidebar-accent-foreground: 285 20% 95%;
+    --sidebar-border: 275 20% 15%;
+    --sidebar-ring: 285 70% 75%;
   }
 }
 
