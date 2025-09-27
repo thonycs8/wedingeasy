@@ -1,7 +1,7 @@
-import WeddingDashboard from "@/components/WeddingDashboard";
+import LandingPage from "@/components/LandingPage";
 
 const Index = () => {
-  return <WeddingDashboard />;
+  return <LandingPage />;
 };
 
 export default Index;
