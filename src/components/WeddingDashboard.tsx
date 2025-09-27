@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Heart, 
   Users, 
   DollarSign, 
   Calendar, 
   CheckCircle,
-  Plus,
-  Minus,
   Target,
-  TrendingUp
+  Palette,
+  Settings
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
-import { formatCurrency } from "@/i18n";
-import { useSettings } from "@/contexts/SettingsContext";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { BudgetManager } from "@/components/BudgetManager";
+import { TimelineManager } from "@/components/TimelineManager";
+import { WeddingChoices } from "@/components/WeddingChoices";
 
 interface Guest {
   id: string;
@@ -28,48 +28,21 @@ interface Guest {
   confirmed: boolean;
 }
 
-interface BudgetItem {
-  id: string;
-  category: string;
-  budgeted: number;
-  spent: number;
-  priority: 'alta' | 'media' | 'baixa';
-}
-
 const WeddingDashboard = () => {
   const { t } = useTranslation();
-  const { currency } = useSettings();
   const { weddingData } = useWeddingData();
   
   // Use data from questionnaire if available, otherwise use defaults
-  const [guests, setGuests] = useState<Guest[]>([
+  const [guests] = useState<Guest[]>([
     { id: '1', name: 'Maria Silva', category: 'family', confirmed: true },
     { id: '2', name: 'João Santos', category: 'friends', confirmed: false },
     { id: '3', name: 'Ana Costa', category: 'work', confirmed: true },
   ]);
 
   // Use questionnaire data if available
-  const actualGuestCount = weddingData?.wedding.guestCount || 120;
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
-  const estimatedBudget = weddingData?.wedding.estimatedBudget || 34000;
 
-  const [budget, setBudget] = useState<BudgetItem[]>([
-    { id: '1', category: t('budget.venue'), budgeted: Math.round(estimatedBudget * 0.35), spent: Math.round(estimatedBudget * 0.30), priority: 'alta' },
-    { id: '2', category: t('budget.dress'), budgeted: Math.round(estimatedBudget * 0.15), spent: Math.round(estimatedBudget * 0.12), priority: 'alta' },
-    { id: '3', category: t('budget.catering'), budgeted: Math.round(estimatedBudget * 0.25), spent: 0, priority: 'alta' },
-    { id: '4', category: t('budget.flowers'), budgeted: Math.round(estimatedBudget * 0.10), spent: Math.round(estimatedBudget * 0.05), priority: 'media' },
-    { id: '5', category: t('budget.photography'), budgeted: Math.round(estimatedBudget * 0.10), spent: Math.round(estimatedBudget * 0.10), priority: 'alta' },
-    { id: '6', category: t('budget.music'), budgeted: Math.round(estimatedBudget * 0.05), spent: 0, priority: 'media' },
-  ]);
-
-  const [guestCount, setGuestCount] = useState(actualGuestCount);
-  
-  const totalBudget = budget.reduce((sum, item) => sum + item.budgeted, 0);
-  const totalSpent = budget.reduce((sum, item) => sum + item.spent, 0);
-  const budgetProgress = (totalSpent / totalBudget) * 100;
-  
   const confirmedGuests = guests.filter(g => g.confirmed).length;
-  const guestProgress = (confirmedGuests / guests.length) * 100;
 
   const checklistItems = [
     { task: t('tasks.chooseVenue'), completed: true },
@@ -153,7 +126,7 @@ const WeddingDashboard = () => {
                 <DollarSign className="w-6 h-6 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">
-                {formatCurrency(totalBudget, currency)}
+                {weddingData?.wedding.estimatedBudget ? `€${weddingData.wedding.estimatedBudget.toLocaleString()}` : '€34.000'}
               </h3>
               <p className="text-muted-foreground">{t('stats.totalBudget')}</p>
             </CardContent>
@@ -180,163 +153,35 @@ const WeddingDashboard = () => {
           </Card>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Guest Management */}
-          <Card className="card-romantic animate-fade-in-up">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                {t('guests.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t('guests.total')}</span>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setGuestCount(Math.max(0, guestCount - 1))}
-                  >
-                    <Minus className="w-4 h-4" />
-                  </Button>
-                  <span className="counter-badge">{guestCount}</span>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setGuestCount(guestCount + 1)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+        {/* Dashboard Tabs */}
+        <Tabs defaultValue="budget" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="budget" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              {t('budget.title')}
+            </TabsTrigger>
+            <TabsTrigger value="timeline" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              {t('timeline.title')}
+            </TabsTrigger>
+            <TabsTrigger value="choices" className="flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              {t('choices.title')}
+            </TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{t('guests.confirmed')}</span>
-                  <span>{confirmedGuests}/{guests.length}</span>
-                </div>
-                <Progress value={guestProgress} className="h-2" />
-              </div>
+          <TabsContent value="budget" className="space-y-6">
+            <BudgetManager />
+          </TabsContent>
 
-              <div className="space-y-3">
-                {['family', 'friends', 'work'].map((category) => {
-                  const categoryGuests = guests.filter(g => g.category === category);
-                  const categoryCount = categoryGuests.length;
-                  
-                  return (
-                    <div key={category} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <span className="capitalize font-medium">{t(`guests.${category}`)}</span>
-                      <Badge variant="secondary">{categoryCount}</Badge>
-                    </div>
-                  );
-                })}
-              </div>
+          <TabsContent value="timeline" className="space-y-6">
+            <TimelineManager />
+          </TabsContent>
 
-              <Button className="btn-gradient w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                {t('guests.addGuest')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Budget Overview */}
-          <Card className="card-romantic animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-accent" />
-                {t('budget.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{t('budget.current')}</span>
-                  <span>{formatCurrency(totalSpent, currency)} / {formatCurrency(totalBudget, currency)}</span>
-                </div>
-                <Progress value={budgetProgress} className="h-3" />
-                <p className="text-xs text-muted-foreground">
-                  {budgetProgress < 80 ? t('budget.withinBudget') : t('budget.overBudget')}
-                </p>
-              </div>
-
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {budget.map((item) => {
-                  const progress = (item.spent / item.budgeted) * 100;
-                  const isOverBudget = progress > 100;
-                  
-                  return (
-                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-sm">{item.category}</h4>
-                          <p className="text-xs text-muted-foreground">
-                            {formatCurrency(item.spent, currency)} / {formatCurrency(item.budgeted, currency)}
-                          </p>
-                        </div>
-                        <Badge 
-                          variant={item.priority === 'alta' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {t(`budget.priority.${item.priority === 'alta' ? 'high' : item.priority === 'media' ? 'medium' : 'low'}`)}
-                        </Badge>
-                      </div>
-                      <Progress 
-                        value={Math.min(progress, 100)} 
-                        className={`h-1 ${isOverBudget ? 'bg-destructive/20' : ''}`}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <Button className="btn-gradient w-full">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                {t('budget.addExpense')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Timeline */}
-          <Card className="card-romantic animate-fade-in-up lg:col-span-2" style={{animationDelay: '0.4s'}}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                {t('timeline.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-sm text-muted-foreground">{t('timeline.progress')}</span>
-                  <span className="font-semibold">{Math.round(progressPercentage)}% {t('timeline.completed')}</span>
-                </div>
-                <Progress value={progressPercentage} className="h-3 mb-6" />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {checklistItems.map((item, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
-                        item.completed 
-                          ? 'bg-success/10 text-success-foreground' 
-                          : 'bg-muted/50 hover:bg-muted'
-                      }`}
-                    >
-                      <CheckCircle 
-                        className={`w-5 h-5 ${
-                          item.completed ? 'text-success' : 'text-muted-foreground'
-                        }`}
-                      />
-                      <span className={item.completed ? 'line-through' : ''}>{item.task}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="choices" className="space-y-6">
+            <WeddingChoices />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
