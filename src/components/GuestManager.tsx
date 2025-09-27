@@ -378,6 +378,188 @@ export const GuestManager = () => {
                   {t('guests.addGuest')}
                 </Button>
               </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    {editingGuest ? 'Editar Convidado' : 'Adicionar Convidado'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Nome *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="category">Categoria</Label>
+                      <Select 
+                        value={formData.category} 
+                        onValueChange={(value: Guest['category']) => setFormData(prev => ({ ...prev, category: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="family">Família</SelectItem>
+                          <SelectItem value="friends">Amigos</SelectItem>
+                          <SelectItem value="work">Trabalho</SelectItem>
+                          <SelectItem value="other">Outros</SelectItem>
+                          <SelectItem value="groomsmen">Padrinhos do Noivo</SelectItem>
+                          <SelectItem value="bridesmaids">Madrinhas da Noiva</SelectItem>
+                          <SelectItem value="groomsman_friends">Amigos do Noivo</SelectItem>
+                          <SelectItem value="bridesmaid_friends">Amigas da Noiva</SelectItem>
+                          <SelectItem value="witnesses">Testemunhas</SelectItem>
+                          <SelectItem value="officiant">Celebrante</SelectItem>
+                          <SelectItem value="pastor">Pastor</SelectItem>
+                          <SelectItem value="musicians">Músicos</SelectItem>
+                          <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="+351 123 456 789"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="relationship">Relação/Parentesco</Label>
+                      <Input
+                        id="relationship"
+                        value={formData.relationship}
+                        onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value }))}
+                        placeholder="Ex: Irmão, Prima, Amigo..."
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="special_role">Função Especial</Label>
+                      <Select 
+                        value={formData.special_role} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, special_role: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar função..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nenhuma função</SelectItem>
+                          <SelectItem value="best_man">Padrinho de Casamento</SelectItem>
+                          <SelectItem value="maid_of_honor">Madrinha de Casamento</SelectItem>
+                          <SelectItem value="groomsman">Padrinho</SelectItem>
+                          <SelectItem value="bridesmaid">Madrinha</SelectItem>
+                          <SelectItem value="witness">Testemunha</SelectItem>
+                          <SelectItem value="officiant">Celebrante</SelectItem>
+                          <SelectItem value="pastor">Pastor</SelectItem>
+                          <SelectItem value="musician">Músico</SelectItem>
+                          <SelectItem value="honor_guest">Convidado de Honra</SelectItem>
+                          <SelectItem value="flower_girl">Menina das Flores</SelectItem>
+                          <SelectItem value="ring_bearer">Menino das Alianças</SelectItem>
+                          <SelectItem value="reader">Leitor</SelectItem>
+                          <SelectItem value="usher">Recepcionista</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="table_number">Número da Mesa</Label>
+                    <Input
+                      id="table_number"
+                      type="number"
+                      value={formData.table_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, table_number: e.target.value }))}
+                      placeholder="Ex: 1, 2, 3..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dietary_restrictions">Restrições Alimentares</Label>
+                    <Input
+                      id="dietary_restrictions"
+                      value={formData.dietary_restrictions}
+                      onChange={(e) => setFormData(prev => ({ ...prev, dietary_restrictions: e.target.value }))}
+                      placeholder="Ex: Vegetariano, Sem glúten..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Notas</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Observações adicionais..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="confirmed"
+                        checked={formData.confirmed}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, confirmed: checked }))}
+                      />
+                      <Label htmlFor="confirmed">Presença confirmada</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="plus_one"
+                        checked={formData.plus_one}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, plus_one: checked }))}
+                      />
+                      <Label htmlFor="plus_one">Vem com acompanhante</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="printed_invitation"
+                        checked={formData.printed_invitation}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, printed_invitation: checked }))}
+                      />
+                      <Label htmlFor="printed_invitation">Recebe convite impresso</Label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" className="btn-gradient">
+                      {editingGuest ? 'Atualizar' : 'Adicionar'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
             </Dialog>
 
             <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
@@ -387,6 +569,66 @@ export const GuestManager = () => {
                   Importar Lista
                 </Button>
               </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Importar Lista de Convidados
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Formato de Importação</Label>
+                    <Select value={importFormat} onValueChange={(value: 'names' | 'csv') => setImportFormat(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="names">Lista de Nomes (um por linha)</SelectItem>
+                        <SelectItem value="csv">Formato CSV (Nome,Email,Telefone,Categoria)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bulk_import">
+                      {importFormat === 'names' ? 'Lista de Nomes' : 'Dados CSV'}
+                    </Label>
+                    <Textarea
+                      id="bulk_import"
+                      value={bulkImportText}
+                      onChange={(e) => setBulkImportText(e.target.value)}
+                      placeholder={
+                        importFormat === 'names' 
+                          ? "João Silva\nMaria Santos\nCarlos Oliveira\n..."
+                          : "Nome,Email,Telefone,Categoria\nJoão Silva,joao@email.com,123456789,family\nMaria Santos,maria@email.com,987654321,friends\n..."
+                      }
+                      rows={10}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
+                  {importFormat === 'csv' && (
+                    <Alert>
+                      <FileText className="w-4 h-4" />
+                      <AlertDescription>
+                        <strong>Formato CSV:</strong> Nome,Email,Telefone,Categoria<br/>
+                        <strong>Categorias válidas:</strong> family, friends, work, other, groomsmen, bridesmaids, witnesses, officiant, pastor, musicians, honor_guests
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={handleBulkImport} className="btn-gradient" disabled={!bulkImportText.trim()}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Importar Convidados
+                    </Button>
+                    <Button variant="outline" onClick={() => {setBulkImportText(''); setShowImportModal(false);}}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
             </Dialog>
           </div>
 
@@ -550,233 +792,6 @@ export const GuestManager = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Add/Edit Guest Modal */}
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingGuest ? 'Editar Convidado' : 'Adicionar Convidado'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Nome *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="relationship">Parentesco/Relação</Label>
-                <Input
-                  id="relationship"
-                  value={formData.relationship}
-                  onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value }))}
-                  placeholder="Ex: Irmão, Primo, Amigo..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Categoria</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value as Guest['category'] }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="family">Família</SelectItem>
-                    <SelectItem value="friends">Amigos</SelectItem>
-                    <SelectItem value="work">Trabalho</SelectItem>
-                    <SelectItem value="other">Outros</SelectItem>
-                    <SelectItem value="groomsmen">Padrinhos do Noivo</SelectItem>
-                    <SelectItem value="bridesmaids">Madrinhas da Noiva</SelectItem>
-                    <SelectItem value="groomsman_friends">Amigos do Noivo</SelectItem>
-                    <SelectItem value="bridesmaid_friends">Amigas da Noiva</SelectItem>
-                    <SelectItem value="witnesses">Testemunhas</SelectItem>
-                    <SelectItem value="officiant">Celebrante</SelectItem>
-                    <SelectItem value="pastor">Pastor</SelectItem>
-                    <SelectItem value="musicians">Músicos</SelectItem>
-                    <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="special_role">Função Especial</Label>
-                <Select value={formData.special_role} onValueChange={(value) => setFormData(prev => ({ ...prev, special_role: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar função..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
-                    <SelectItem value="best_man">Padrinho de Casamento</SelectItem>
-                    <SelectItem value="maid_of_honor">Madrinha de Casamento</SelectItem>
-                    <SelectItem value="groomsman">Padrinho</SelectItem>
-                    <SelectItem value="bridesmaid">Madrinha</SelectItem>
-                    <SelectItem value="witness">Testemunha</SelectItem>
-                    <SelectItem value="officiant">Celebrante</SelectItem>
-                    <SelectItem value="pastor">Pastor</SelectItem>
-                    <SelectItem value="musician">Músico</SelectItem>
-                    <SelectItem value="honor_guest">Convidado de Honra</SelectItem>
-                    <SelectItem value="flower_girl">Menina das Flores</SelectItem>
-                    <SelectItem value="ring_bearer">Menino das Alianças</SelectItem>
-                    <SelectItem value="reader">Leitor</SelectItem>
-                    <SelectItem value="usher">Recepcionista</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="table_number">Número da Mesa</Label>
-                <Input
-                  id="table_number"
-                  type="number"
-                  value={formData.table_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, table_number: e.target.value }))}
-                  placeholder="Ex: 1, 2, 3..."
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="dietary_restrictions">Restrições Alimentares</Label>
-              <Input
-                id="dietary_restrictions"
-                value={formData.dietary_restrictions}
-                onChange={(e) => setFormData(prev => ({ ...prev, dietary_restrictions: e.target.value }))}
-                placeholder="Ex: Vegetariano, Sem glúten..."
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Notas</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Observações adicionais..."
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="confirmed"
-                  checked={formData.confirmed}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, confirmed: checked }))}
-                />
-                <Label htmlFor="confirmed">Presença confirmada</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="plus_one"
-                  checked={formData.plus_one}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, plus_one: checked }))}
-                />
-                <Label htmlFor="plus_one">Vem com acompanhante</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="printed_invitation"
-                  checked={formData.printed_invitation}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, printed_invitation: checked }))}
-                />
-                <Label htmlFor="printed_invitation">Recebe convite impresso</Label>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" className="btn-gradient">
-                {editingGuest ? 'Atualizar' : 'Adicionar'}
-              </Button>
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancelar
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-
-        {/* Import Modal */}
-        <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Importar Lista de Convidados
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Formato de Importação</Label>
-                <Select value={importFormat} onValueChange={(value: 'names' | 'csv') => setImportFormat(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="names">Lista de Nomes (um por linha)</SelectItem>
-                    <SelectItem value="csv">Formato CSV (Nome,Email,Telefone,Categoria)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="bulk_import">
-                  {importFormat === 'names' ? 'Lista de Nomes' : 'Dados CSV'}
-                </Label>
-                <Textarea
-                  id="bulk_import"
-                  value={bulkImportText}
-                  onChange={(e) => setBulkImportText(e.target.value)}
-                  placeholder={
-                    importFormat === 'names' 
-                      ? "João Silva\nMaria Santos\nCarlos Oliveira\n..."
-                      : "Nome,Email,Telefone,Categoria\nJoão Silva,joao@email.com,123456789,family\nMaria Santos,maria@email.com,987654321,friends\n..."
-                  }
-                  rows={10}
-                  className="font-mono text-sm"
-                />
-              </div>
-
-              {importFormat === 'csv' && (
-                <Alert>
-                  <FileText className="w-4 h-4" />
-                  <AlertDescription>
-                    <strong>Formato CSV:</strong> Nome,Email,Telefone,Categoria<br/>
-                    <strong>Categorias válidas:</strong> family, friends, work, other, groomsmen, bridesmaids, witnesses, officiant, pastor, musicians, honor_guests
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="flex gap-2 pt-4">
-                <Button onClick={handleBulkImport} className="btn-gradient" disabled={!bulkImportText.trim()}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importar Convidados
-                </Button>
-                <Button variant="outline" onClick={() => {setBulkImportText(''); setShowImportModal(false);}}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
   );
