@@ -1,15 +1,42 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { useAuth } from "@/hooks/useAuth";
 import WeddingDashboard from "@/components/WeddingDashboard";
 
 const Dashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const { weddingData } = useWeddingData();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-6">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">A carregar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, don't render anything (will redirect)
+  if (!user) {
+    return null;
+  }
 
   // If no wedding data exists, show onboarding message
   if (!weddingData || !weddingData.isSetupComplete) {

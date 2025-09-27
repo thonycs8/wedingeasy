@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface WeddingData {
   couple: {
@@ -22,6 +24,8 @@ interface WeddingContextType {
   weddingData: WeddingData | null;
   setWeddingData: (data: WeddingData) => void;
   clearWeddingData: () => void;
+  saveToCloud: (data: WeddingData) => Promise<void>;
+  loadFromCloud: () => Promise<void>;
 }
 
 const WeddingContext = createContext<WeddingContextType | undefined>(undefined);
@@ -39,24 +43,132 @@ interface WeddingProviderProps {
 }
 
 export const WeddingProvider = ({ children }: WeddingProviderProps) => {
+  const { user } = useAuth();
   const [weddingData, setWeddingDataState] = useState<WeddingData | null>(() => {
-    // Try to load from localStorage on initialization
+    // Try to load from localStorage on initialization (fallback)
     const stored = localStorage.getItem('weddingData');
     return stored ? JSON.parse(stored) : null;
   });
 
+  // Load data from cloud when user logs in
+  useEffect(() => {
+    if (user) {
+      loadFromCloud();
+    }
+  }, [user]);
+
   const setWeddingData = (data: WeddingData) => {
     setWeddingDataState(data);
     localStorage.setItem('weddingData', JSON.stringify(data));
+    // Also save to cloud if user is logged in
+    if (user) {
+      saveToCloud(data);
+    }
   };
 
   const clearWeddingData = () => {
     setWeddingDataState(null);
     localStorage.removeItem('weddingData');
+    // Also clear from cloud if user is logged in
+    if (user) {
+      clearFromCloud();
+    }
+  };
+
+  const saveToCloud = async (data: WeddingData) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('wedding_data')
+        .upsert({
+          user_id: user.id,
+          couple_name: data.couple.name,
+          partner_name: data.couple.partnerName,
+          wedding_date: data.wedding.date,
+          guest_count: data.wedding.guestCount,
+          style: data.wedding.style,
+          region: data.wedding.region,
+          season: data.wedding.season,
+          priorities: data.wedding.priorities,
+          estimated_budget: data.wedding.estimatedBudget,
+          is_setup_complete: data.isSetupComplete
+        });
+
+      if (error) {
+        console.error('Error saving to cloud:', error);
+      }
+    } catch (error) {
+      console.error('Error saving to cloud:', error);
+    }
+  };
+
+  const loadFromCloud = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wedding_data')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading from cloud:', error);
+        return;
+      }
+
+      if (data) {
+        const weddingData: WeddingData = {
+          couple: {
+            name: data.couple_name || '',
+            email: user.email || '',
+            partnerName: data.partner_name || ''
+          },
+          wedding: {
+            date: data.wedding_date || '',
+            guestCount: data.guest_count || 50,
+            style: (data.style as 'intimate' | 'classic' | 'luxury') || 'classic',
+            region: (data.region as 'lisboa' | 'porto' | 'center' | 'south' | 'islands') || 'lisboa',
+            season: (data.season as 'spring' | 'summer' | 'autumn' | 'winter') || 'spring',
+            priorities: data.priorities || [],
+            estimatedBudget: data.estimated_budget || 0
+          },
+          isSetupComplete: data.is_setup_complete || false
+        };
+        setWeddingDataState(weddingData);
+        localStorage.setItem('weddingData', JSON.stringify(weddingData));
+      }
+    } catch (error) {
+      console.error('Error loading from cloud:', error);
+    }
+  };
+
+  const clearFromCloud = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('wedding_data')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error clearing from cloud:', error);
+      }
+    } catch (error) {
+      console.error('Error clearing from cloud:', error);
+    }
   };
 
   return (
-    <WeddingContext.Provider value={{ weddingData, setWeddingData, clearWeddingData }}>
+    <WeddingContext.Provider value={{ 
+      weddingData, 
+      setWeddingData, 
+      clearWeddingData, 
+      saveToCloud, 
+      loadFromCloud 
+    }}>
       {children}
     </WeddingContext.Provider>
   );

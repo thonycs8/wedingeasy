@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import { SignupModal } from "@/components/SignupModal";
 
 const LandingPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [showSignup, setShowSignup] = useState(false);
 
   const features = [
@@ -124,10 +126,19 @@ const LandingPage = () => {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="w-5 h-5" />
-                <span>{t('landing.hero.free')}</span>
-              </div>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={() => navigate('/auth')}
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-lg px-8 py-4 h-auto"
+              >
+                Já tem conta? Entre aqui
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2 text-white/90 justify-center mb-4">
+              <CheckCircle className="w-5 h-5" />
+              <span>{t('landing.hero.free')}</span>
             </div>
             
             <div className="flex flex-wrap justify-center gap-6 text-white/80">

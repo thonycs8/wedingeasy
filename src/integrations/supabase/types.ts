@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wedding_data: {
+        Row: {
+          couple_name: string | null
+          created_at: string
+          estimated_budget: number | null
+          guest_count: number | null
+          id: string
+          is_setup_complete: boolean | null
+          partner_name: string | null
+          priorities: string[] | null
+          region: string | null
+          season: string | null
+          style: string | null
+          updated_at: string
+          user_id: string
+          wedding_date: string | null
+        }
+        Insert: {
+          couple_name?: string | null
+          created_at?: string
+          estimated_budget?: number | null
+          guest_count?: number | null
+          id?: string
+          is_setup_complete?: boolean | null
+          partner_name?: string | null
+          priorities?: string[] | null
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          updated_at?: string
+          user_id: string
+          wedding_date?: string | null
+        }
+        Update: {
+          couple_name?: string | null
+          created_at?: string
+          estimated_budget?: number | null
+          guest_count?: number | null
+          id?: string
+          is_setup_complete?: boolean | null
+          partner_name?: string | null
+          priorities?: string[] | null
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          updated_at?: string
+          user_id?: string
+          wedding_date?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

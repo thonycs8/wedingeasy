@@ -12,14 +12,17 @@ import {
   CheckCircle,
   Target,
   Palette,
-  Settings
+  Settings,
+  LogOut
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { useAuth } from "@/hooks/useAuth";
 import { BudgetManager } from "@/components/BudgetManager";
 import { TimelineManager } from "@/components/TimelineManager";
 import { WeddingChoices } from "@/components/WeddingChoices";
+import { useToast } from "@/hooks/use-toast";
 
 interface Guest {
   id: string;
@@ -30,7 +33,9 @@ interface Guest {
 
 const WeddingDashboard = () => {
   const { t } = useTranslation();
-  const { weddingData } = useWeddingData();
+  const { weddingData, clearWeddingData } = useWeddingData();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
   
   // Use data from questionnaire if available, otherwise use defaults
   const [guests] = useState<Guest[]>([
@@ -60,12 +65,28 @@ const WeddingDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={async () => {
+            await signOut();
+            toast({
+              title: "Sessão terminada",
+              description: "Até breve!",
+            });
+          }}
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sair
+        </Button>
         {weddingData && (
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => {
               if (confirm(t('dashboard.reset.confirm'))) {
+                clearWeddingData();
                 window.location.href = '/';
               }
             }}
