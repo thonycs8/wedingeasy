@@ -13,7 +13,8 @@ import {
   Target,
   Palette,
   Settings,
-  LogOut
+  LogOut,
+  Camera
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
@@ -22,6 +23,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { BudgetManager } from "@/components/BudgetManager";
 import { TimelineManager } from "@/components/TimelineManager";
 import { WeddingChoices } from "@/components/WeddingChoices";
+import { GuestManager } from "@/components/GuestManager";
+import { PhotoGallery } from "@/components/PhotoGallery";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import { useToast } from "@/hooks/use-toast";
 
 interface Guest {
@@ -176,7 +180,7 @@ const WeddingDashboard = () => {
 
         {/* Dashboard Tabs */}
         <Tabs defaultValue="budget" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="budget" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               {t('budget.title')}
@@ -188,6 +192,18 @@ const WeddingDashboard = () => {
             <TabsTrigger value="choices" className="flex items-center gap-2">
               <Palette className="w-4 h-4" />
               {t('choices.title')}
+            </TabsTrigger>
+            <TabsTrigger value="guests" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Convidados
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              Galeria
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Notificações
             </TabsTrigger>
           </TabsList>
 
@@ -201,6 +217,18 @@ const WeddingDashboard = () => {
 
           <TabsContent value="choices" className="space-y-6">
             <WeddingChoices />
+          </TabsContent>
+
+          <TabsContent value="guests" className="space-y-6">
+            <GuestManager />
+          </TabsContent>
+
+          <TabsContent value="photos" className="space-y-6">
+            <PhotoGallery />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <NotificationCenter />
           </TabsContent>
         </Tabs>
       </div>

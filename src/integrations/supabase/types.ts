@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      guests: {
+        Row: {
+          category: string
+          confirmed: boolean | null
+          created_at: string
+          dietary_restrictions: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          plus_one: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          confirmed?: boolean | null
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          plus_one?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          confirmed?: boolean | null
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          plus_one?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          scheduled_for: string | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          scheduled_for?: string | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          scheduled_for?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      photos: {
+        Row: {
+          category: string | null
+          description: string | null
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          title: string | null
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          title?: string | null
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          title?: string | null
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
