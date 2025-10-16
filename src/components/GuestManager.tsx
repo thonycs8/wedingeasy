@@ -463,14 +463,13 @@ export const GuestManager = () => {
                     <div>
                       <Label htmlFor="special_role">Função Especial</Label>
                       <Select 
-                        value={formData.special_role} 
+                        value={formData.special_role || undefined} 
                         onValueChange={(value) => setFormData(prev => ({ ...prev, special_role: value }))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecionar função..." />
+                          <SelectValue placeholder="Nenhuma função" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhuma função</SelectItem>
                           <SelectItem value="best_man">Padrinho de Casamento</SelectItem>
                           <SelectItem value="maid_of_honor">Madrinha de Casamento</SelectItem>
                           <SelectItem value="groomsman">Padrinho</SelectItem>
