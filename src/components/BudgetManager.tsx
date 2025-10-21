@@ -37,6 +37,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/i18n';
 import { useSettings } from '@/contexts/SettingsContext';
+import { BudgetCharts } from './BudgetCharts';
 
 interface BudgetCategory {
   id: string;
@@ -505,56 +506,12 @@ export const BudgetManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary">{formatCurrency(totalBudget, currency)}</div>
-            <div className="text-sm text-muted-foreground">Orçamento Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalSpent, currency)}</div>
-            <div className="text-sm text-muted-foreground">Total Gasto</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className={`text-2xl font-bold ${remainingBudget < 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {formatCurrency(remainingBudget, currency)}
-            </div>
-            <div className="text-sm text-muted-foreground">Disponível</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{Math.round(budgetProgress)}%</div>
-            <div className="text-sm text-muted-foreground">Progresso</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progresso do Orçamento</span>
-              <span>{Math.round(budgetProgress)}%</span>
-            </div>
-            <Progress value={Math.min(budgetProgress, 100)} className="h-3" />
-            {budgetProgress > 90 && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Atenção! Você já gastou mais de 90% do orçamento planeado.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Budget Charts */}
+      <BudgetCharts 
+        categories={categories}
+        totalBudget={totalBudget}
+        totalSpent={totalSpent}
+      />
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
