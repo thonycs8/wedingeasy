@@ -47,6 +47,10 @@ export default function Auth() {
     password: ''
   });
 
+  // Password recovery state
+  const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
@@ -153,6 +157,34 @@ export default function Auth() {
     }
   };
 
+  const handlePasswordRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique o seu email para redefinir a senha.",
+      });
+      setShowPasswordRecovery(false);
+      setRecoveryEmail('');
+    } catch (err) {
+      setError('Erro ao enviar email de recuperação. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -182,34 +214,78 @@ export default function Auth() {
             )}
 
             <TabsContent value="signin" className="space-y-4">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    value={signInData.email}
-                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    value={signInData.password}
-                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Entrar
-                </Button>
-              </form>
+              {!showPasswordRecovery ? (
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      value={signInData.email}
+                      onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="signin-password">Senha</Label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordRecovery(true)}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Esqueceu a senha?
+                      </button>
+                    </div>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      value={signInData.password}
+                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Entrar
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handlePasswordRecovery} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="recovery-email">Email</Label>
+                    <Input
+                      id="recovery-email"
+                      type="email"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      placeholder="Digite o seu email"
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Enviaremos um link para redefinir a sua senha
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      {loading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      Enviar
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowPasswordRecovery(false)}
+                      disabled={loading}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
