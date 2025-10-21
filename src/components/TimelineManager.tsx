@@ -14,12 +14,14 @@ import {
   Clock,
   AlertCircle,
   Trash2,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
 import { useWeddingData } from "@/contexts/WeddingContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { exportTimelinePDF } from "@/utils/pdfExport";
 
 interface TimelineTask {
   id: string;
@@ -189,10 +191,21 @@ export const TimelineManager = () => {
   return (
     <Card className="card-romantic">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          {t('timeline.title')}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            {t('timeline.title')}
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => exportTimelinePDF(tasks)}
+            disabled={tasks.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exportar PDF
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Progress Overview */}

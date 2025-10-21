@@ -34,6 +34,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { exportGuestListPDF } from '@/utils/pdfExport';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface Guest {
   id: string;
@@ -54,6 +56,7 @@ interface Guest {
 export const GuestManager = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { currency } = useSettings();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -371,6 +374,14 @@ export const GuestManager = () => {
         {/* Controls */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => exportGuestListPDF(guests, currency)}
+              disabled={guests.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
             <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
               <DialogTrigger asChild>
                 <Button className="btn-gradient">

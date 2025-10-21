@@ -30,7 +30,8 @@ import {
   Heart,
   CheckCircle,
   Clock,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/i18n';
 import { useSettings } from '@/contexts/SettingsContext';
 import { BudgetCharts } from './BudgetCharts';
+import { exportBudgetPDF } from '@/utils/pdfExport';
 
 interface BudgetCategory {
   id: string;
@@ -571,14 +573,23 @@ export const BudgetManager = () => {
         <TabsContent value="categories" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Categorias de Orçamento</h3>
-            <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Categoria
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => exportBudgetPDF(categories, currency)}
+                disabled={categories.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar PDF
+              </Button>
+              <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nova Categoria
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Adicionar Categoria</DialogTitle>
                 </DialogHeader>
@@ -638,6 +649,7 @@ export const BudgetManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           <div className="grid gap-4">
