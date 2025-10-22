@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { z } from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -32,12 +34,32 @@ interface SignupModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Validation schemas
+const eventCodeSchema = z.string()
+  .trim()
+  .regex(/^WEPLAN-[A-Z0-9]{6}$/, 'Código inválido. Formato: WEPLAN-ABC123')
+  .length(13, 'Código deve ter 13 caracteres');
+
+const signupSchema = z.object({
+  name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
+  email: z.string().trim().email('Email inválido').max(255, 'Email muito longo'),
+  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres').max(100, 'Password muito longa'),
+  partnerName: z.string().trim().min(2, 'Nome do parceiro deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().email('Email inválido'),
+  password: z.string().min(1, 'Password é obrigatória'),
+});
+
 export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
   const [step, setStep] = useState<'auth' | 'questionnaire' | 'dashboard'>('auth');
   const [loading, setLoading] = useState(false);
+  const [weddingMode, setWeddingMode] = useState<'create' | 'join'>('create');
+  const [joinCode, setJoinCode] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,21 +69,56 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password || !formData.partnerName) {
-      toast.error('Por favor, preencha todos os campos');
-      return;
+    
+    // Validate event code if joining
+    if (weddingMode === 'join') {
+      try {
+        eventCodeSchema.parse(joinCode.trim().toUpperCase());
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          toast.error(error.errors[0].message);
+          return;
+        }
+      }
+    }
+
+    // Validate form data
+    if (weddingMode === 'create') {
+      try {
+        signupSchema.parse(formData);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          toast.error(error.errors[0].message);
+          return;
+        }
+      }
+    } else {
+      // For join mode, only validate email and password
+      if (!formData.email || !formData.password) {
+        toast.error('Por favor, preencha email e password');
+        return;
+      }
+      
+      try {
+        loginSchema.parse({ email: formData.email, password: formData.password });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          toast.error(error.errors[0].message);
+          return;
+        }
+      }
     }
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            first_name: formData.name,
-            last_name: formData.partnerName,
+            first_name: formData.name || 'User',
+            last_name: formData.partnerName || '',
           }
         }
       });
@@ -71,8 +128,53 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
         return;
       }
 
-      toast.success('Conta criada! Complete o questionário para personalizar o seu planeamento.');
-      setStep('questionnaire');
+      if (!authData.user) {
+        toast.error('Erro ao criar conta');
+        return;
+      }
+
+      // If joining an existing wedding
+      if (weddingMode === 'join') {
+        // Wait a bit for the user to be created in the database
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Find the wedding by code
+        const { data: weddingData, error: weddingError } = await supabase
+          .from('wedding_data')
+          .select('id')
+          .eq('event_code', joinCode.trim().toUpperCase())
+          .maybeSingle();
+
+        if (weddingError || !weddingData) {
+          toast.error('Código de casamento inválido');
+          setLoading(false);
+          return;
+        }
+
+        // Add as collaborator
+        const { error: collabError } = await supabase
+          .from('wedding_collaborators')
+          .insert({
+            wedding_id: weddingData.id,
+            user_id: authData.user.id,
+            role: 'collaborator'
+          });
+
+        if (collabError) {
+          console.error('Error adding collaborator:', collabError);
+          toast.error('Erro ao entrar no casamento');
+          setLoading(false);
+          return;
+        }
+
+        toast.success('Conta criada! Você foi adicionado ao casamento.');
+        onOpenChange(false);
+        navigate('/dashboard');
+      } else {
+        // Creating new wedding - show questionnaire
+        toast.success('Conta criada! Complete o questionário para personalizar o seu planeamento.');
+        setStep('questionnaire');
+      }
     } catch (error: any) {
       console.error('Signup error:', error);
       toast.error('Erro ao criar conta. Tente novamente.');
@@ -83,9 +185,15 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
-      toast.error('Por favor, preencha email e password');
-      return;
+    
+    // Validate login inputs
+    try {
+      loginSchema.parse({ email: formData.email, password: formData.password });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -128,6 +236,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
         onOpenChange={onOpenChange}
         onComplete={handleQuestionnaireComplete}
         coupleData={formData}
+        mode="create"
       />
     );
   }
@@ -219,20 +328,60 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
 
             <form onSubmit={mode === 'signup' ? handleSignup : handleLogin} className="space-y-4">
               {mode === 'signup' && (
-                <div>
-                  <Label htmlFor="name">{t('signup.form.yourName')}</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      placeholder={t('signup.form.yourNamePlaceholder')}
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="pl-10"
-                      required
-                    />
+                <>
+                  {/* Wedding Mode Selection */}
+                  <div className="space-y-3">
+                    <Label>Você quer:</Label>
+                    <RadioGroup value={weddingMode} onValueChange={(value: 'create' | 'join') => setWeddingMode(value)}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="create" id="create" />
+                        <Label htmlFor="create" className="cursor-pointer">
+                          {t('collaborators.createNew')}
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="join" id="join" />
+                        <Label htmlFor="join" className="cursor-pointer">
+                          {t('collaborators.joinWithCode')}
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
-                </div>
+
+                  {weddingMode === 'join' && (
+                    <div>
+                      <Label htmlFor="joinCode">{t('collaborators.eventCode')}</Label>
+                      <Input
+                        id="joinCode"
+                        placeholder="WEPLAN-ABC123"
+                        value={joinCode}
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                        className="font-mono"
+                        maxLength={13}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {weddingMode === 'create' && (
+                    <>
+                      <div>
+                        <Label htmlFor="name">{t('signup.form.yourName')}</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="name"
+                            placeholder={t('signup.form.yourNamePlaceholder')}
+                            value={formData.name}
+                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
               <div>
@@ -267,7 +416,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
                 </div>
               </div>
 
-              {mode === 'signup' && (
+              {mode === 'signup' && weddingMode === 'create' && (
                 <div>
                   <Label htmlFor="partnerName">{t('signup.form.partnerName')}</Label>
                   <div className="relative">
