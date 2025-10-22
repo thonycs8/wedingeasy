@@ -89,6 +89,20 @@ const LandingPage = () => {
           </div>
           <div className="flex items-center gap-4">
             <Button 
+              variant="ghost" 
+              onClick={() => navigate('/user-guide')}
+              className="text-white hover:bg-white/10"
+            >
+              Manual de Uso
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/faq')}
+              className="text-white hover:bg-white/10"
+            >
+              FAQ
+            </Button>
+            <Button 
               variant="outline" 
               onClick={() => navigate('/auth')}
               className="bg-white/10 border-white/20 text-white hover:bg-white/20"

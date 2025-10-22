@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 
 const Footer = () => {
@@ -14,26 +15,26 @@ const Footer = () => {
           
           {/* Links */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <a 
-              href="#" 
+            <Link 
+              to="/privacy-policy" 
               className="text-muted hover:text-background transition-colors"
             >
               Política de Privacidade
-            </a>
+            </Link>
             <span className="text-muted">•</span>
-            <a 
-              href="#" 
+            <Link 
+              to="/gdpr" 
               className="text-muted hover:text-background transition-colors"
             >
               GDPR
-            </a>
+            </Link>
             <span className="text-muted">•</span>
-            <a 
-              href="#" 
+            <Link 
+              to="/cookies" 
               className="text-muted hover:text-background transition-colors"
             >
               Cookies
-            </a>
+            </Link>
           </div>
           
           {/* Attribution */}
