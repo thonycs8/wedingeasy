@@ -81,31 +81,28 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 p-4">
-        <div className="container mx-auto flex justify-between items-center">
+      <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border py-4">
+        <div className="container mx-auto flex justify-between items-center px-4">
           <div className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-white" />
-            <span className="text-xl font-bold text-white">{t('landing.brand')}</span>
+            <Heart className="w-8 h-8 text-primary" />
+            <span className="text-xl font-bold text-primary">{t('landing.brand')}</span>
           </div>
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               onClick={() => navigate('/user-guide')}
-              className="text-white hover:bg-white/10"
             >
               Manual de Uso
             </Button>
             <Button 
               variant="ghost" 
               onClick={() => navigate('/faq')}
-              className="text-white hover:bg-white/10"
             >
               FAQ
             </Button>
             <Button 
               variant="outline" 
               onClick={() => navigate('/auth')}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
               Entrar / Registar
             </Button>
@@ -115,7 +112,7 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 z-0">
           <img 
             src={heroImage} 
