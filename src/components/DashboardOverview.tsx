@@ -291,9 +291,10 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
             {upcomingTasks.length > 0 ? (
               <div className="space-y-3">
                 {upcomingTasks.map((task) => (
-                  <div 
+                  <button
                     key={task.id} 
-                    className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    onClick={() => onNavigateToTab('timeline')}
+                    className="w-full flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 hover:border-primary/50 transition-all cursor-pointer text-left"
                   >
                     <CheckCircle2 className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -307,7 +308,8 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                         </Badge>
                       </div>
                     </div>
-                  </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
                 ))}
               </div>
             ) : (
@@ -360,9 +362,10 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                 )}
 
                 {overdueTasks.slice(0, 3).map((task) => (
-                  <div 
+                  <button
                     key={task.id}
-                    className="p-4 rounded-lg bg-destructive/10 border border-destructive/20"
+                    onClick={() => onNavigateToTab('timeline')}
+                    className="w-full p-4 rounded-lg bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-all cursor-pointer text-left"
                   >
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
@@ -372,8 +375,9 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                           Atrasada desde {format(new Date(task.due_date), "dd MMM", { locale: pt })}
                         </p>
                       </div>
+                      <ArrowRight className="w-4 h-4 text-destructive flex-shrink-0 mt-1" />
                     </div>
-                  </div>
+                  </button>
                 ))}
 
                 {overdueTasks.length > 3 && (
