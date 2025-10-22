@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# WePlan - Planejador de Casamento
 
 ## Project info
 
