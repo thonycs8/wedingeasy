@@ -154,11 +154,11 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
         // Add as collaborator
         const { error: collabError } = await supabase
           .from('wedding_collaborators')
-          .insert({
+          .insert([{
             wedding_id: weddingData.id,
             user_id: authData.user.id,
-            role: 'collaborator'
-          });
+            role: 'colaborador'
+          }]);
 
         if (collabError) {
           console.error('Error adding collaborator:', collabError);

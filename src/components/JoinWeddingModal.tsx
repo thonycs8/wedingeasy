@@ -78,11 +78,11 @@ export const JoinWeddingModal = ({ open, onOpenChange, onSuccess }: JoinWeddingM
       // Add as collaborator
       const { error: insertError } = await supabase
         .from('wedding_collaborators')
-        .insert({
+        .insert([{
           wedding_id: weddingData.id,
           user_id: user.id,
-          role: 'collaborator'
-        });
+          role: 'colaborador'
+        }]);
 
       if (insertError) {
         throw insertError;

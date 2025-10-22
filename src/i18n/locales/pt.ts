@@ -90,6 +90,25 @@ export const ptTranslations = {
     "collaborators.joinSuccess": "Entrou no casamento com sucesso!",
     "collaborators.joinError": "Erro ao entrar no casamento",
     "collaborators.manage": "Gerir Colaboradores",
+    "collaborators.inviteByEmail": "Convidar por Email",
+    "collaborators.emailAddress": "Endereço de Email",
+    "collaborators.selectRole": "Selecione o Papel",
+    "collaborators.sendInvite": "Enviar Convite",
+    "collaborators.inviteSent": "Convite enviado!",
+    "collaborators.inviteSentDesc": "O convite foi enviado por email",
+    "collaborators.inviteError": "Erro ao enviar convite",
+    "collaborators.pendingInvitations": "Convites Pendentes",
+    
+    // Roles
+    "roles.noivo": "Noivo",
+    "roles.noiva": "Noiva",
+    "roles.colaborador": "Colaborador",
+    "roles.celebrante": "Celebrante",
+    "roles.padrinho": "Padrinho",
+    "roles.madrinha": "Madrinha",
+    "roles.convidado": "Convidado",
+    "roles.fotografo": "Fotógrafo",
+    "roles.organizador": "Organizador/Wedding Planner",
 
     // Landing Page
     "landing.brand": "Casamento dos Sonhos",
