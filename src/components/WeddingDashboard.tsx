@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, createElement } from "react";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,8 +15,17 @@ import {
   LogOut,
   Camera,
   LayoutDashboard,
-  UserPlus
+  UserPlus,
+  Menu
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
 import { useWeddingData } from "@/contexts/WeddingContext";
@@ -38,9 +47,28 @@ const WeddingDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Use questionnaire data if available
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
+
+  const tabs = [
+    { value: "overview", icon: LayoutDashboard, label: "Visão Geral" },
+    { value: "budget", icon: DollarSign, label: t('budget.title') },
+    { value: "timeline", icon: Calendar, label: t('timeline.title') },
+    { value: "choices", icon: Palette, label: t('choices.title') },
+    { value: "guests", icon: Users, label: "Convidados" },
+    { value: "photos", icon: Camera, label: "Galeria" },
+    { value: "notifications", icon: Settings, label: "Notificações" },
+  ];
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
@@ -121,37 +149,50 @@ const WeddingDashboard = () => {
 
       <div className="container mx-auto px-6 py-12">
         {/* Dashboard Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-8">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              Visão Geral
-            </TabsTrigger>
-            <TabsTrigger value="budget" className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              {t('budget.title')}
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {t('timeline.title')}
-            </TabsTrigger>
-            <TabsTrigger value="choices" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              {t('choices.title')}
-            </TabsTrigger>
-            <TabsTrigger value="guests" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Convidados
-            </TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-2">
-              <Camera className="w-4 h-4" />
-              Galeria
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Notificações
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          {isMobile ? (
+            <div className="mb-8">
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      {tabs.find(tab => tab.value === activeTab)?.icon && 
+                        createElement(tabs.find(tab => tab.value === activeTab)!.icon, { className: "w-4 h-4" })}
+                      {tabs.find(tab => tab.value === activeTab)?.label}
+                    </span>
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh]">
+                  <SheetHeader>
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 space-y-2">
+                    {tabs.map((tab) => (
+                      <Button
+                        key={tab.value}
+                        variant={activeTab === tab.value ? "default" : "ghost"}
+                        className="w-full justify-start gap-2"
+                        onClick={() => handleTabChange(tab.value)}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                      </Button>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          ) : (
+            <TabsList className="grid w-full grid-cols-7 mb-8">
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
+                  <tab.icon className="w-4 h-4" />
+                  <span className="hidden lg:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
 
           <TabsContent value="overview" className="space-y-6">
             <DashboardOverview onNavigateToTab={setActiveTab} />
