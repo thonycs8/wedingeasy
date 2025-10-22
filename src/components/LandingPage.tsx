@@ -20,6 +20,7 @@ import {
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
 import { SignupModal } from "@/components/SignupModal";
+import Footer from "@/components/Footer";
 
 const LandingPage = () => {
   const { t } = useTranslation();
@@ -289,18 +290,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 bg-foreground text-background">
-        <div className="container mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Heart className="w-6 h-6 text-primary" />
-            <span className="text-xl font-bold">{t('landing.brand')}</span>
-          </div>
-          <p className="text-muted">
-            {t('landing.footer.text')}
-          </p>
-        </div>
-      </footer>
+      <Footer />
 
       <SignupModal open={showSignup} onOpenChange={setShowSignup} />
     </div>
