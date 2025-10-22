@@ -381,22 +381,28 @@ export type Database = {
       wedding_collaborators: {
         Row: {
           id: string
+          invitation_accepted_at: string | null
+          invited_by: string | null
           joined_at: string
-          role: string
+          role: Database["public"]["Enums"]["wedding_role"]
           user_id: string
           wedding_id: string
         }
         Insert: {
           id?: string
+          invitation_accepted_at?: string | null
+          invited_by?: string | null
           joined_at?: string
-          role?: string
+          role?: Database["public"]["Enums"]["wedding_role"]
           user_id: string
           wedding_id: string
         }
         Update: {
           id?: string
+          invitation_accepted_at?: string | null
+          invited_by?: string | null
           joined_at?: string
-          role?: string
+          role?: Database["public"]["Enums"]["wedding_role"]
           user_id?: string
           wedding_id?: string
         }
@@ -464,11 +470,59 @@ export type Database = {
         }
         Relationships: []
       }
+      wedding_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          invited_by: string
+          role: Database["public"]["Enums"]["wedding_role"]
+          wedding_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invitation_token: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["wedding_role"]
+          wedding_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["wedding_role"]
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_invitations_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_invitation_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_wedding_id: {
         Args: { _user_id: string }
         Returns: string
@@ -479,7 +533,16 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      wedding_role:
+        | "noivo"
+        | "noiva"
+        | "colaborador"
+        | "celebrante"
+        | "padrinho"
+        | "madrinha"
+        | "convidado"
+        | "fotografo"
+        | "organizador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -606,6 +669,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      wedding_role: [
+        "noivo",
+        "noiva",
+        "colaborador",
+        "celebrante",
+        "padrinho",
+        "madrinha",
+        "convidado",
+        "fotografo",
+        "organizador",
+      ],
+    },
   },
 } as const
