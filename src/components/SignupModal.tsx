@@ -359,12 +359,17 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
-            <Heart className="w-6 h-6 text-primary" />
-            {invitationData 
-              ? `Aceitar convite para ${invitationData.wedding_data?.couple_name || 'o casamento'}`
-              : mode === 'signup' ? t('signup.title') : 'Entrar na Conta'
-            }
+          <DialogTitle className="text-center text-2xl font-bold">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Heart className="w-6 h-6 text-primary" />
+              <span className="text-primary">Wedding Plan</span>
+            </div>
+            <div className="text-lg text-muted-foreground">
+              {invitationData 
+                ? `Aceitar convite para ${invitationData.wedding_data?.couple_name || 'o casamento'}`
+                : mode === 'signup' ? t('signup.title') : 'Entrar na Conta'
+              }
+            </div>
           </DialogTitle>
         </DialogHeader>
 

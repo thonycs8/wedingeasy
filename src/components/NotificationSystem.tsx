@@ -168,14 +168,19 @@ export const NotificationSystem = () => {
     <Card className="card-romantic">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-primary" />
-            Notificações
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {unreadCount}
-              </Badge>
-            )}
+          <CardTitle className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              <span className="text-primary">Wedding Plan</span>
+            </div>
+            <div className="flex items-center gap-2 text-base font-normal">
+              <span>Notificações</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive">
+                  {unreadCount}
+                </Badge>
+              )}
+            </div>
           </CardTitle>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
