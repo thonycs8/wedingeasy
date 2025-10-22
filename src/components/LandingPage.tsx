@@ -15,17 +15,22 @@ import {
   ArrowRight,
   MapPin,
   Clock,
-  Target
+  Target,
+  Menu
 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
 import { SignupModal } from "@/components/SignupModal";
 import Footer from "@/components/Footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const LandingPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showSignup, setShowSignup] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const features = [
     {
@@ -87,27 +92,85 @@ const LandingPage = () => {
             <Heart className="w-8 h-8 text-primary" />
             <span className="text-xl font-bold text-primary">{t('landing.brand')}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/user-guide')}
-            >
-              Manual de Uso
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/faq')}
-            >
-              FAQ
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/auth')}
-            >
-              Entrar / Registar
-            </Button>
-            <LanguageCurrencySelector />
-          </div>
+          
+          {/* Desktop Menu */}
+          {!isMobile && (
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/user-guide')}
+              >
+                Manual de Uso
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/faq')}
+              >
+                FAQ
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/auth')}
+              >
+                Entrar / Registar
+              </Button>
+              <LanguageCurrencySelector />
+            </div>
+          )}
+
+          {/* Mobile Menu */}
+          {isMobile && (
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Heart className="w-6 h-6 text-primary" />
+                    {t('landing.brand')}
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-4 mt-8">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      navigate('/user-guide');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    Manual de Uso
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      navigate('/faq');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    FAQ
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      navigate('/auth');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    Entrar / Registar
+                  </Button>
+                  <div className="pt-4 border-t">
+                    <LanguageCurrencySelector />
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
       </header>
 
