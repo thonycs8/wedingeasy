@@ -65,6 +65,32 @@ export const enTranslations = {
     "settings.language": "Language",
     "settings.currency": "Currency",
 
+    // Collaborators
+    "collaborators.title": "Collaborators",
+    "collaborators.description": "Manage who has access to this wedding",
+    "collaborators.eventCode": "Wedding Code",
+    "collaborators.shareCode": "Share this code with people you want to collaborate on planning",
+    "collaborators.codeCopied": "Code copied!",
+    "collaborators.codeCopiedDesc": "Share with your collaborators",
+    "collaborators.copyError": "Error copying code",
+    "collaborators.currentCollaborators": "Current Collaborators",
+    "collaborators.owner": "Owner",
+    "collaborators.collaborator": "Collaborator",
+    "collaborators.removed": "Collaborator removed",
+    "collaborators.removedDesc": "The collaborator was successfully removed",
+    "collaborators.removeError": "Error removing collaborator",
+    "collaborators.onlyOwnerCanRemove": "Only the owner can remove collaborators",
+    "collaborators.cannotRemoveSelf": "You cannot remove yourself",
+    "collaborators.joinWithCode": "Join with Code",
+    "collaborators.createNew": "Create New Wedding",
+    "collaborators.enterCode": "Enter wedding code",
+    "collaborators.joinButton": "Join Wedding",
+    "collaborators.invalidCode": "Invalid code",
+    "collaborators.alreadyJoined": "You're already a collaborator on this wedding",
+    "collaborators.joinSuccess": "Successfully joined the wedding!",
+    "collaborators.joinError": "Error joining wedding",
+    "collaborators.manage": "Manage Collaborators",
+
     // Landing Page
     "landing.brand": "Dream Wedding",
     "landing.hero.badge": "🇵🇹 Made for Portugal",
@@ -266,6 +292,7 @@ export const enTranslations = {
     "common.finish": "Finish",
     "common.cancel": "Cancel",
     "common.loading": "Loading...",
+    "common.error": "Error",
 
     // Additional tasks
     "tasks.bookHoneymoon": "Book honeymoon",

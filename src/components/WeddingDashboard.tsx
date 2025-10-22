@@ -13,7 +13,8 @@ import {
   Settings,
   LogOut,
   Camera,
-  LayoutDashboard
+  LayoutDashboard,
+  UserPlus
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
@@ -26,6 +27,7 @@ import { GuestManager } from "@/components/GuestManager";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { DashboardOverview } from "@/components/DashboardOverview";
+import { CollaboratorsManager } from "@/components/CollaboratorsManager";
 import { useToast } from "@/hooks/use-toast";
 
 const WeddingDashboard = () => {
@@ -34,6 +36,7 @@ const WeddingDashboard = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showCollaborators, setShowCollaborators] = useState(false);
   
   // Use questionnaire data if available
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
@@ -42,6 +45,15 @@ const WeddingDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowCollaborators(true)}
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          {t('collaborators.manage')}
+        </Button>
         <Button 
           variant="outline" 
           size="sm"
@@ -74,6 +86,11 @@ const WeddingDashboard = () => {
         )}
         <LanguageCurrencySelector />
       </div>
+
+      <CollaboratorsManager 
+        open={showCollaborators} 
+        onOpenChange={setShowCollaborators} 
+      />
 
       {/* Hero Section */}
       <div className="relative h-80 overflow-hidden rounded-b-3xl">

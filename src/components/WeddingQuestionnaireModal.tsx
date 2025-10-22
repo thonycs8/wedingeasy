@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -37,6 +38,7 @@ interface WeddingQuestionnaireModalProps {
     email: string;
     partnerName: string;
   };
+  mode?: 'create' | 'join';
 }
 
 interface WeddingData {
@@ -104,11 +106,14 @@ export const WeddingQuestionnaireModal = ({
   open, 
   onOpenChange, 
   onComplete, 
-  coupleData 
+  coupleData,
+  mode = 'create'
 }: WeddingQuestionnaireModalProps) => {
   const { t } = useTranslation();
   const { currency } = useSettings();
   const { setWeddingData: saveWeddingData } = useWeddingData();
+  const [setupMode, setSetupMode] = useState<'create' | 'join'>(mode);
+  const [joinCode, setJoinCode] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
   const [weddingData, setWeddingData] = useState<WeddingData>({
     date: '',

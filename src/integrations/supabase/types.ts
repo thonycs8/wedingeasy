@@ -378,11 +378,44 @@ export type Database = {
         }
         Relationships: []
       }
+      wedding_collaborators: {
+        Row: {
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+          wedding_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+          wedding_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_collaborators_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_data: {
         Row: {
           couple_name: string | null
           created_at: string
           estimated_budget: number | null
+          event_code: string
           guest_count: number | null
           id: string
           is_setup_complete: boolean | null
@@ -399,6 +432,7 @@ export type Database = {
           couple_name?: string | null
           created_at?: string
           estimated_budget?: number | null
+          event_code: string
           guest_count?: number | null
           id?: string
           is_setup_complete?: boolean | null
@@ -415,6 +449,7 @@ export type Database = {
           couple_name?: string | null
           created_at?: string
           estimated_budget?: number | null
+          event_code?: string
           guest_count?: number | null
           id?: string
           is_setup_complete?: boolean | null
@@ -434,7 +469,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_wedding_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      is_wedding_collaborator: {
+        Args: { _user_id: string; _wedding_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
