@@ -10,18 +10,29 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
 import { 
   Users, 
   Copy, 
   Check, 
   UserPlus,
   Trash2,
-  Crown
+  Crown,
+  Mail,
+  Loader2,
+  Clock
 } from "lucide-react";
 
 interface Collaborator {
@@ -36,6 +47,17 @@ interface Collaborator {
   };
 }
 
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+}
+
+// Email validation schema
+const emailSchema = z.string().trim().email('Email inválido').max(255, 'Email muito longo');
+
 interface CollaboratorsManagerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,9 +69,17 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
   const { user } = useAuth();
   const [eventCode, setEventCode] = useState<string>("");
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("colaborador");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [weddingId, setWeddingId] = useState<string>("");
+  const [weddingNames, setWeddingNames] = useState<string>("");
+  const [inviterName, setInviterName] = useState<string>("");
 
   useEffect(() => {
     if (open && user) {
@@ -65,7 +95,7 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
       // Get wedding data with event code
       const { data: weddingData, error: weddingError } = await supabase
         .from('wedding_data')
-        .select('id, event_code, user_id')
+        .select('id, event_code, user_id, couple_name, partner_name')
         .eq('user_id', user.id)
         .single();
 
@@ -78,6 +108,21 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
       if (weddingData) {
         setEventCode(weddingData.event_code);
         setIsOwner(weddingData.user_id === user.id);
+        setWeddingId(weddingData.id);
+        setWeddingNames(weddingData.couple_name && weddingData.partner_name 
+          ? `${weddingData.couple_name} & ${weddingData.partner_name}` 
+          : 'Nosso Casamento');
+
+        // Get inviter name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile) {
+          setInviterName(`${profile.first_name} ${profile.last_name || ''}`.trim());
+        }
 
         // Load collaborators with profile data
         const { data: collaboratorsData, error: collabError } = await supabase
@@ -105,6 +150,18 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             })
           );
           setCollaborators(collaboratorsWithProfiles);
+        }
+
+        // Load pending invitations
+        const { data: invitationsData, error: invError } = await supabase
+          .from('wedding_invitations')
+          .select('id, email, role, created_at, expires_at')
+          .eq('wedding_id', weddingData.id)
+          .is('accepted_at', null)
+          .order('created_at', { ascending: false });
+
+        if (!invError && invitationsData) {
+          setInvitations(invitationsData);
         }
       }
     } catch (error) {
@@ -175,6 +232,81 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
     }
   };
 
+  const sendInvitation = async () => {
+    // Validate email
+    try {
+      emailSchema.parse(inviteEmail);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: t('common.error'),
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setSendingInvite(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-wedding-invitation', {
+        body: {
+          email: inviteEmail.toLowerCase().trim(),
+          role: inviteRole,
+          weddingId: weddingId,
+          inviterName: inviterName,
+          weddingNames: weddingNames,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t('collaborators.inviteSent'),
+        description: t('collaborators.inviteSentDesc'),
+      });
+
+      setInviteEmail("");
+      setInviteRole("colaborador");
+      setShowInviteModal(false);
+      loadWeddingData();
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast({
+        title: t('common.error'),
+        description: t('collaborators.inviteError'),
+        variant: "destructive",
+      });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
+  const deleteInvitation = async (invitationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('wedding_invitations')
+        .delete()
+        .eq('id', invitationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Convite cancelado",
+        description: "O convite foi removido",
+      });
+
+      loadWeddingData();
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      toast({
+        title: t('common.error'),
+        description: "Erro ao cancelar convite",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -223,6 +355,59 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             </CardContent>
           </Card>
 
+          {/* Invite by Email Button */}
+          <div className="flex justify-end">
+            <Button onClick={() => setShowInviteModal(true)} className="gap-2">
+              <Mail className="w-4 h-4" />
+              {t('collaborators.inviteByEmail')}
+            </Button>
+          </div>
+
+          {/* Pending Invitations */}
+          {invitations.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {t('collaborators.pendingInvitations')} ({invitations.length})
+              </h3>
+              <div className="space-y-2">
+                {invitations.map((invitation) => (
+                  <Card key={invitation.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <Mail className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{invitation.email}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Convite enviado • Expira em {new Date(invitation.expires_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            {t(`roles.${invitation.role}`)}
+                          </Badge>
+                          {isOwner && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteInvitation(invitation.id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Collaborators List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -260,10 +445,10 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={collaborator.role === 'owner' ? 'default' : 'secondary'}>
-                            {collaborator.role === 'owner' ? t('collaborators.owner') : t('collaborators.collaborator')}
+                          <Badge variant={collaborator.role === 'noivo' || collaborator.role === 'noiva' ? 'default' : 'secondary'}>
+                            {t(`roles.${collaborator.role}`)}
                           </Badge>
-                          {isOwner && collaborator.role !== 'owner' && (
+                          {isOwner && collaborator.role !== 'noivo' && collaborator.role !== 'noiva' && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -282,6 +467,72 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           </div>
         </div>
       </DialogContent>
+
+      {/* Invite Modal */}
+      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5" />
+              {t('collaborators.inviteByEmail')}
+            </DialogTitle>
+            <DialogDescription>
+              O convite será enviado por email com um link para aceitar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="inviteEmail">{t('collaborators.emailAddress')}</Label>
+              <Input
+                id="inviteEmail"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="inviteRole">{t('collaborators.selectRole')}</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="colaborador">{t('roles.colaborador')}</SelectItem>
+                  <SelectItem value="noivo">{t('roles.noivo')}</SelectItem>
+                  <SelectItem value="noiva">{t('roles.noiva')}</SelectItem>
+                  <SelectItem value="celebrante">{t('roles.celebrante')}</SelectItem>
+                  <SelectItem value="padrinho">{t('roles.padrinho')}</SelectItem>
+                  <SelectItem value="madrinha">{t('roles.madrinha')}</SelectItem>
+                  <SelectItem value="fotografo">{t('roles.fotografo')}</SelectItem>
+                  <SelectItem value="organizador">{t('roles.organizador')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={sendInvitation}
+              disabled={sendingInvite || !inviteEmail.trim()}
+              className="w-full"
+            >
+              {sendingInvite ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  {t('collaborators.sendInvite')}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

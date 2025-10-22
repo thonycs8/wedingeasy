@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,17 +55,57 @@ const loginSchema = z.object({
 export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
   const [step, setStep] = useState<'auth' | 'questionnaire' | 'dashboard'>('auth');
   const [loading, setLoading] = useState(false);
   const [weddingMode, setWeddingMode] = useState<'create' | 'join'>('create');
   const [joinCode, setJoinCode] = useState('');
+  const [invitationToken, setInvitationToken] = useState<string | null>(null);
+  const [invitationData, setInvitationData] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     partnerName: '',
   });
+
+  // Check for invitation token in URL
+  useEffect(() => {
+    const token = searchParams.get('invitation');
+    if (token && open) {
+      setInvitationToken(token);
+      loadInvitationData(token);
+    }
+  }, [searchParams, open]);
+
+  const loadInvitationData = async (token: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('wedding_invitations')
+        .select('*, wedding_data(couple_name, partner_name)')
+        .eq('invitation_token', token)
+        .is('accepted_at', null)
+        .maybeSingle();
+
+      if (error || !data) {
+        toast.error('Convite inválido ou expirado');
+        return;
+      }
+
+      // Check if expired
+      if (new Date(data.expires_at) < new Date()) {
+        toast.error('Este convite expirou');
+        return;
+      }
+
+      setInvitationData(data);
+      setFormData(prev => ({ ...prev, email: data.email }));
+      toast.success(`Convite para colaborar como ${data.role}`);
+    } catch (error) {
+      console.error('Error loading invitation:', error);
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +170,15 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
 
       if (!authData.user) {
         toast.error('Erro ao criar conta');
+        return;
+      }
+
+      // If there's an invitation token, accept it
+      if (invitationToken && invitationData) {
+        await acceptInvitation(authData.user.id, invitationToken);
+        toast.success('Conta criada! Você foi adicionado ao casamento.');
+        onOpenChange(false);
+        navigate('/dashboard');
         return;
       }
 
@@ -198,7 +247,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
@@ -208,13 +257,59 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
         return;
       }
 
-      toast.success('Login realizado com sucesso!');
+      // If there's an invitation token, accept it
+      if (invitationToken && invitationData && authData.user) {
+        await acceptInvitation(authData.user.id, invitationToken);
+        toast.success('Você foi adicionado ao casamento!');
+      } else {
+        toast.success('Login realizado com sucesso!');
+      }
+
       onOpenChange(false);
       navigate('/dashboard');
     } catch (error) {
       toast.error('Erro ao fazer login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const acceptInvitation = async (userId: string, token: string) => {
+    try {
+      // Get invitation details
+      const { data: invitation, error: invError } = await supabase
+        .from('wedding_invitations')
+        .select('wedding_id, role')
+        .eq('invitation_token', token)
+        .single();
+
+      if (invError || !invitation) {
+        throw new Error('Invitation not found');
+      }
+
+      // Add user as collaborator
+      const { error: collabError } = await supabase
+        .from('wedding_collaborators')
+        .insert([{
+          wedding_id: invitation.wedding_id,
+          user_id: userId,
+          role: invitation.role,
+          invited_by: invitationData?.invited_by
+        }]);
+
+      if (collabError) {
+        throw collabError;
+      }
+
+      // Mark invitation as accepted
+      await supabase
+        .from('wedding_invitations')
+        .update({ accepted_at: new Date().toISOString() })
+        .eq('invitation_token', token);
+
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      throw error;
     }
   };
 
@@ -266,7 +361,10 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
             <Heart className="w-6 h-6 text-primary" />
-            {mode === 'signup' ? t('signup.title') : 'Entrar na Conta'}
+            {invitationData 
+              ? `Aceitar convite para ${invitationData.wedding_data?.couple_name || 'o casamento'}`
+              : mode === 'signup' ? t('signup.title') : 'Entrar na Conta'
+            }
           </DialogTitle>
         </DialogHeader>
 
@@ -327,7 +425,21 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
             </div>
 
             <form onSubmit={mode === 'signup' ? handleSignup : handleLogin} className="space-y-4">
-              {mode === 'signup' && (
+              {/* Show invitation info if present */}
+              {invitationData && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="p-4">
+                    <p className="text-sm font-medium">
+                      Você foi convidado para colaborar como <Badge className="ml-1">{t(`roles.${invitationData.role}`)}</Badge>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Casamento: {invitationData.wedding_data?.couple_name} & {invitationData.wedding_data?.partner_name}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {mode === 'signup' && !invitationToken && (
                 <>
                   {/* Wedding Mode Selection */}
                   <div className="space-y-3">
