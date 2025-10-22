@@ -15,13 +15,16 @@ import {
   AlertCircle,
   Trash2,
   Loader2,
-  Download
+  Download,
+  Sparkles,
+  Lightbulb
 } from "lucide-react";
 import { useWeddingData } from "@/contexts/WeddingContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { exportTimelinePDF } from "@/utils/pdfExport";
+import { generateTasksFromDate } from "@/utils/taskTemplates";
 
 interface TimelineTask {
   id: string;
@@ -40,9 +43,12 @@ interface TimelineTask {
 export const TimelineManager = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { weddingData } = useWeddingData();
   const [tasks, setTasks] = useState<TimelineTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestedTasks, setSuggestedTasks] = useState<any[]>([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -56,6 +62,27 @@ export const TimelineManager = () => {
       loadTasks();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (weddingData?.wedding.date) {
+      generateSuggestions();
+    }
+  }, [weddingData]);
+
+  const generateSuggestions = () => {
+    if (!weddingData?.wedding.date) return;
+    
+    const weddingDate = new Date(weddingData.wedding.date);
+    const suggestions = generateTasksFromDate(weddingDate);
+    
+    // Filter out tasks that already exist
+    const existingTitles = new Set(tasks.map(t => t.title.toLowerCase()));
+    const newSuggestions = suggestions.filter(
+      s => !existingTitles.has(s.title.toLowerCase())
+    );
+    
+    setSuggestedTasks(newSuggestions.slice(0, 10)); // Show top 10 suggestions
+  };
 
   const loadTasks = async () => {
     try {
@@ -155,6 +182,66 @@ export const TimelineManager = () => {
     }
   };
 
+  const addSuggestedTask = async (suggestion: any) => {
+    if (!user) return;
+    
+    const taskData = {
+      title: suggestion.title,
+      description: suggestion.description,
+      due_date: suggestion.dueDate.toISOString().split('T')[0],
+      priority: suggestion.priority,
+      category: suggestion.category,
+      user_id: user.id
+    };
+    
+    try {
+      const { data, error } = await supabase
+        .from('timeline_tasks')
+        .insert([taskData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTasks(prev => [...prev, data as TimelineTask]);
+      setSuggestedTasks(prev => prev.filter(s => s.title !== suggestion.title));
+      toast.success('Tarefa adicionada!');
+    } catch (error) {
+      console.error('Error adding suggested task:', error);
+      toast.error('Erro ao adicionar tarefa');
+    }
+  };
+
+  const addAllSuggestions = async () => {
+    if (!user) return;
+    
+    const tasksToAdd = suggestedTasks.map(suggestion => ({
+      title: suggestion.title,
+      description: suggestion.description,
+      due_date: suggestion.dueDate.toISOString().split('T')[0],
+      priority: suggestion.priority,
+      category: suggestion.category,
+      user_id: user.id
+    }));
+    
+    try {
+      const { data, error } = await supabase
+        .from('timeline_tasks')
+        .insert(tasksToAdd)
+        .select();
+
+      if (error) throw error;
+
+      setTasks(prev => [...prev, ...(data as TimelineTask[])]);
+      setSuggestedTasks([]);
+      setShowSuggestions(false);
+      toast.success(`${data.length} tarefas adicionadas!`);
+    } catch (error) {
+      console.error('Error adding all suggestions:', error);
+      toast.error('Erro ao adicionar tarefas');
+    }
+  };
+
   const getTasksByCategory = () => {
     const categories = tasks.reduce((acc, task) => {
       if (!acc[task.category]) acc[task.category] = [];
@@ -196,18 +283,85 @@ export const TimelineManager = () => {
             <Calendar className="w-5 h-5 text-primary" />
             {t('timeline.title')}
           </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => exportTimelinePDF(tasks)}
-            disabled={tasks.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar PDF
-          </Button>
+          <div className="flex gap-2">
+            {suggestedTasks.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className="border-primary/20 bg-primary/5"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {suggestedTasks.length} Sugestões
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportTimelinePDF(tasks)}
+              disabled={tasks.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Smart Suggestions */}
+        {showSuggestions && suggestedTasks.length > 0 && (
+          <div className="p-4 rounded-lg border-2 border-primary/20 bg-primary/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold">Sugestões Inteligentes</h4>
+              </div>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={addAllSuggestions}
+                className="btn-gradient"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Todas
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Baseado na data do seu casamento ({weddingData?.wedding.date ? new Date(weddingData.wedding.date).toLocaleDateString('pt-PT') : ''}), 
+              sugerimos estas tarefas:
+            </p>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {suggestedTasks.map((suggestion, index) => (
+                <div 
+                  key={index}
+                  className="flex items-start gap-3 p-3 rounded-lg bg-background border border-border hover:border-primary/30 transition-colors"
+                >
+                  <div className="flex-1">
+                    <h5 className="font-medium">{suggestion.title}</h5>
+                    <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        {suggestion.dueDate.toLocaleDateString('pt-PT')}
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {t(`timeline.categories.${suggestion.category}`)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => addSuggestedTask(suggestion)}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Progress Overview */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
