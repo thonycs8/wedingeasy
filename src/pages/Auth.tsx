@@ -191,7 +191,7 @@ export default function Auth() {
         <CardHeader className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
             <Heart className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">Eternal Knot</h1>
+            <h1 className="text-2xl font-bold text-primary">Wedding Plan</h1>
           </div>
           <div>
             <CardTitle className="text-xl">Bem-vindo</CardTitle>
