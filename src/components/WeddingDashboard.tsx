@@ -73,47 +73,50 @@ const WeddingDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setShowCollaborators(true)}
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          {t('collaborators.manage')}
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={async () => {
-            await signOut();
-            toast({
-              title: "Sessão terminada",
-              description: "Até breve!",
-            });
-          }}
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sair
-        </Button>
-        {weddingData && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              if (confirm(t('dashboard.reset.confirm'))) {
-                clearWeddingData();
-                window.location.href = '/';
-              }
-            }}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            {t('dashboard.reset.button')}
-          </Button>
-        )}
-        <LanguageCurrencySelector />
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border py-3 px-4">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Wedding Plan</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCollaborators(true)}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">{t('collaborators.manage')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={async () => {
+                await signOut();
+                toast({
+                  title: "Sessão terminada",
+                  description: "Até breve!",
+                });
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+            {weddingData && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  if (confirm(t('dashboard.reset.confirm'))) {
+                    clearWeddingData();
+                    window.location.href = '/';
+                  }
+                }}
+              >
+                <span className="hidden sm:inline">{t('dashboard.reset.button')}</span>
+                <span className="sm:hidden">Reset</span>
+              </Button>
+            )}
+            <LanguageCurrencySelector />
+          </div>
+        </div>
       </div>
 
       <CollaboratorsManager 
@@ -122,9 +125,9 @@ const WeddingDashboard = () => {
       />
 
       {/* Hero Section */}
-      <div className="relative h-80 overflow-hidden rounded-b-3xl">
+      <div className="relative h-64 md:h-80 overflow-hidden">
         <img 
-          src={heroImage} 
+          src={heroImage}
           alt="Wedding Planning" 
           className="w-full h-full object-cover"
         />
