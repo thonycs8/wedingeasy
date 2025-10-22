@@ -9,12 +9,11 @@ import {
   Users, 
   DollarSign, 
   Calendar, 
-  CheckCircle,
-  Target,
   Palette,
   Settings,
   LogOut,
-  Camera
+  Camera,
+  LayoutDashboard
 } from "lucide-react";
 import heroImage from "@/assets/wedding-hero.jpg";
 import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector";
@@ -26,44 +25,18 @@ import { WeddingChoices } from "@/components/WeddingChoices";
 import { GuestManager } from "@/components/GuestManager";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { DashboardOverview } from "@/components/DashboardOverview";
 import { useToast } from "@/hooks/use-toast";
-
-interface Guest {
-  id: string;
-  name: string;
-  category: 'family' | 'friends' | 'work';
-  confirmed: boolean;
-}
 
 const WeddingDashboard = () => {
   const { t } = useTranslation();
   const { weddingData, clearWeddingData } = useWeddingData();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
   
-  // Use data from questionnaire if available, otherwise use defaults
-  const [guests] = useState<Guest[]>([
-    { id: '1', name: 'Maria Silva', category: 'family', confirmed: true },
-    { id: '2', name: 'João Santos', category: 'friends', confirmed: false },
-    { id: '3', name: 'Ana Costa', category: 'work', confirmed: true },
-  ]);
-
   // Use questionnaire data if available
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
-
-  const confirmedGuests = guests.filter(g => g.confirmed).length;
-
-  const checklistItems = [
-    { task: t('tasks.chooseVenue'), completed: true },
-    { task: t('tasks.buyDress'), completed: true },
-    { task: t('tasks.hirePhotographer'), completed: true },
-    { task: t('tasks.sendInvites'), completed: false },
-    { task: t('tasks.chooseMenu'), completed: false },
-    { task: t('tasks.defineDecoration'), completed: false },
-  ];
-
-  const completedTasks = checklistItems.filter(item => item.completed).length;
-  const progressPercentage = (completedTasks / checklistItems.length) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
@@ -121,11 +94,7 @@ const WeddingDashboard = () => {
             <div className="flex items-center justify-center gap-6">
               <Badge className="bg-white/20 text-white text-lg px-4 py-2">
                 <Heart className="w-5 h-5 mr-2" />
-                {guests.length} {t('hero.guests')}
-              </Badge>
-              <Badge className="bg-white/20 text-white text-lg px-4 py-2">
-                <Calendar className="w-5 h-5 mr-2" />
-                6 {t('hero.remaining')}
+                {t('hero.subtitle')}
               </Badge>
             </div>
           </div>
@@ -133,54 +102,13 @@ const WeddingDashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-12">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <Card className="card-romantic animate-scale-in">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">{guests.length}</h3>
-              <p className="text-muted-foreground">{t('stats.guests')}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-romantic animate-scale-in" style={{animationDelay: '0.1s'}}>
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DollarSign className="w-6 h-6 text-accent" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">
-                {weddingData?.wedding.estimatedBudget ? `€${weddingData.wedding.estimatedBudget.toLocaleString()}` : '€34.000'}
-              </h3>
-              <p className="text-muted-foreground">{t('stats.totalBudget')}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-romantic animate-scale-in" style={{animationDelay: '0.2s'}}>
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-6 h-6 text-success" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">{completedTasks}</h3>
-              <p className="text-muted-foreground">{t('stats.completedTasks')}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-romantic animate-scale-in" style={{animationDelay: '0.3s'}}>
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">{Math.round(progressPercentage)}%</h3>
-              <p className="text-muted-foreground">{t('stats.overallProgress')}</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Dashboard Tabs */}
-        <Tabs defaultValue="budget" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-7 mb-8">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              Visão Geral
+            </TabsTrigger>
             <TabsTrigger value="budget" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               {t('budget.title')}
@@ -206,6 +134,10 @@ const WeddingDashboard = () => {
               Notificações
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <DashboardOverview onNavigateToTab={setActiveTab} />
+          </TabsContent>
 
           <TabsContent value="budget" className="space-y-6">
             <BudgetManager />
