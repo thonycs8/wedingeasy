@@ -531,6 +531,10 @@ export type Database = {
         Args: { _user_id: string; _wedding_id: string }
         Returns: boolean
       }
+      is_wedding_owner: {
+        Args: { _user_id: string; _wedding_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       wedding_role:
