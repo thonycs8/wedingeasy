@@ -16,7 +16,8 @@ import {
   Camera,
   LayoutDashboard,
   UserPlus,
-  Menu
+  Menu,
+  ShoppingBag
 } from "lucide-react";
 import {
   Sheet,
@@ -38,6 +39,7 @@ import { PhotoGallery } from "@/components/PhotoGallery";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { DashboardOverview } from "@/components/DashboardOverview";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
+import { ServicesMarketplace } from "@/components/ServicesMarketplace";
 import { useToast } from "@/hooks/use-toast";
 
 const WeddingDashboard = () => {
@@ -59,6 +61,7 @@ const WeddingDashboard = () => {
     { value: "timeline", icon: Calendar, label: t('timeline.title') },
     { value: "choices", icon: Palette, label: t('choices.title') },
     { value: "guests", icon: Users, label: "Convidados" },
+    { value: "services", icon: ShoppingBag, label: "Serviços" },
     { value: "photos", icon: Camera, label: "Galeria" },
     { value: "notifications", icon: Settings, label: "Notificações" },
   ];
@@ -215,6 +218,10 @@ const WeddingDashboard = () => {
 
           <TabsContent value="guests" className="space-y-6">
             <GuestManager />
+          </TabsContent>
+
+          <TabsContent value="services" className="space-y-6">
+            <ServicesMarketplace />
           </TabsContent>
 
           <TabsContent value="photos" className="space-y-6">
