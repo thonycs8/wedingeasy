@@ -235,6 +235,18 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate event code if joining
+    if (weddingMode === 'join') {
+      try {
+        eventCodeSchema.parse(joinCode.trim().toUpperCase());
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          toast.error(error.errors[0].message);
+          return;
+        }
+      }
+    }
+    
     // Validate login inputs
     try {
       loginSchema.parse({ email: formData.email, password: formData.password });
@@ -260,6 +272,58 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
       // If there's an invitation token, accept it
       if (invitationToken && invitationData && authData.user) {
         await acceptInvitation(authData.user.id, invitationToken);
+        toast.success('Você foi adicionado ao casamento!');
+        onOpenChange(false);
+        navigate('/dashboard');
+        return;
+      }
+
+      // If joining an existing wedding
+      if (weddingMode === 'join' && authData.user) {
+        // Find the wedding by code
+        const { data: weddingData, error: weddingError } = await supabase
+          .from('wedding_data')
+          .select('id')
+          .eq('event_code', joinCode.trim().toUpperCase())
+          .maybeSingle();
+
+        if (weddingError || !weddingData) {
+          toast.error('Código de casamento inválido');
+          setLoading(false);
+          return;
+        }
+
+        // Check if already a collaborator
+        const { data: existingCollab } = await supabase
+          .from('wedding_collaborators')
+          .select('id')
+          .eq('wedding_id', weddingData.id)
+          .eq('user_id', authData.user.id)
+          .maybeSingle();
+
+        if (existingCollab) {
+          toast.success('Você já faz parte deste casamento!');
+          onOpenChange(false);
+          navigate('/dashboard');
+          return;
+        }
+
+        // Add as collaborator
+        const { error: collabError } = await supabase
+          .from('wedding_collaborators')
+          .insert([{
+            wedding_id: weddingData.id,
+            user_id: authData.user.id,
+            role: 'colaborador'
+          }]);
+
+        if (collabError) {
+          console.error('Error adding collaborator:', collabError);
+          toast.error('Erro ao entrar no casamento');
+          setLoading(false);
+          return;
+        }
+
         toast.success('Você foi adicionado ao casamento!');
       } else {
         toast.success('Login realizado com sucesso!');
@@ -444,7 +508,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
                 </Card>
               )}
 
-              {mode === 'signup' && !invitationToken && (
+              {!invitationToken && (
                 <>
                   {/* Wedding Mode Selection */}
                   <div className="space-y-3">
@@ -453,7 +517,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="create" id="create" />
                         <Label htmlFor="create" className="cursor-pointer">
-                          {t('collaborators.createNew')}
+                          {mode === 'signup' ? t('collaborators.createNew') : 'Criar novo casamento'}
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -480,7 +544,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
                     </div>
                   )}
 
-                  {weddingMode === 'create' && (
+                  {weddingMode === 'create' && mode === 'signup' && (
                     <>
                       <div>
                         <Label htmlFor="name">{t('signup.form.yourName')}</Label>
