@@ -166,7 +166,7 @@ const WeddingDashboard = () => {
           </div>
         </div>
 
-        {/* Navigation Bar */}
+        {/* Navigation Bar - Global/Sticky */}
         <div className="bg-background/95 backdrop-blur-sm border-b border-border shadow-sm sticky top-[73px] z-40">
           <div className="container mx-auto">
             {isMobile ? (
@@ -194,25 +194,27 @@ const WeddingDashboard = () => {
                 </Select>
               </div>
             ) : (
-              <nav className="flex items-center justify-center gap-1 py-3 px-4">
-                <SidebarTrigger className="mr-2" />
-                {tabs.map((tab) => (
-                  <Button
-                    key={tab.value}
-                    variant={activeTab === tab.value ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleTabChange(tab.value)}
-                    className={`
-                      flex items-center gap-1.5 whitespace-nowrap text-xs
-                      ${activeTab === tab.value 
-                        ? "bg-primary text-primary-foreground shadow-sm" 
-                        : "hover:bg-muted"}
-                    `}
-                  >
-                    {createElement(tab.icon, { className: "w-3.5 h-3.5" })}
-                    <span>{tab.label}</span>
-                  </Button>
-                ))}
+              <nav className="flex items-center gap-1 py-3 px-4">
+                <SidebarTrigger className="mr-3" />
+                <div className="flex items-center justify-center gap-1 flex-1">
+                  {tabs.map((tab) => (
+                    <Button
+                      key={tab.value}
+                      variant={activeTab === tab.value ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => handleTabChange(tab.value)}
+                      className={`
+                        flex items-center gap-1.5 whitespace-nowrap text-xs
+                        ${activeTab === tab.value 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "hover:bg-muted"}
+                      `}
+                    >
+                      {createElement(tab.icon, { className: "w-3.5 h-3.5" })}
+                      <span>{tab.label}</span>
+                    </Button>
+                  ))}
+                </div>
               </nav>
             )}
           </div>
