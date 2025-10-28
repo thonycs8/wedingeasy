@@ -40,11 +40,11 @@ interface Collaborator {
   user_id: string;
   role: string;
   joined_at: string;
-  profiles?: {
+  profiles: {
     first_name: string;
     last_name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface Invitation {
@@ -124,32 +124,27 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           setInviterName(`${profile.first_name} ${profile.last_name || ''}`.trim());
         }
 
-        // Load collaborators with profile data
+        // Load collaborators with profile data using JOIN
         const { data: collaboratorsData, error: collabError } = await supabase
           .from('wedding_collaborators')
-          .select('id, user_id, role, joined_at')
+          .select(`
+            id, 
+            user_id, 
+            role, 
+            joined_at,
+            profiles:user_id (
+              first_name,
+              last_name,
+              email
+            )
+          `)
           .eq('wedding_id', weddingData.id)
           .order('joined_at', { ascending: true });
 
         if (collabError) {
           console.error('Error loading collaborators:', collabError);
         } else if (collaboratorsData) {
-          // Fetch profile data for each collaborator
-          const collaboratorsWithProfiles = await Promise.all(
-            collaboratorsData.map(async (collab) => {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('first_name, last_name, email')
-                .eq('user_id', collab.user_id)
-                .single();
-              
-              return {
-                ...collab,
-                profiles: profile || { first_name: '', last_name: '', email: '' }
-              };
-            })
-          );
-          setCollaborators(collaboratorsWithProfiles);
+          setCollaborators(collaboratorsData as any);
         }
 
         // Load pending invitations
@@ -437,10 +432,10 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           </div>
                           <div>
                             <p className="font-medium">
-                              {collaborator.profiles?.first_name} {collaborator.profiles?.last_name}
+                              {collaborator.profiles?.first_name || 'Sem nome'} {collaborator.profiles?.last_name || ''}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {collaborator.profiles?.email}
+                              {collaborator.profiles?.email || 'Sem email'}
                             </p>
                           </div>
                         </div>
