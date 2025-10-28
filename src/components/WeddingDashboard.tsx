@@ -1,4 +1,4 @@
-import { useState, createElement } from "react";
+import { useState, createElement, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,8 @@ import {
   LayoutDashboard,
   UserPlus,
   Menu,
-  ShoppingBag
+  ShoppingBag,
+  Bell
 } from "lucide-react";
 import {
   Sheet,
@@ -62,18 +63,58 @@ import { CollaboratorsManager } from "@/components/CollaboratorsManager";
 import { ServicesMarketplace } from "@/components/ServicesMarketplace";
 import { CeremonyRoles } from "@/components/CeremonyRoles";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const WeddingDashboard = () => {
   const { t } = useTranslation();
   const { weddingData, clearWeddingData } = useWeddingData();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const isMobile = useIsMobile();
   
   // Use questionnaire data if available
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadUnreadCount = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      
+      if (!error && data) {
+        setUnreadCount(data.length);
+      }
+    };
+
+    loadUnreadCount();
+
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          loadUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const tabs = [
     { value: "overview", icon: LayoutDashboard, label: "Início", fullLabel: "Visão Geral" },
@@ -99,6 +140,23 @@ const WeddingDashboard = () => {
           <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-foreground">Wedding Plan</h2>
             <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setActiveTab("notifications")}
+                className="relative"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Alertas</span>
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center px-1 text-xs"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm"
