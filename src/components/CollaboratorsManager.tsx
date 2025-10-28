@@ -181,12 +181,37 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
         console.log('[CollaboratorsManager] Collaborators data:', collaboratorsData);
         console.log('[CollaboratorsManager] Collaborators error:', collabError);
 
-        if (collabError) {
-          console.error('Error loading collaborators:', collabError);
-        } else if (collaboratorsData) {
-          console.log('[CollaboratorsManager] Setting collaborators:', collaboratorsData);
-          setCollaborators(collaboratorsData as any);
+        // Also load the wedding owner (noivo/noiva)
+        const { data: ownerProfile, error: ownerError } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email, user_id')
+          .eq('user_id', weddingData.user_id)
+          .single();
+
+        const allCollaborators: Collaborator[] = [];
+
+        // Add owner first
+        if (ownerProfile && !ownerError) {
+          allCollaborators.push({
+            id: 'owner-' + weddingData.user_id,
+            user_id: weddingData.user_id,
+            role: 'noivo', // or determine from wedding data
+            joined_at: new Date().toISOString(),
+            profiles: {
+              first_name: ownerProfile.first_name || 'Sem nome',
+              last_name: ownerProfile.last_name || '',
+              email: ownerProfile.email || 'Sem email'
+            }
+          });
         }
+
+        // Add other collaborators
+        if (!collabError && collaboratorsData) {
+          console.log('[CollaboratorsManager] Setting collaborators:', collaboratorsData);
+          allCollaborators.push(...(collaboratorsData as any));
+        }
+
+        setCollaborators(allCollaborators);
 
         // Load pending invitations
         const { data: invitationsData, error: invError } = await supabase
@@ -484,7 +509,7 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           <Badge variant={collaborator.role === 'noivo' || collaborator.role === 'noiva' ? 'default' : 'secondary'}>
                             {t(`roles.${collaborator.role}`)}
                           </Badge>
-                          {isOwner && collaborator.role !== 'noivo' && collaborator.role !== 'noiva' && (
+                          {isOwner && collaborator.role !== 'noivo' && collaborator.role !== 'noiva' && collaborator.user_id !== weddingId && !collaborator.id.startsWith('owner-') && (
                             <Button
                               variant="ghost"
                               size="sm"
