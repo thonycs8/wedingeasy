@@ -19,6 +19,7 @@ interface CeremonyRole {
   phone?: string;
   special_role: string;
   confirmed: boolean;
+  side?: 'noivo' | 'noiva' | null;
 }
 
 const DEFAULT_ROLES = [
@@ -45,6 +46,7 @@ export const CeremonyRoles = () => {
     email: "",
     phone: "",
     special_role: "",
+    side: "" as 'noivo' | 'noiva' | '',
   });
   const [newRoleName, setNewRoleName] = useState("");
 
@@ -67,7 +69,7 @@ export const CeremonyRoles = () => {
         .order("special_role");
 
       if (error) throw error;
-      setRoles(data || []);
+      setRoles((data || []) as CeremonyRole[]);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar papéis",
@@ -92,10 +94,10 @@ export const CeremonyRoles = () => {
   };
 
   const addPerson = async () => {
-    if (!user || !newPerson.name || !newPerson.special_role) {
+    if (!user || !newPerson.name || !newPerson.special_role || !newPerson.side) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome e o papel",
+        description: "Por favor, preencha o nome, papel e lado (noivo/noiva)",
         variant: "destructive",
       });
       return;
@@ -113,14 +115,15 @@ export const CeremonyRoles = () => {
             special_role: newPerson.special_role,
             category: "ceremony",
             confirmed: false,
+            side: newPerson.side,
           },
         ])
         .select();
 
       if (error) throw error;
 
-      setRoles([...roles, ...(data || [])]);
-      setNewPerson({ name: "", email: "", phone: "", special_role: "" });
+      setRoles([...roles, ...(data || [])] as CeremonyRole[]);
+      setNewPerson({ name: "", email: "", phone: "", special_role: "", side: "" });
       setIsAddDialogOpen(false);
 
       toast({
@@ -200,10 +203,18 @@ export const CeremonyRoles = () => {
 
   const allRoles = [...DEFAULT_ROLES, ...customRoles];
 
-  const groupedRoles = allRoles.reduce((acc, role) => {
-    acc[role] = roles.filter((r) => r.special_role === role);
-    return acc;
-  }, {} as Record<string, CeremonyRole[]>);
+  const groomRoles = roles.filter((r) => r.side === 'noivo');
+  const brideRoles = roles.filter((r) => r.side === 'noiva');
+
+  const groupBySide = (sideRoles: CeremonyRole[]) => {
+    return allRoles.reduce((acc, role) => {
+      acc[role] = sideRoles.filter((r) => r.special_role === role);
+      return acc;
+    }, {} as Record<string, CeremonyRole[]>);
+  };
+
+  const groomGrouped = groupBySide(groomRoles);
+  const brideGrouped = groupBySide(brideRoles);
 
   if (loading) {
     return <div className="p-8 text-center">Carregando...</div>;
@@ -302,6 +313,23 @@ export const CeremonyRoles = () => {
                       </Select>
                     </div>
                     <div>
+                      <Label htmlFor="side">Lado *</Label>
+                      <Select
+                        value={newPerson.side}
+                        onValueChange={(value: 'noivo' | 'noiva') =>
+                          setNewPerson({ ...newPerson, side: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o lado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="noivo">Noivo</SelectItem>
+                          <SelectItem value="noiva">Noiva</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
                       <Label htmlFor="email">Email</Label>
                       <Input
                         id="email"
@@ -333,63 +361,138 @@ export const CeremonyRoles = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {allRoles.map((roleName) => {
-            const peopleInRole = groupedRoles[roleName] || [];
-            if (peopleInRole.length === 0) return null;
+        <CardContent className="space-y-8">
+          {/* Lado do Noivo */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-primary">Lado do Noivo</h2>
+            <div className="space-y-6">
+              {allRoles.map((roleName) => {
+                const peopleInRole = groomGrouped[roleName] || [];
+                if (peopleInRole.length === 0) return null;
 
-            return (
-              <div key={roleName} className="space-y-3">
-                <h3 className="font-semibold text-lg">{roleName}</h3>
-                <div className="grid gap-3">
-                  {peopleInRole.map((person) => (
-                    <div
-                      key={person.id}
-                      className="flex items-center justify-between p-4 border rounded-lg bg-card"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{person.name}</p>
-                          {person.confirmed && (
-                            <Badge variant="default" className="gap-1">
-                              <Check className="h-3 w-3" />
-                              Confirmado
-                            </Badge>
-                          )}
+                return (
+                  <div key={`groom-${roleName}`} className="space-y-3">
+                    <h3 className="font-semibold text-lg">{roleName}</h3>
+                    <div className="grid gap-3">
+                      {peopleInRole.map((person) => (
+                        <div
+                          key={person.id}
+                          className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{person.name}</p>
+                              {person.confirmed && (
+                                <Badge variant="default" className="gap-1">
+                                  <Check className="h-3 w-3" />
+                                  Confirmado
+                                </Badge>
+                              )}
+                            </div>
+                            {person.email && (
+                              <p className="text-sm text-muted-foreground">{person.email}</p>
+                            )}
+                            {person.phone && (
+                              <p className="text-sm text-muted-foreground">{person.phone}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={person.confirmed ? "outline" : "default"}
+                              onClick={() => toggleConfirmation(person.id, person.confirmed)}
+                            >
+                              {person.confirmed ? (
+                                <X className="h-4 w-4" />
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteRole(person.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        {person.email && (
-                          <p className="text-sm text-muted-foreground">{person.email}</p>
-                        )}
-                        {person.phone && (
-                          <p className="text-sm text-muted-foreground">{person.phone}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant={person.confirmed ? "outline" : "default"}
-                          onClick={() => toggleConfirmation(person.id, person.confirmed)}
-                        >
-                          {person.confirmed ? (
-                            <X className="h-4 w-4" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteRole(person.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                  </div>
+                );
+              })}
+              {groomRoles.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado do noivo</p>
+              )}
+            </div>
+          </div>
+
+          {/* Lado da Noiva */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-primary">Lado da Noiva</h2>
+            <div className="space-y-6">
+              {allRoles.map((roleName) => {
+                const peopleInRole = brideGrouped[roleName] || [];
+                if (peopleInRole.length === 0) return null;
+
+                return (
+                  <div key={`bride-${roleName}`} className="space-y-3">
+                    <h3 className="font-semibold text-lg">{roleName}</h3>
+                    <div className="grid gap-3">
+                      {peopleInRole.map((person) => (
+                        <div
+                          key={person.id}
+                          className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{person.name}</p>
+                              {person.confirmed && (
+                                <Badge variant="default" className="gap-1">
+                                  <Check className="h-3 w-3" />
+                                  Confirmado
+                                </Badge>
+                              )}
+                            </div>
+                            {person.email && (
+                              <p className="text-sm text-muted-foreground">{person.email}</p>
+                            )}
+                            {person.phone && (
+                              <p className="text-sm text-muted-foreground">{person.phone}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={person.confirmed ? "outline" : "default"}
+                              onClick={() => toggleConfirmation(person.id, person.confirmed)}
+                            >
+                              {person.confirmed ? (
+                                <X className="h-4 w-4" />
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteRole(person.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {brideRoles.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado da noiva</p>
+              )}
+            </div>
+          </div>
 
           {roles.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
