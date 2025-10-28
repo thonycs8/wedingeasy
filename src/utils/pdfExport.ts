@@ -220,3 +220,111 @@ export const exportTimelinePDF = (tasks: TimelineTask[]) => {
   
   doc.save('cronograma-casamento.pdf');
 };
+
+interface CeremonyRole {
+  name: string;
+  email?: string;
+  phone?: string;
+  special_role: string;
+  confirmed: boolean;
+  side?: 'noivo' | 'noiva' | null;
+}
+
+export const exportCeremonyRolesPDF = (roles: CeremonyRole[]) => {
+  const doc = new jsPDF();
+  
+  const groomRoles = roles.filter(r => r.side === 'noivo');
+  const brideRoles = roles.filter(r => r.side === 'noiva');
+  
+  // Header
+  doc.setFontSize(20);
+  doc.text('Lista de Papéis na Cerimônia', 14, 20);
+  
+  doc.setFontSize(10);
+  doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, 14, 28);
+  doc.text(`Total: ${roles.length} pessoas`, 14, 34);
+  doc.text(`Confirmados: ${roles.filter(r => r.confirmed).length}`, 14, 40);
+  
+  let currentY = 48;
+  
+  // Lado do Noivo
+  if (groomRoles.length > 0) {
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Lado do Noivo', 14, currentY);
+    currentY += 8;
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Nome', 'Papel', 'Email', 'Telefone', 'Confirmado']],
+      body: groomRoles.map(role => [
+        role.name,
+        role.special_role,
+        role.email || '-',
+        role.phone || '-',
+        role.confirmed ? 'Sim' : 'Não'
+      ]),
+      headStyles: {
+        fillColor: [219, 39, 119],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [253, 242, 248]
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+  }
+  
+  // Lado da Noiva
+  if (brideRoles.length > 0) {
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Lado da Noiva', 14, currentY);
+    currentY += 8;
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Nome', 'Papel', 'Email', 'Telefone', 'Confirmado']],
+      body: brideRoles.map(role => [
+        role.name,
+        role.special_role,
+        role.email || '-',
+        role.phone || '-',
+        role.confirmed ? 'Sim' : 'Não'
+      ]),
+      headStyles: {
+        fillColor: [219, 39, 119],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [253, 242, 248]
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
+    });
+  }
+  
+  // Footer
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.text(
+      `Página ${i} de ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+  
+  doc.save('lista-cerimonia.pdf');
+};

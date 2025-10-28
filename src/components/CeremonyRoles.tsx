@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Trash2, Check, X } from "lucide-react";
+import { Users, Plus, Trash2, Check, X, Download } from "lucide-react";
+import { exportCeremonyRolesPDF } from "@/utils/pdfExport";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface CeremonyRole {
@@ -234,7 +235,17 @@ export const CeremonyRoles = () => {
                 Gerencie padrinhos, madrinhas e outros papéis especiais na cerimônia
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exportCeremonyRolesPDF(roles)}
+                disabled={roles.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </Button>
+              
               <Dialog open={isNewRoleDialogOpen} onOpenChange={setIsNewRoleDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
