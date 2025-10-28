@@ -17,7 +17,8 @@ import {
   Loader2,
   Download,
   Sparkles,
-  Lightbulb
+  Lightbulb,
+  ExternalLink
 } from "lucide-react";
 import { useWeddingData } from "@/contexts/WeddingContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -262,6 +263,28 @@ export const TimelineManager = () => {
     return new Date(dueDate) < new Date();
   };
 
+  const getTaskLink = (task: TimelineTask): { label: string; tab: string } | null => {
+    const title = task.title.toLowerCase();
+    
+    if (title.includes("padrinho") || title.includes("madrinha") || title.includes("dama") || title.includes("cerimônia")) {
+      return { label: "Ir para Cerimônia", tab: "ceremony" };
+    }
+    if (title.includes("convidado") || title.includes("lista")) {
+      return { label: "Ir para Convidados", tab: "guests" };
+    }
+    if (title.includes("orçamento") || title.includes("fornecedor")) {
+      return { label: "Ir para Orçamento", tab: "budget" };
+    }
+    if (title.includes("foto") || title.includes("fotograf")) {
+      return { label: "Ir para Fotos", tab: "photos" };
+    }
+    if (title.includes("serviço") || title.includes("reserva")) {
+      return { label: "Ir para Serviços", tab: "services" };
+    }
+    
+    return null;
+  };
+
   const categorizedTasks = getTasksByCategory();
 
   if (loading) {
@@ -445,7 +468,7 @@ export const TimelineManager = () => {
                           {task.description && (
                             <p className="text-sm text-muted-foreground">{task.description}</p>
                           )}
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Clock className="w-3 h-3" />
                               {new Date(task.due_date).toLocaleDateString()}
@@ -456,6 +479,25 @@ export const TimelineManager = () => {
                                 {t('timeline.overdue')}
                               </div>
                             )}
+                            {(() => {
+                              const taskLink = getTaskLink(task);
+                              return taskLink && !task.completed ? (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  onClick={() => {
+                                    const tabButton = document.querySelector(
+                                      `[value="${taskLink.tab}"]`
+                                    ) as HTMLButtonElement;
+                                    tabButton?.click();
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  {taskLink.label}
+                                </Button>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                         

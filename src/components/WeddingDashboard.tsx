@@ -40,6 +40,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { DashboardOverview } from "@/components/DashboardOverview";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
 import { ServicesMarketplace } from "@/components/ServicesMarketplace";
+import { CeremonyRoles } from "@/components/CeremonyRoles";
 import { useToast } from "@/hooks/use-toast";
 
 const WeddingDashboard = () => {
@@ -61,6 +62,7 @@ const WeddingDashboard = () => {
     { value: "timeline", icon: Calendar, label: t('timeline.title') },
     { value: "choices", icon: Palette, label: t('choices.title') },
     { value: "guests", icon: Users, label: "Convidados" },
+    { value: "ceremony", icon: Heart, label: "Cerimônia" },
     { value: "services", icon: ShoppingBag, label: "Serviços" },
     { value: "photos", icon: Camera, label: "Galeria" },
     { value: "notifications", icon: Settings, label: "Notificações" },
@@ -190,7 +192,7 @@ const WeddingDashboard = () => {
               </Sheet>
             </div>
           ) : (
-            <TabsList className="grid w-full grid-cols-7 mb-8">
+            <TabsList className="grid w-full grid-cols-8 mb-8">
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
                   <tab.icon className="w-4 h-4" />
@@ -218,6 +220,10 @@ const WeddingDashboard = () => {
 
           <TabsContent value="guests" className="space-y-6">
             <GuestManager />
+          </TabsContent>
+
+          <TabsContent value="ceremony" className="space-y-6">
+            <CeremonyRoles />
           </TabsContent>
 
           <TabsContent value="services" className="space-y-6">
