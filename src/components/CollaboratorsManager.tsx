@@ -92,20 +92,57 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
 
     setLoading(true);
     try {
-      // Get wedding data with event code
-      const { data: weddingData, error: weddingError } = await supabase
+      console.log('[CollaboratorsManager] Loading wedding data for user:', user.id);
+      
+      // Try to get wedding data where user is owner
+      let { data: weddingData, error: weddingError } = await supabase
         .from('wedding_data')
         .select('id, event_code, user_id, couple_name, partner_name')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (weddingError) {
+      // If not owner, check if user is collaborator
+      if (!weddingData) {
+        console.log('[CollaboratorsManager] User is not owner, checking collaborations...');
+        const { data: collabData, error: collabError } = await supabase
+          .from('wedding_collaborators')
+          .select('wedding_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (collabError) {
+          console.error('[CollaboratorsManager] Error checking collaborations:', collabError);
+          setLoading(false);
+          return;
+        }
+
+        if (collabData) {
+          console.log('[CollaboratorsManager] User is collaborator, loading wedding:', collabData.wedding_id);
+          // Load the wedding data they're collaborating on
+          const { data: wedding, error: wError } = await supabase
+            .from('wedding_data')
+            .select('id, event_code, user_id, couple_name, partner_name')
+            .eq('id', collabData.wedding_id)
+            .single();
+
+          if (wError) {
+            console.error('[CollaboratorsManager] Error loading wedding:', wError);
+            setLoading(false);
+            return;
+          }
+
+          weddingData = wedding;
+        }
+      }
+
+      if (weddingError && weddingError.code !== 'PGRST116') {
         console.error('Error loading wedding data:', weddingError);
         setLoading(false);
         return;
       }
 
       if (weddingData) {
+        console.log('[CollaboratorsManager] Wedding data loaded:', weddingData);
         setEventCode(weddingData.event_code);
         setIsOwner(weddingData.user_id === user.id);
         setWeddingId(weddingData.id);
@@ -141,9 +178,13 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           .eq('wedding_id', weddingData.id)
           .order('joined_at', { ascending: true });
 
+        console.log('[CollaboratorsManager] Collaborators data:', collaboratorsData);
+        console.log('[CollaboratorsManager] Collaborators error:', collabError);
+
         if (collabError) {
           console.error('Error loading collaborators:', collabError);
         } else if (collaboratorsData) {
+          console.log('[CollaboratorsManager] Setting collaborators:', collaboratorsData);
           setCollaborators(collaboratorsData as any);
         }
 

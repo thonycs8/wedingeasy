@@ -139,18 +139,58 @@ export const WeddingProvider = ({ children }: WeddingProviderProps) => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      console.log('[WeddingContext] Loading wedding data for user:', user.id);
+      
+      // First try to find wedding where user is the owner
+      let { data, error } = await supabase
         .from('wedding_data')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      // If not owner, check if user is a collaborator
+      if (!data) {
+        console.log('[WeddingContext] User is not owner, checking collaborations...');
+        const { data: collabData, error: collabError } = await supabase
+          .from('wedding_collaborators')
+          .select('wedding_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (collabError) {
+          console.error('[WeddingContext] Error checking collaborations:', collabError);
+          return;
+        }
+
+        if (collabData) {
+          console.log('[WeddingContext] User is collaborator, loading wedding:', collabData.wedding_id);
+          // Load the wedding data they're collaborating on
+          const { data: weddingData, error: weddingError } = await supabase
+            .from('wedding_data')
+            .select('*')
+            .eq('id', collabData.wedding_id)
+            .single();
+
+          if (weddingError) {
+            console.error('[WeddingContext] Error loading wedding data:', weddingError);
+            return;
+          }
+
+          data = weddingData;
+        } else {
+          console.log('[WeddingContext] User has no wedding data');
+        }
+      } else {
+        console.log('[WeddingContext] User is owner of wedding:', data.id);
+      }
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error loading from cloud:', error);
+        console.error('[WeddingContext] Error loading from cloud:', error);
         return;
       }
 
       if (data) {
+        console.log('[WeddingContext] Wedding data loaded successfully');
         const weddingData: WeddingData = {
           couple: {
             name: data.couple_name || '',
@@ -172,7 +212,7 @@ export const WeddingProvider = ({ children }: WeddingProviderProps) => {
         localStorage.setItem('weddingData', JSON.stringify(weddingData));
       }
     } catch (error) {
-      console.error('Error loading from cloud:', error);
+      console.error('[WeddingContext] Error loading from cloud:', error);
     }
   };
 
