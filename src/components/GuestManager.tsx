@@ -36,6 +36,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { exportGuestListPDF } from '@/utils/pdfExport';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useWeddingData } from '@/contexts/WeddingContext';
 
 interface Guest {
   id: string;
@@ -57,6 +58,7 @@ export const GuestManager = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { currency } = useSettings();
+  const { weddingData } = useWeddingData();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,7 +378,11 @@ export const GuestManager = () => {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => exportGuestListPDF(guests, currency)}
+              onClick={() => exportGuestListPDF(guests, currency, {
+                coupleName: weddingData?.couple.name,
+                partnerName: weddingData?.couple.partnerName,
+                weddingDate: weddingData?.wedding.date
+              })}
               disabled={guests.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />

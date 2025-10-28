@@ -321,7 +321,11 @@ export const TimelineManager = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => exportTimelinePDF(tasks)}
+              onClick={() => exportTimelinePDF(tasks, {
+                coupleName: weddingData?.couple.name,
+                partnerName: weddingData?.couple.partnerName,
+                weddingDate: weddingData?.wedding.date
+              })}
               disabled={tasks.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />

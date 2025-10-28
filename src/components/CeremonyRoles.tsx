@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, Plus, Trash2, Check, X, Download } from "lucide-react";
 import { exportCeremonyRolesPDF } from "@/utils/pdfExport";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useWeddingData } from "@/contexts/WeddingContext";
 
 interface CeremonyRole {
   id: string;
@@ -36,6 +37,7 @@ export const CeremonyRoles = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { weddingData } = useWeddingData();
   const [roles, setRoles] = useState<CeremonyRole[]>([]);
   const [customRoles, setCustomRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,7 +241,11 @@ export const CeremonyRoles = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => exportCeremonyRolesPDF(roles)}
+                onClick={() => exportCeremonyRolesPDF(roles, {
+                  coupleName: weddingData?.couple.name,
+                  partnerName: weddingData?.couple.partnerName,
+                  weddingDate: weddingData?.wedding.date
+                })}
                 disabled={roles.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />

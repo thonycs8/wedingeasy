@@ -40,6 +40,7 @@ import { formatCurrency } from '@/i18n';
 import { useSettings } from '@/contexts/SettingsContext';
 import { BudgetCharts } from './BudgetCharts';
 import { exportBudgetPDF } from '@/utils/pdfExport';
+import { useWeddingData } from '@/contexts/WeddingContext';
 
 interface BudgetCategory {
   id: string;
@@ -85,6 +86,7 @@ export const BudgetManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { currency } = useSettings();
+  const { weddingData } = useWeddingData();
 
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [expenses, setExpenses] = useState<BudgetExpense[]>([]);
@@ -576,7 +578,11 @@ export const BudgetManager = () => {
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => exportBudgetPDF(categories, currency)}
+                onClick={() => exportBudgetPDF(categories, currency, {
+                  coupleName: weddingData?.couple.name,
+                  partnerName: weddingData?.couple.partnerName,
+                  weddingDate: weddingData?.wedding.date
+                })}
                 disabled={categories.length === 0}
               >
                 <Download className="w-4 h-4 mr-2" />
