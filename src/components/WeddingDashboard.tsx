@@ -76,7 +76,7 @@ const WeddingDashboard = () => {
   const isMobile = useIsMobile();
   
   // Use questionnaire data if available
-  const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
+  const coupleNames = weddingData ? `${weddingData.couple.partnerName} & ${weddingData.couple.name}` : t('hero.title');
 
   useEffect(() => {
     if (!user) return;
