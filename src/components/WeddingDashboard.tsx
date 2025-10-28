@@ -63,15 +63,15 @@ const WeddingDashboard = () => {
   const coupleNames = weddingData ? `${weddingData.couple.name} & ${weddingData.couple.partnerName}` : t('hero.title');
 
   const tabs = [
-    { value: "overview", icon: LayoutDashboard, label: "Visão Geral" },
-    { value: "budget", icon: DollarSign, label: t('budget.title') },
-    { value: "timeline", icon: Calendar, label: t('timeline.title') },
-    { value: "choices", icon: Palette, label: t('choices.title') },
-    { value: "guests", icon: Users, label: "Convidados" },
-    { value: "ceremony", icon: Heart, label: "Cerimônia" },
-    { value: "services", icon: ShoppingBag, label: "Serviços" },
-    { value: "photos", icon: Camera, label: "Galeria" },
-    { value: "notifications", icon: Settings, label: "Notificações" },
+    { value: "overview", icon: LayoutDashboard, label: "Início", fullLabel: "Visão Geral" },
+    { value: "budget", icon: DollarSign, label: "Orçamento", fullLabel: t('budget.title') },
+    { value: "timeline", icon: Calendar, label: "Cronograma", fullLabel: t('timeline.title') },
+    { value: "choices", icon: Palette, label: "Escolhas", fullLabel: t('choices.title') },
+    { value: "guests", icon: Users, label: "Convidados", fullLabel: "Convidados" },
+    { value: "ceremony", icon: Heart, label: "Cerimônia", fullLabel: "Cerimônia" },
+    { value: "services", icon: ShoppingBag, label: "Serviços", fullLabel: "Serviços" },
+    { value: "photos", icon: Camera, label: "Galeria", fullLabel: "Galeria" },
+    { value: "notifications", icon: Settings, label: "Configurações", fullLabel: "Notificações" },
   ];
 
   const handleTabChange = (value: string) => {
@@ -79,7 +79,7 @@ const WeddingDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 shadow-sm">
         <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
@@ -153,17 +153,17 @@ const WeddingDashboard = () => {
       </div>
 
       {/* Navigation Bar */}
-      <div className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-[60px] z-40">
+      <div className="bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container mx-auto">
           {isMobile ? (
-            <div className="p-4">
+            <div className="p-3">
               <Select value={activeTab} onValueChange={handleTabChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue>
                     <span className="flex items-center gap-2">
                       {tabs.find(tab => tab.value === activeTab)?.icon && 
                         createElement(tabs.find(tab => tab.value === activeTab)!.icon, { className: "w-4 h-4" })}
-                      {tabs.find(tab => tab.value === activeTab)?.label}
+                      {tabs.find(tab => tab.value === activeTab)?.fullLabel}
                     </span>
                   </SelectValue>
                 </SelectTrigger>
@@ -172,7 +172,7 @@ const WeddingDashboard = () => {
                     <SelectItem key={tab.value} value={tab.value}>
                       <span className="flex items-center gap-2">
                         {createElement(tab.icon, { className: "w-4 h-4" })}
-                        {tab.label}
+                        {tab.fullLabel}
                       </span>
                     </SelectItem>
                   ))}
@@ -180,7 +180,7 @@ const WeddingDashboard = () => {
               </Select>
             </div>
           ) : (
-            <nav className="flex items-center overflow-x-auto py-2 px-4">
+            <nav className="flex items-center justify-center gap-1 py-3 px-4">
               {tabs.map((tab) => (
                 <Button
                   key={tab.value}
@@ -188,14 +188,14 @@ const WeddingDashboard = () => {
                   size="sm"
                   onClick={() => handleTabChange(tab.value)}
                   className={`
-                    flex items-center gap-2 whitespace-nowrap
+                    flex items-center gap-1.5 whitespace-nowrap text-xs
                     ${activeTab === tab.value 
-                      ? "bg-primary text-primary-foreground" 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
                       : "hover:bg-muted"}
                   `}
                 >
-                  {createElement(tab.icon, { className: "w-4 h-4" })}
-                  <span className="hidden lg:inline">{tab.label}</span>
+                  {createElement(tab.icon, { className: "w-3.5 h-3.5" })}
+                  <span>{tab.label}</span>
                 </Button>
               ))}
             </nav>
@@ -203,7 +203,7 @@ const WeddingDashboard = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="flex-1 container mx-auto px-6 py-8">
 
         {/* Content Area */}
         <div className="space-y-6">
