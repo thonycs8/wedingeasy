@@ -111,7 +111,7 @@ export const CeremonyRoles = () => {
             email: newPerson.email || null,
             phone: newPerson.phone || null,
             special_role: newPerson.special_role,
-            category: "Cerimônia",
+            category: "ceremony",
             confirmed: false,
           },
         ])
