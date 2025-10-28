@@ -1,6 +1,6 @@
 {
-  "name": "WePlan - Planeador de Casamentos",
-  "short_name": "WePlan",
+  "name": "wedigneasy - Planeador de Casamentos",
+  "short_name": "wedigneasy",
   "description": "A sua plataforma completa para planear o casamento perfeito",
   "start_url": "/",
   "display": "standalone",

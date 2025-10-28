@@ -32,7 +32,7 @@ const GDPR = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Compromisso com a Proteção de Dados</h2>
               <p className="text-muted-foreground">
-                A Wedding Plan está totalmente comprometida com a conformidade do Regulamento Geral de Proteção 
+                A wedigneasy está totalmente comprometida com a conformidade do Regulamento Geral de Proteção
                 de Dados (GDPR) da União Europeia. Implementamos medidas rigorosas para garantir que os seus 
                 dados pessoais sejam processados de forma legal, justa e transparente.
               </p>

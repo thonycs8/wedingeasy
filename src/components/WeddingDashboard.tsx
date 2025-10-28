@@ -138,7 +138,7 @@ const WeddingDashboard = () => {
         {/* Header with Language/Currency Selector and Wedding Data Actions */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 shadow-sm">
           <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-foreground">Wedding Plan</h2>
+            <h2 className="text-lg font-semibold text-foreground">wedigneasy</h2>
             <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 

@@ -33,10 +33,10 @@ const FAQ = () => {
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger className="text-left">
-                  A aplicação Wedding Plan é gratuita?
+                  A aplicação wedigneasy é gratuita?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Sim! A Wedding Plan oferece acesso gratuito às funcionalidades essenciais de planeamento 
+                  Sim! A wedigneasy oferece acesso gratuito às funcionalidades essenciais de planeamento
                   de casamentos. Poderá haver funcionalidades premium no futuro, mas o core da aplicação 
                   permanecerá sempre gratuito.
                 </AccordionContent>
@@ -83,7 +83,7 @@ const FAQ = () => {
                   Posso usar a aplicação em vários dispositivos?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Sim! A Wedding Plan sincroniza automaticamente os seus dados na nuvem. Pode aceder ao 
+                  Sim! A wedigneasy sincroniza automaticamente os seus dados na nuvem. Pode aceder ao
                   planeamento do seu casamento a partir de qualquer dispositivo (computador, tablet, telemóvel) 
                   fazendo login com a sua conta.
                 </AccordionContent>

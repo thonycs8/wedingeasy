@@ -32,7 +32,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Introdução</h2>
               <p className="text-muted-foreground">
-                A Wedding Plan ("nós", "nosso" ou "nossa") está comprometida em proteger a sua privacidade. 
+                A wedigneasy ("nós", "nosso" ou "nossa") está comprometida em proteger a sua privacidade.
                 Esta Política de Privacidade explica como recolhemos, usamos, divulgamos e protegemos as suas 
                 informações pessoais quando utiliza a nossa aplicação de planeamento de casamentos.
               </p>
