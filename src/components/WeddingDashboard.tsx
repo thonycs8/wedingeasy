@@ -92,8 +92,7 @@ const WeddingDashboard = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted w-full">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 shadow-sm">
         <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
@@ -167,7 +166,7 @@ const WeddingDashboard = () => {
       </div>
 
       {/* Navigation Bar */}
-      <div className="bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+      <div className="bg-background/95 backdrop-blur-sm border-b border-border shadow-sm sticky top-[73px] z-40">
         <div className="container mx-auto">
           {isMobile ? (
             <div className="p-3">
@@ -218,57 +217,58 @@ const WeddingDashboard = () => {
         </div>
       </div>
 
-      <div className="flex flex-1 w-full">
-        {/* Sidebar - Desktop Only */}
-        {!isMobile && (
-          <Sidebar collapsible="icon" className="border-r">
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupLabel>Menu</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {tabs.map((tab) => (
-                      <SidebarMenuItem key={tab.value}>
-                        <SidebarMenuButton
-                          isActive={activeTab === tab.value}
-                          onClick={() => handleTabChange(tab.value)}
-                          tooltip={tab.fullLabel}
-                        >
-                          {createElement(tab.icon, { className: "h-4 w-4" })}
-                          <span>{tab.fullLabel}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
-        )}
+      {/* Main Content Area with Sidebar */}
+      <SidebarProvider>
+        <div className="flex flex-1 w-full">
+          {/* Sidebar - Desktop Only */}
+          {!isMobile && (
+            <Sidebar collapsible="icon" className="border-r">
+              <SidebarContent>
+                <SidebarGroup>
+                  <SidebarGroupLabel>Menu</SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {tabs.map((tab) => (
+                        <SidebarMenuItem key={tab.value}>
+                          <SidebarMenuButton
+                            isActive={activeTab === tab.value}
+                            onClick={() => handleTabChange(tab.value)}
+                            tooltip={tab.fullLabel}
+                          >
+                            {createElement(tab.icon, { className: "h-4 w-4" })}
+                            <span>{tab.fullLabel}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </SidebarContent>
+            </Sidebar>
+          )}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 container mx-auto px-6 py-8">
-
-            {/* Content Area */}
-            <div className="space-y-6">
-              {activeTab === "overview" && <DashboardOverview onNavigateToTab={setActiveTab} />}
-              {activeTab === "budget" && <BudgetManager />}
-              {activeTab === "timeline" && <TimelineManager />}
-              {activeTab === "choices" && <WeddingChoices />}
-              {activeTab === "guests" && <GuestManager />}
-              {activeTab === "ceremony" && <CeremonyRoles />}
-              {activeTab === "services" && <ServicesMarketplace />}
-              {activeTab === "photos" && <PhotoGallery />}
-              {activeTab === "notifications" && <NotificationCenter />}
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 container mx-auto px-6 py-8">
+              {/* Content Area */}
+              <div className="space-y-6">
+                {activeTab === "overview" && <DashboardOverview onNavigateToTab={setActiveTab} />}
+                {activeTab === "budget" && <BudgetManager />}
+                {activeTab === "timeline" && <TimelineManager />}
+                {activeTab === "choices" && <WeddingChoices />}
+                {activeTab === "guests" && <GuestManager />}
+                {activeTab === "ceremony" && <CeremonyRoles />}
+                {activeTab === "services" && <ServicesMarketplace />}
+                {activeTab === "photos" && <PhotoGallery />}
+                {activeTab === "notifications" && <NotificationCenter />}
+              </div>
             </div>
+            
+            <Footer />
           </div>
-          
-          <Footer />
         </div>
-      </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </div>
   );
 };
 
