@@ -32,7 +32,8 @@ import {
   Crown,
   Mail,
   Loader2,
-  Clock
+  Clock,
+  Settings
 } from "lucide-react";
 
 interface Collaborator {
@@ -94,6 +95,8 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
   const [weddingId, setWeddingId] = useState<string>("");
   const [weddingNames, setWeddingNames] = useState<string>("");
   const [inviterName, setInviterName] = useState<string>("");
+  const [editingCollaborator, setEditingCollaborator] = useState<Collaborator | null>(null);
+  const [newRole, setNewRole] = useState("");
 
   useEffect(() => {
     if (open && user) {
@@ -272,6 +275,73 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
       toast({
         title: t('common.error'),
         description: t('collaborators.copyError'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateCollaboratorRole = async () => {
+    if (!editingCollaborator || !newRole) return;
+
+    // Check if current user is admin (owner, noiva, or celebrante)
+    const { data: wedding } = await supabase
+      .from('wedding_data')
+      .select('user_id')
+      .eq('id', weddingId)
+      .single();
+
+    const isOwner = wedding && wedding.user_id === user?.id;
+
+    // Check if user is admin collaborator
+    const { data: userCollab } = await supabase
+      .from('wedding_collaborators')
+      .select('role')
+      .eq('wedding_id', weddingId)
+      .eq('user_id', user?.id)
+      .maybeSingle();
+
+    const isAdmin = isOwner || (userCollab && ['noiva', 'celebrante'].includes(userCollab.role));
+
+    if (!isAdmin) {
+      toast({
+        title: t('common.error'),
+        description: 'Apenas administradores podem editar papéis',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Cannot edit admin roles
+    if (['noivo', 'noiva', 'celebrante'].includes(editingCollaborator.role)) {
+      toast({
+        title: t('common.error'),
+        description: 'Não é possível editar papéis de administradores',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('wedding_collaborators')
+        .update({ role: newRole as any })
+        .eq('id', editingCollaborator.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Papel atualizado",
+        description: `O papel foi alterado para ${t(`roles.${newRole}`)}`,
+      });
+
+      setEditingCollaborator(null);
+      setNewRole("");
+      loadWeddingData();
+    } catch (error) {
+      console.error('Error updating collaborator role:', error);
+      toast({
+        title: t('common.error'),
+        description: 'Erro ao atualizar papel',
         variant: "destructive",
       });
     }
@@ -737,16 +807,30 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                               Owner
                             </Badge>
                           )}
-                          {/* Only admins can remove non-admin collaborators */}
+                          {/* Only admins can edit/remove non-admin collaborators */}
                           {!['noivo', 'noiva', 'celebrante'].includes(collaborator.role) && 
                            !collaborator.id.startsWith('owner-') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeCollaborator(collaborator.id, collaborator.user_id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCollaborator(collaborator);
+                                  setNewRole(collaborator.role);
+                                }}
+                                title="Editar papel"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeCollaborator(collaborator.id, collaborator.user_id)}
+                                title="Remover"
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -914,6 +998,68 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                 </>
               )}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Collaborator Role Modal */}
+      <Dialog open={!!editingCollaborator} onOpenChange={(open) => {
+        if (!open) {
+          setEditingCollaborator(null);
+          setNewRole("");
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Editar Papel do Colaborador
+            </DialogTitle>
+            <DialogDescription>
+              Altere o papel de {editingCollaborator?.profiles?.first_name} para dividir tarefas
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newRole">Novo Papel</Label>
+              <Select value={newRole} onValueChange={setNewRole}>
+                <SelectTrigger id="newRole">
+                  <SelectValue placeholder="Selecione o papel" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="colaborador">{t('roles.colaborador')}</SelectItem>
+                  <SelectItem value="padrinho">{t('roles.padrinho')}</SelectItem>
+                  <SelectItem value="madrinha">{t('roles.madrinha')}</SelectItem>
+                  <SelectItem value="fotografo">{t('roles.fotografo')}</SelectItem>
+                  <SelectItem value="organizador">{t('roles.organizador')}</SelectItem>
+                  <SelectItem value="convidado">{t('roles.convidado')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Apenas papéis de colaboradores regulares podem ser editados
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={updateCollaboratorRole}
+                disabled={!newRole || newRole === editingCollaborator?.role}
+                className="flex-1"
+              >
+                Salvar Alteração
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setEditingCollaborator(null);
+                  setNewRole("");
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
