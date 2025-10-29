@@ -60,16 +60,30 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields");
     }
 
-    // Check if user is a collaborator on this wedding
-    const { data: collaborator, error: collabError } = await supabase
-      .from("wedding_collaborators")
-      .select("id")
-      .eq("wedding_id", weddingId)
-      .eq("user_id", user.id)
+    // Check if user is the owner or a collaborator on this wedding
+    const { data: wedding, error: weddingError } = await supabase
+      .from("wedding_data")
+      .select("user_id")
+      .eq("id", weddingId)
       .maybeSingle();
 
-    if (collabError || !collaborator) {
-      throw new Error("Not authorized to send invitations for this wedding");
+    if (weddingError) {
+      throw new Error("Wedding not found");
+    }
+
+    const isOwner = wedding && wedding.user_id === user.id;
+
+    if (!isOwner) {
+      const { data: collaborator, error: collabError } = await supabase
+        .from("wedding_collaborators")
+        .select("id")
+        .eq("wedding_id", weddingId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (collabError || !collaborator) {
+        throw new Error("Not authorized to send invitations for this wedding");
+      }
     }
 
     // Generate invitation token
