@@ -15,12 +15,12 @@ import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X, Trash2
 // Validation schemas
 const nameSchema = z.string().trim().min(1, 'Nome não pode estar vazio').max(100, 'Nome muito longo');
 const emailSchema = z.string().trim().email('Email inválido').max(255, 'Email muito longo');
-const phoneSchema = z.string().trim().regex(/^[\d\s\-\+\(\)]+$/, 'Telefone inválido').max(20, 'Telefone muito longo').optional().or(z.literal(''));
+const phoneSchema = z.string().trim().regex(/^[\d\s\-\+\(\)]*$/, 'Telefone inválido').max(20, 'Telefone muito longo').optional().or(z.literal(''));
 const eventCodeSchema = z.string().trim().min(1, 'Código do evento é obrigatório').max(50, 'Código muito longo');
 
 const profileSchema = z.object({
   firstName: nameSchema,
-  lastName: z.string().trim().max(100, 'Sobrenome muito longo'),
+  lastName: z.string().max(100, 'Sobrenome muito longo').optional().or(z.literal('')),
   email: emailSchema,
   phone: phoneSchema
 });
@@ -97,10 +97,10 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
     // Validate all fields
     try {
       profileSchema.parse({
-        firstName,
-        lastName,
-        email,
-        phone
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim()
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -119,7 +119,7 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
         .from('profiles')
         .update({
           first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          last_name: lastName.trim() || null,
           email: email.trim().toLowerCase(),
           phone: phone.trim() || null
         })
@@ -131,8 +131,6 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
         title: "Perfil atualizado",
         description: "Suas informações foram salvas com sucesso",
       });
-
-      onOpenChange(false);
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
