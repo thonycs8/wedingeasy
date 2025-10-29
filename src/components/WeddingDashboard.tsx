@@ -62,6 +62,7 @@ import { DashboardOverview } from "@/components/DashboardOverview";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
 import { ServicesMarketplace } from "@/components/ServicesMarketplace";
 import { CeremonyRoles } from "@/components/CeremonyRoles";
+import { UserProfile } from "@/components/UserProfile";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -72,6 +73,7 @@ const WeddingDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [coupleNames, setCoupleNames] = useState<string>(t('hero.title'));
   const isMobile = useIsMobile();
@@ -290,6 +292,14 @@ const WeddingDashboard = () => {
             <Button 
               variant="outline" 
               size="sm"
+              onClick={() => setShowProfile(true)}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Meu Perfil</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
               onClick={async () => {
                 await signOut();
                 toast({
@@ -416,6 +426,16 @@ const WeddingDashboard = () => {
       </div>
       
       <Footer />
+
+      <CollaboratorsManager 
+        open={showCollaborators} 
+        onOpenChange={setShowCollaborators} 
+      />
+
+      <UserProfile 
+        open={showProfile} 
+        onOpenChange={setShowProfile} 
+      />
     </div>
   );
 };
