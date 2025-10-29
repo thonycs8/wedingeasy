@@ -18,7 +18,8 @@ import {
   UserPlus,
   Menu,
   ShoppingBag,
-  Bell
+  Bell,
+  User
 } from "lucide-react";
 import {
   Sheet,
@@ -76,6 +77,7 @@ const WeddingDashboard = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [coupleNames, setCoupleNames] = useState<string>(t('hero.title'));
+  const [userName, setUserName] = useState<string>("");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -94,6 +96,17 @@ const WeddingDashboard = () => {
     };
 
     const loadCoupleNames = async () => {
+      // Get user name first
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', user.id)
+        .single();
+
+      if (userProfile) {
+        setUserName(`${userProfile.first_name} ${userProfile.last_name || ''}`.trim() || 'Perfil');
+      }
+
       // Get wedding ID
       const { data: weddingDataDb } = await supabase
         .from('wedding_data')
@@ -260,45 +273,55 @@ const WeddingDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted w-full">
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 shadow-sm">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">wedigneasy</h2>
-          <div className="flex flex-wrap gap-2">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-2 px-3 sm:py-3 sm:px-4 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">wedigneasy</h2>
+          
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Notifications */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm"
               onClick={() => setActiveTab("notifications")}
-              className="relative"
+              className="relative h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
             >
-              <Bell className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Alertas</span>
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline sm:ml-2">Alertas</span>
               {unreadCount > 0 && (
                 <Badge 
                   variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center px-1 text-xs"
+                  className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center px-1 text-[10px]"
                 >
                   {unreadCount}
                 </Badge>
               )}
             </Button>
+
+            {/* Collaborators */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm"
               onClick={() => setShowCollaborators(true)}
+              className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
             >
-              <UserPlus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">{t('collaborators.manage')}</span>
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline sm:ml-2">{t('collaborators.manage')}</span>
             </Button>
+
+            {/* User Profile */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm"
               onClick={() => setShowProfile(true)}
+              className="h-8 px-2 sm:h-9 sm:px-3"
             >
-              <Users className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Meu Perfil</span>
+              <User className="w-4 h-4" />
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm">{userName || 'Perfil'}</span>
             </Button>
+
+            {/* Logout */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm"
               onClick={async () => {
                 await signOut();
@@ -307,34 +330,14 @@ const WeddingDashboard = () => {
                   description: "Até breve!",
                 });
               }}
+              className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Sair</span>
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline sm:ml-2">Sair</span>
             </Button>
-            {weddingData && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  if (confirm(t('dashboard.reset.confirm'))) {
-                    clearWeddingData();
-                    window.location.href = '/';
-                  }
-                }}
-              >
-                <span className="hidden sm:inline">{t('dashboard.reset.button')}</span>
-                <span className="sm:hidden">Reset</span>
-              </Button>
-            )}
-            <LanguageCurrencySelector />
           </div>
         </div>
       </div>
-
-      <CollaboratorsManager 
-        open={showCollaborators} 
-        onOpenChange={setShowCollaborators} 
-      />
 
       {/* Hero Section */}
       <div className="relative h-48 md:h-64 overflow-hidden">
