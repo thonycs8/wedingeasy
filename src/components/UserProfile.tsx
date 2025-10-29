@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
-import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X } from "lucide-react";
+import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X, Trash2 } from "lucide-react";
 
 // Validation schemas
 const nameSchema = z.string().trim().min(1, 'Nome não pode estar vazio').max(100, 'Nome muito longo');
@@ -327,6 +327,39 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
     }
   };
 
+  const deleteEvent = async (eventId: string) => {
+    if (!confirm('Tem certeza que deseja apagar este evento? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('wedding_data')
+        .delete()
+        .eq('id', eventId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Evento apagado",
+        description: "O evento foi removido com sucesso",
+      });
+
+      loadEvents();
+      
+      // Reload page if this was the current wedding
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: t('common.error'),
+        description: 'Erro ao apagar evento',
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -511,15 +544,27 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
                                   </p>
                                 )}
                               </div>
-                              {!event.is_owner && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => leaveEvent(event.id, event.is_owner)}
-                                >
-                                  <LeaveIcon className="w-4 h-4" />
-                                </Button>
-                              )}
+                              <div className="flex gap-1">
+                                {!event.is_owner ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => leaveEvent(event.id, event.is_owner)}
+                                    title="Sair do evento"
+                                  >
+                                    <LeaveIcon className="w-4 h-4" />
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteEvent(event.id)}
+                                    title="Apagar evento"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>

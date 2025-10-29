@@ -104,7 +104,10 @@ const WeddingDashboard = () => {
         .single();
 
       if (userProfile) {
-        setUserName(`${userProfile.first_name} ${userProfile.last_name || ''}`.trim() || 'Perfil');
+        // Get only first and last name
+        const firstName = userProfile.first_name?.trim() || '';
+        const lastName = userProfile.last_name?.trim() || '';
+        setUserName(firstName && lastName ? `${firstName} ${lastName}` : firstName || 'Perfil');
       }
 
       // Get wedding ID
@@ -158,16 +161,22 @@ const WeddingDashboard = () => {
 
         // Check owner first (assuming owner is noivo)
         if (ownerProfile) {
-          noivoName = `${ownerProfile.first_name} ${ownerProfile.last_name || ''}`.trim();
+          const firstName = ownerProfile.first_name?.trim() || '';
+          const lastName = ownerProfile.last_name?.trim() || '';
+          noivoName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
         }
 
         // Check collaborators
         if (collaborators) {
           collaborators.forEach((collab: any) => {
             if (collab.role === 'noivo' && collab.profiles) {
-              noivoName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+              const firstName = collab.profiles.first_name?.trim() || '';
+              const lastName = collab.profiles.last_name?.trim() || '';
+              noivoName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
             } else if (collab.role === 'noiva' && collab.profiles) {
-              noivaName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+              const firstName = collab.profiles.first_name?.trim() || '';
+              const lastName = collab.profiles.last_name?.trim() || '';
+              noivaName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
             }
           });
         }
@@ -206,16 +215,22 @@ const WeddingDashboard = () => {
 
         // Owner is noivo
         if (ownerProfile) {
-          noivoName = `${ownerProfile.first_name} ${ownerProfile.last_name || ''}`.trim();
+          const firstName = ownerProfile.first_name?.trim() || '';
+          const lastName = ownerProfile.last_name?.trim() || '';
+          noivoName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
         }
 
         // Check collaborators for noiva
         if (collaborators) {
           collaborators.forEach((collab: any) => {
             if (collab.role === 'noivo' && collab.profiles) {
-              noivoName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+              const firstName = collab.profiles.first_name?.trim() || '';
+              const lastName = collab.profiles.last_name?.trim() || '';
+              noivoName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
             } else if (collab.role === 'noiva' && collab.profiles) {
-              noivaName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+              const firstName = collab.profiles.first_name?.trim() || '';
+              const lastName = collab.profiles.last_name?.trim() || '';
+              noivaName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
             }
           });
         }
@@ -233,7 +248,8 @@ const WeddingDashboard = () => {
     loadUnreadCount();
     loadCoupleNames();
 
-    const channel = supabase
+    // Subscribe to real-time updates for notifications
+    const notificationChannel = supabase
       .channel('notifications-changes')
       .on(
         'postgres_changes',
@@ -249,8 +265,36 @@ const WeddingDashboard = () => {
       )
       .subscribe();
 
+    // Subscribe to real-time updates for collaborators and profiles
+    const collaboratorChannel = supabase
+      .channel('collaborator-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wedding_collaborators'
+        },
+        () => {
+          loadCoupleNames();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          loadCoupleNames();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notificationChannel);
+      supabase.removeChannel(collaboratorChannel);
     };
   }, [user]);
 
