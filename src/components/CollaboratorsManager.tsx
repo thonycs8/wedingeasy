@@ -55,8 +55,16 @@ interface Invitation {
   expires_at: string;
 }
 
-// Email validation schema
+// Validation schemas
 const emailSchema = z.string().trim().email('Email inválido').max(255, 'Email muito longo');
+const nameSchema = z.string().trim().min(1, 'Nome não pode estar vazio').max(100, 'Nome muito longo');
+
+const directAddSchema = z.object({
+  firstName: nameSchema,
+  lastName: z.string().trim().max(100, 'Sobrenome muito longo'),
+  email: emailSchema,
+  role: z.string().min(1, 'Papel é obrigatório')
+});
 
 interface CollaboratorsManagerProps {
   open: boolean;
@@ -74,9 +82,15 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showAddDirectModal, setShowAddDirectModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("colaborador");
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [addingDirect, setAddingDirect] = useState(false);
+  const [directFirstName, setDirectFirstName] = useState("");
+  const [directLastName, setDirectLastName] = useState("");
+  const [directEmail, setDirectEmail] = useState("");
+  const [directRole, setDirectRole] = useState("noiva");
   const [weddingId, setWeddingId] = useState<string>("");
   const [weddingNames, setWeddingNames] = useState<string>("");
   const [inviterName, setInviterName] = useState<string>("");
@@ -368,6 +382,128 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
     }
   };
 
+  const addCollaboratorDirect = async () => {
+    // Validate all fields
+    try {
+      directAddSchema.parse({
+        firstName: directFirstName,
+        lastName: directLastName,
+        email: directEmail,
+        role: directRole
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: t('common.error'),
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setAddingDirect(true);
+    try {
+      const cleanEmail = directEmail.toLowerCase().trim();
+
+      // Check if user exists with this email
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (existingUser) {
+        // User exists, check if already collaborator
+        const { data: existingCollab } = await supabase
+          .from('wedding_collaborators')
+          .select('id')
+          .eq('wedding_id', weddingId)
+          .eq('user_id', existingUser.user_id)
+          .maybeSingle();
+
+        if (existingCollab) {
+          toast({
+            title: t('common.error'),
+            description: 'Este usuário já é colaborador do casamento',
+            variant: "destructive",
+          });
+          setAddingDirect(false);
+          return;
+        }
+
+        // Add as collaborator
+        const { error: collabError } = await supabase
+          .from('wedding_collaborators')
+          .insert({
+            wedding_id: weddingId,
+            user_id: existingUser.user_id,
+            role: directRole as any,
+            invited_by: user?.id
+          });
+
+        if (collabError) throw collabError;
+
+        // Update profile if name is different
+        if (existingUser.first_name !== directFirstName || existingUser.last_name !== directLastName) {
+          await supabase
+            .from('profiles')
+            .update({
+              first_name: directFirstName,
+              last_name: directLastName
+            })
+            .eq('user_id', existingUser.user_id);
+        }
+
+        toast({
+          title: "Colaborador adicionado",
+          description: `${directFirstName} foi adicionado como ${t(`roles.${directRole}`)}`,
+        });
+
+        setDirectFirstName("");
+        setDirectLastName("");
+        setDirectEmail("");
+        setDirectRole("noiva");
+        setShowAddDirectModal(false);
+        loadWeddingData();
+      } else {
+        // User doesn't exist, send invitation
+        const { error } = await supabase.functions.invoke('send-wedding-invitation', {
+          body: {
+            email: cleanEmail,
+            role: directRole,
+            weddingId: weddingId,
+            inviterName: inviterName,
+            weddingNames: weddingNames,
+          },
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Convite enviado",
+          description: `Um convite foi enviado para ${cleanEmail}. Quando aceitar, o perfil será criado com os dados informados.`,
+        });
+
+        setDirectFirstName("");
+        setDirectLastName("");
+        setDirectEmail("");
+        setDirectRole("noiva");
+        setShowAddDirectModal(false);
+        loadWeddingData();
+      }
+    } catch (error) {
+      console.error('Error adding collaborator:', error);
+      toast({
+        title: t('common.error'),
+        description: 'Erro ao adicionar colaborador',
+        variant: "destructive",
+      });
+    } finally {
+      setAddingDirect(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -416,8 +552,12 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             </CardContent>
           </Card>
 
-          {/* Invite by Email Button */}
-          <div className="flex justify-end">
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setShowAddDirectModal(true)} variant="outline" className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Adicionar Diretamente
+            </Button>
             <Button onClick={() => setShowInviteModal(true)} className="gap-2">
               <Mail className="w-4 h-4" />
               {t('collaborators.inviteByEmail')}
@@ -588,6 +728,99 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                 <>
                   <Mail className="w-4 h-4 mr-2" />
                   {t('collaborators.sendInvite')}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Direct Modal */}
+      <Dialog open={showAddDirectModal} onOpenChange={setShowAddDirectModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Adicionar Colaborador Diretamente
+            </DialogTitle>
+            <DialogDescription>
+              Se a pessoa já tem conta, será adicionada imediatamente. Caso contrário, receberá um convite.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="directFirstName">Nome *</Label>
+              <Input
+                id="directFirstName"
+                type="text"
+                value={directFirstName}
+                onChange={(e) => setDirectFirstName(e.target.value)}
+                placeholder="Nome"
+                className="mt-2"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="directLastName">Sobrenome</Label>
+              <Input
+                id="directLastName"
+                type="text"
+                value={directLastName}
+                onChange={(e) => setDirectLastName(e.target.value)}
+                placeholder="Sobrenome"
+                className="mt-2"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="directEmail">E-mail *</Label>
+              <Input
+                id="directEmail"
+                type="email"
+                value={directEmail}
+                onChange={(e) => setDirectEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="mt-2"
+                maxLength={255}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="directRole">Papel *</Label>
+              <Select value={directRole} onValueChange={setDirectRole}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="noiva">{t('roles.noiva')}</SelectItem>
+                  <SelectItem value="noivo">{t('roles.noivo')}</SelectItem>
+                  <SelectItem value="colaborador">{t('roles.colaborador')}</SelectItem>
+                  <SelectItem value="celebrante">{t('roles.celebrante')}</SelectItem>
+                  <SelectItem value="padrinho">{t('roles.padrinho')}</SelectItem>
+                  <SelectItem value="madrinha">{t('roles.madrinha')}</SelectItem>
+                  <SelectItem value="fotografo">{t('roles.fotografo')}</SelectItem>
+                  <SelectItem value="organizador">{t('roles.organizador')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={addCollaboratorDirect}
+              disabled={addingDirect || !directFirstName.trim() || !directEmail.trim()}
+              className="w-full"
+            >
+              {addingDirect ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Adicionar
                 </>
               )}
             </Button>
