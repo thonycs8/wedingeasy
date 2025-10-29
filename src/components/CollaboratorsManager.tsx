@@ -175,41 +175,43 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           setInviterName(`${profile.first_name} ${profile.last_name || ''}`.trim());
         }
 
-        // Load collaborators with profile data using JOIN
+        // Load collaborators
         const { data: collaboratorsData, error: collabError } = await supabase
           .from('wedding_collaborators')
-          .select(`
-            id, 
-            user_id, 
-            role, 
-            joined_at,
-            profiles:user_id (
-              first_name,
-              last_name,
-              email
-            )
-          `)
+          .select('id, user_id, role, joined_at')
           .eq('wedding_id', weddingData.id)
           .order('joined_at', { ascending: true });
 
         console.log('[CollaboratorsManager] Collaborators data:', collaboratorsData);
         console.log('[CollaboratorsManager] Collaborators error:', collabError);
 
-        // Also load the wedding owner (noivo/noiva)
-        const { data: ownerProfile, error: ownerError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, email, user_id')
-          .eq('user_id', weddingData.user_id)
-          .single();
-
         const allCollaborators: Collaborator[] = [];
 
+        // Collect all user IDs to fetch profiles
+        const userIds = new Set<string>();
+        userIds.add(weddingData.user_id); // Add owner
+
+        if (collaboratorsData) {
+          collaboratorsData.forEach(collab => userIds.add(collab.user_id));
+        }
+
+        // Fetch all profiles in one query
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, email')
+          .in('user_id', Array.from(userIds));
+
+        const profilesMap = new Map(
+          allProfiles?.map(p => [p.user_id, p]) || []
+        );
+
         // Add owner first
-        if (ownerProfile && !ownerError) {
+        const ownerProfile = profilesMap.get(weddingData.user_id);
+        if (ownerProfile) {
           allCollaborators.push({
             id: 'owner-' + weddingData.user_id,
             user_id: weddingData.user_id,
-            role: 'noivo', // or determine from wedding data
+            role: 'noivo',
             joined_at: new Date().toISOString(),
             profiles: {
               first_name: ownerProfile.first_name || 'Sem nome',
@@ -219,10 +221,21 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           });
         }
 
-        // Add other collaborators
+        // Add other collaborators with their profiles
         if (!collabError && collaboratorsData) {
-          console.log('[CollaboratorsManager] Setting collaborators:', collaboratorsData);
-          allCollaborators.push(...(collaboratorsData as any));
+          collaboratorsData.forEach(collab => {
+            const profile = profilesMap.get(collab.user_id);
+            if (profile) {
+              allCollaborators.push({
+                ...collab,
+                profiles: {
+                  first_name: profile.first_name || 'Sem nome',
+                  last_name: profile.last_name || '',
+                  email: profile.email || 'Sem email'
+                }
+              });
+            }
+          });
         }
 
         setCollaborators(allCollaborators);
