@@ -41,7 +41,7 @@ const Cookies = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Como Utilizamos Cookies</h2>
               <p className="text-muted-foreground mb-3">
-                A wedigneasy utiliza cookies para:
+                A weddingeasy utiliza cookies para:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                 <li>Manter a sua sessão ativa enquanto utiliza a aplicação</li>

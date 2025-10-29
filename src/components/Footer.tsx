@@ -9,7 +9,7 @@ const Footer = () => {
           {/* Brand & Copyright */}
           <div className="flex items-center gap-2">
             <Heart className="w-5 h-5 text-primary" />
-            <span className="font-semibold">wedigneasy</span>
+            <span className="font-semibold">weddingeasy</span>
             <span className="text-muted text-sm">© {new Date().getFullYear()} Todos os direitos reservados</span>
           </div>
           

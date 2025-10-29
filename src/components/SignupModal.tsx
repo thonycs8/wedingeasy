@@ -426,7 +426,7 @@ export const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
           <DialogTitle className="text-center text-2xl font-bold">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Heart className="w-6 h-6 text-primary" />
-              <span className="text-primary">wedigneasy</span>
+              <span className="text-primary">weddingeasy</span>
             </div>
             <div className="text-lg text-muted-foreground">
               {invitationData 

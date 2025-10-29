@@ -232,7 +232,7 @@ const WeddingDashboard = () => {
       {/* Header with Language/Currency Selector and Wedding Data Actions */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-2 px-3 sm:py-3 sm:px-4 shadow-sm">
         <div className="container mx-auto flex items-center justify-between gap-2">
-          <h2 className="text-base sm:text-lg font-semibold text-foreground">wedigneasy</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">weddingeasy</h2>
           
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Wedding Details */}

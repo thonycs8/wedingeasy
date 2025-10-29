@@ -171,7 +171,7 @@ export const NotificationSystem = () => {
           <CardTitle className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-primary" />
-              <span className="text-primary">wedigneasy</span>
+              <span className="text-primary">weddingeasy</span>
             </div>
             <div className="flex items-center gap-2 text-base font-normal">
               <span>Notificações</span>
