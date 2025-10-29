@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Trash2, Check, X, Download } from "lucide-react";
+import { Users, Plus, Trash2, Check, X, Download, Pencil } from "lucide-react";
 import { exportCeremonyRolesPDF } from "@/utils/pdfExport";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useWeddingData } from "@/contexts/WeddingContext";
@@ -43,6 +43,8 @@ export const CeremonyRoles = () => {
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isNewRoleDialogOpen, setIsNewRoleDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<CeremonyRole | null>(null);
   
   const [newPerson, setNewPerson] = useState({
     name: "",
@@ -198,6 +200,52 @@ export const CeremonyRoles = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openEditDialog = (person: CeremonyRole) => {
+    setEditingPerson(person);
+    setIsEditDialogOpen(true);
+  };
+
+  const updatePerson = async () => {
+    if (!editingPerson || !editingPerson.name || !editingPerson.special_role || !editingPerson.side) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha o nome, papel e lado (noivo/noiva)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("guests")
+        .update({
+          name: editingPerson.name,
+          email: editingPerson.email || null,
+          phone: editingPerson.phone || null,
+          special_role: editingPerson.special_role,
+          side: editingPerson.side,
+        })
+        .eq("id", editingPerson.id);
+
+      if (error) throw error;
+
+      setRoles(roles.map(r => r.id === editingPerson.id ? editingPerson : r));
+      setIsEditDialogOpen(false);
+      setEditingPerson(null);
+
+      toast({
+        title: "Pessoa atualizada",
+        description: `${editingPerson.name} foi atualizado(a)`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar pessoa",
         description: error.message,
         variant: "destructive",
       });
@@ -416,6 +464,13 @@ export const CeremonyRoles = () => {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(person)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
                               variant={person.confirmed ? "outline" : "default"}
                               onClick={() => toggleConfirmation(person.id, person.confirmed)}
                             >
@@ -482,6 +537,13 @@ export const CeremonyRoles = () => {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(person)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
                               variant={person.confirmed ? "outline" : "default"}
                               onClick={() => toggleConfirmation(person.id, person.confirmed)}
                             >
@@ -520,6 +582,96 @@ export const CeremonyRoles = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Person Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Pessoa</DialogTitle>
+            <DialogDescription>
+              Altere o papel ou informações da pessoa na cerimônia
+            </DialogDescription>
+          </DialogHeader>
+          {editingPerson && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="edit-name">Nome *</Label>
+                <Input
+                  id="edit-name"
+                  value={editingPerson.name}
+                  onChange={(e) =>
+                    setEditingPerson({ ...editingPerson, name: e.target.value })
+                  }
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-role">Papel *</Label>
+                <Select
+                  value={editingPerson.special_role}
+                  onValueChange={(value) =>
+                    setEditingPerson({ ...editingPerson, special_role: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o papel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-side">Lado *</Label>
+                <Select
+                  value={editingPerson.side || ''}
+                  onValueChange={(value: 'noivo' | 'noiva') =>
+                    setEditingPerson({ ...editingPerson, side: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o lado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="noivo">Noivo</SelectItem>
+                    <SelectItem value="noiva">Noiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editingPerson.email || ''}
+                  onChange={(e) =>
+                    setEditingPerson({ ...editingPerson, email: e.target.value })
+                  }
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-phone">Telefone</Label>
+                <Input
+                  id="edit-phone"
+                  value={editingPerson.phone || ''}
+                  onChange={(e) =>
+                    setEditingPerson({ ...editingPerson, phone: e.target.value })
+                  }
+                  placeholder="+351 912 345 678"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={updatePerson}>Salvar Alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
