@@ -73,10 +73,8 @@ const WeddingDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [coupleNames, setCoupleNames] = useState<string>(t('hero.title'));
   const isMobile = useIsMobile();
-  
-  // Use questionnaire data if available
-  const coupleNames = weddingData ? `${weddingData.couple.partnerName} & ${weddingData.couple.name}` : t('hero.title');
 
   useEffect(() => {
     if (!user) return;
@@ -93,7 +91,132 @@ const WeddingDashboard = () => {
       }
     };
 
+    const loadCoupleNames = async () => {
+      // Get wedding ID
+      const { data: weddingDataDb } = await supabase
+        .from('wedding_data')
+        .select('id, user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!weddingDataDb) {
+        // Check if user is collaborator
+        const { data: collabData } = await supabase
+          .from('wedding_collaborators')
+          .select('wedding_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!collabData) return;
+
+        // Get wedding owner and collaborators
+        const { data: wedding } = await supabase
+          .from('wedding_data')
+          .select('id, user_id')
+          .eq('id', collabData.wedding_id)
+          .single();
+
+        if (!wedding) return;
+
+        // Load collaborators with noivo/noiva roles
+        const { data: collaborators } = await supabase
+          .from('wedding_collaborators')
+          .select(`
+            role,
+            profiles:user_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('wedding_id', wedding.id)
+          .in('role', ['noivo', 'noiva']);
+
+        // Also get owner profile
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', wedding.user_id)
+          .single();
+
+        let noivoName = '';
+        let noivaName = '';
+
+        // Check owner first (assuming owner is noivo)
+        if (ownerProfile) {
+          noivoName = `${ownerProfile.first_name} ${ownerProfile.last_name || ''}`.trim();
+        }
+
+        // Check collaborators
+        if (collaborators) {
+          collaborators.forEach((collab: any) => {
+            if (collab.role === 'noivo' && collab.profiles) {
+              noivoName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+            } else if (collab.role === 'noiva' && collab.profiles) {
+              noivaName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+            }
+          });
+        }
+
+        if (noivaName && noivoName) {
+          setCoupleNames(`${noivaName} & ${noivoName}`);
+        } else if (noivoName) {
+          setCoupleNames(noivoName);
+        } else if (noivaName) {
+          setCoupleNames(noivaName);
+        }
+      } else {
+        // User is owner
+        // Load collaborators with noivo/noiva roles
+        const { data: collaborators } = await supabase
+          .from('wedding_collaborators')
+          .select(`
+            role,
+            profiles:user_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('wedding_id', weddingDataDb.id)
+          .in('role', ['noivo', 'noiva']);
+
+        // Get owner profile
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', weddingDataDb.user_id)
+          .single();
+
+        let noivoName = '';
+        let noivaName = '';
+
+        // Owner is noivo
+        if (ownerProfile) {
+          noivoName = `${ownerProfile.first_name} ${ownerProfile.last_name || ''}`.trim();
+        }
+
+        // Check collaborators for noiva
+        if (collaborators) {
+          collaborators.forEach((collab: any) => {
+            if (collab.role === 'noivo' && collab.profiles) {
+              noivoName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+            } else if (collab.role === 'noiva' && collab.profiles) {
+              noivaName = `${collab.profiles.first_name} ${collab.profiles.last_name || ''}`.trim();
+            }
+          });
+        }
+
+        if (noivaName && noivoName) {
+          setCoupleNames(`${noivaName} & ${noivoName}`);
+        } else if (noivoName) {
+          setCoupleNames(noivoName);
+        } else if (noivaName) {
+          setCoupleNames(noivaName);
+        }
+      }
+    };
+
     loadUnreadCount();
+    loadCoupleNames();
 
     const channel = supabase
       .channel('notifications-changes')
