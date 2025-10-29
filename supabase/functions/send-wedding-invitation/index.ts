@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields");
     }
 
-    // Check if user is the owner or a collaborator on this wedding
+    // Check if user is the owner or an admin (noiva/celebrante) on this wedding
     const { data: wedding, error: weddingError } = await supabase
       .from("wedding_data")
       .select("user_id")
@@ -72,17 +72,31 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const isOwner = wedding && wedding.user_id === user.id;
+    let isAdmin = isOwner;
 
     if (!isOwner) {
+      // Check if user is admin collaborator (noiva or celebrante)
       const { data: collaborator, error: collabError } = await supabase
         .from("wedding_collaborators")
-        .select("id")
+        .select("role")
         .eq("wedding_id", weddingId)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (collabError || !collaborator) {
-        throw new Error("Not authorized to send invitations for this wedding");
+      isAdmin = collaborator && ['noiva', 'celebrante'].includes(collaborator.role);
+
+      if (!isAdmin) {
+        // Check if user is at least a regular collaborator
+        const { data: anyCollab } = await supabase
+          .from("wedding_collaborators")
+          .select("id")
+          .eq("wedding_id", weddingId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!anyCollab) {
+          throw new Error("Not authorized to send invitations for this wedding");
+        }
       }
     }
 

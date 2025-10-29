@@ -691,6 +691,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_wedding_admin: {
+        Args: { _user_id: string; _wedding_id: string }
+        Returns: boolean
+      }
       is_wedding_collaborator: {
         Args: { _user_id: string; _wedding_id: string }
         Returns: boolean

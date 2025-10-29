@@ -278,10 +278,29 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
   };
 
   const removeCollaborator = async (collaboratorId: string, collaboratorUserId: string) => {
-    if (!isOwner) {
+    // Check if current user is admin (owner, noiva, or celebrante)
+    const { data: wedding } = await supabase
+      .from('wedding_data')
+      .select('user_id')
+      .eq('id', weddingId)
+      .single();
+
+    const isOwner = wedding && wedding.user_id === user?.id;
+
+    // Check if user is admin collaborator
+    const { data: userCollab } = await supabase
+      .from('wedding_collaborators')
+      .select('role')
+      .eq('wedding_id', weddingId)
+      .eq('user_id', user?.id)
+      .maybeSingle();
+
+    const isAdmin = isOwner || (userCollab && ['noiva', 'celebrante'].includes(userCollab.role));
+
+    if (!isAdmin) {
       toast({
         title: t('common.error'),
-        description: t('collaborators.onlyOwnerCanRemove'),
+        description: 'Apenas administradores podem remover colaboradores',
         variant: "destructive",
       });
       return;
@@ -291,6 +310,22 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
       toast({
         title: t('common.error'),
         description: t('collaborators.cannotRemoveSelf'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if trying to remove another admin
+    const { data: targetCollab } = await supabase
+      .from('wedding_collaborators')
+      .select('role')
+      .eq('id', collaboratorId)
+      .maybeSingle();
+
+    if (targetCollab && ['noiva', 'celebrante'].includes(targetCollab.role)) {
+      toast({
+        title: t('common.error'),
+        description: 'Não é possível remover administradores (noiva/celebrante)',
         variant: "destructive",
       });
       return;
@@ -371,6 +406,34 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
   };
 
   const deleteInvitation = async (invitationId: string) => {
+    // Check if current user is admin (owner, noiva, or celebrante)
+    const { data: wedding } = await supabase
+      .from('wedding_data')
+      .select('user_id')
+      .eq('id', weddingId)
+      .single();
+
+    const isOwner = wedding && wedding.user_id === user?.id;
+
+    // Check if user is admin collaborator
+    const { data: userCollab } = await supabase
+      .from('wedding_collaborators')
+      .select('role')
+      .eq('wedding_id', weddingId)
+      .eq('user_id', user?.id)
+      .maybeSingle();
+
+    const isAdmin = isOwner || (userCollab && ['noiva', 'celebrante'].includes(userCollab.role));
+
+    if (!isAdmin) {
+      toast({
+        title: t('common.error'),
+        description: 'Apenas administradores podem cancelar convites',
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('wedding_invitations')
@@ -604,15 +667,13 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           <Badge variant="outline">
                             {t(`roles.${invitation.role}`)}
                           </Badge>
-                          {isOwner && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteInvitation(invitation.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteInvitation(invitation.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -662,7 +723,23 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           <Badge variant={collaborator.role === 'noivo' || collaborator.role === 'noiva' ? 'default' : 'secondary'}>
                             {t(`roles.${collaborator.role}`)}
                           </Badge>
-                          {isOwner && collaborator.role !== 'noivo' && collaborator.role !== 'noiva' && collaborator.user_id !== weddingId && !collaborator.id.startsWith('owner-') && (
+                          {/* Show Admin badge for noiva and celebrante */}
+                          {(collaborator.role === 'noiva' || collaborator.role === 'celebrante') && (
+                            <Badge variant="destructive" className="gap-1">
+                              <Crown className="w-3 h-3" />
+                              Admin
+                            </Badge>
+                          )}
+                          {/* Show Owner badge for noivo */}
+                          {(collaborator.role === 'noivo' || collaborator.id.startsWith('owner-')) && (
+                            <Badge variant="destructive" className="gap-1">
+                              <Crown className="w-3 h-3" />
+                              Owner
+                            </Badge>
+                          )}
+                          {/* Only admins can remove non-admin collaborators */}
+                          {!['noivo', 'noiva', 'celebrante'].includes(collaborator.role) && 
+                           !collaborator.id.startsWith('owner-') && (
                             <Button
                               variant="ghost"
                               size="sm"
