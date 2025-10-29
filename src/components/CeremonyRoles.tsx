@@ -207,6 +207,7 @@ export const CeremonyRoles = () => {
   };
 
   const openEditDialog = (person: CeremonyRole) => {
+    loadCustomRoles(); // Recarrega papéis personalizados antes de abrir
     setEditingPerson(person);
     setIsEditDialogOpen(true);
   };
