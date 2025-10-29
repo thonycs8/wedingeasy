@@ -126,17 +126,17 @@ const WeddingDashboard = () => {
       }
     }
 
-    // Set couple names from wedding_data fields
+    // Set couple names from wedding_data fields - Noiva primeiro
     if (weddingData) {
       const couple = weddingData.couple_name?.trim() || '';
       const partner = weddingData.partner_name?.trim() || '';
 
-      if (couple && partner) {
-        setCoupleNames(`${couple} & ${partner}`);
-      } else if (couple) {
-        setCoupleNames(couple);
+      if (partner && couple) {
+        setCoupleNames(`${partner} & ${couple}`);
       } else if (partner) {
         setCoupleNames(partner);
+      } else if (couple) {
+        setCoupleNames(couple);
       } else {
         setCoupleNames(t('hero.title'));
       }
