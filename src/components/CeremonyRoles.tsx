@@ -31,6 +31,9 @@ const DEFAULT_ROLES = [
   "Pajem",
   "Florista",
   "Portador das Alianças",
+  "Amigo do Noivo",
+  "Amiga da Noiva",
+  "Convidado de Honra",
 ];
 
 export const CeremonyRoles = () => {
