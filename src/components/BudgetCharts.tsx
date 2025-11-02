@@ -58,25 +58,25 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-lg bg-primary/10">
-              <p className="text-sm text-muted-foreground mb-1">Orçamento Total</p>
-              <p className="text-xl font-bold text-primary">{formatCurrency(totalBudget, currency)}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="text-center p-3 sm:p-4 rounded-lg bg-primary/10">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Orçamento Total</p>
+              <p className="text-base sm:text-lg lg:text-xl font-bold text-primary truncate">{formatCurrency(totalBudget, currency)}</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-destructive/10">
-              <p className="text-sm text-muted-foreground mb-1">Total Gasto</p>
-              <p className="text-xl font-bold text-destructive">{formatCurrency(totalSpent, currency)}</p>
+            <div className="text-center p-3 sm:p-4 rounded-lg bg-destructive/10">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Total Gasto</p>
+              <p className="text-base sm:text-lg lg:text-xl font-bold text-destructive truncate">{formatCurrency(totalSpent, currency)}</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-success/10">
-              <p className="text-sm text-muted-foreground mb-1">Restante</p>
-              <p className="text-xl font-bold text-success">{formatCurrency(remainingBudget, currency)}</p>
+            <div className="text-center p-3 sm:p-4 rounded-lg bg-success/10">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Restante</p>
+              <p className="text-base sm:text-lg lg:text-xl font-bold text-success truncate">{formatCurrency(remainingBudget, currency)}</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Progresso do Orçamento</span>
-              <span className="text-sm font-semibold">{budgetProgress.toFixed(1)}%</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium truncate">Progresso do Orçamento</span>
+              <span className="text-xs sm:text-sm font-semibold shrink-0">{budgetProgress.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
               <div 
@@ -91,16 +91,16 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
           </div>
 
           {budgetProgress > 100 && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
-              <TrendingDown className="w-4 h-4" />
-              <p className="text-sm font-medium">Orçamento ultrapassado em {formatCurrency(totalSpent - totalBudget, currency)}</p>
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
+              <TrendingDown className="w-4 h-4 shrink-0 mt-0.5" />
+              <p className="text-xs sm:text-sm font-medium break-words">Orçamento ultrapassado em {formatCurrency(totalSpent - totalBudget, currency)}</p>
             </div>
           )}
 
           {budgetProgress < 50 && totalSpent > 0 && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
-              <TrendingUp className="w-4 h-4" />
-              <p className="text-sm font-medium">Ótimo! Dentro do orçamento</p>
+              <TrendingUp className="w-4 h-4 shrink-0" />
+              <p className="text-xs sm:text-sm font-medium">Ótimo! Dentro do orçamento</p>
             </div>
           )}
         </CardContent>
@@ -109,9 +109,9 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
       {/* Pie Chart - Distribution of Spending */}
       <Card className="card-romantic">
         <CardHeader>
-          <CardTitle className="text-lg">Distribuição de Gastos</CardTitle>
+          <CardTitle className="text-base sm:text-lg truncate">Distribuição de Gastos</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden">
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -120,7 +120,10 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => {
+                    const shortName = name.length > 10 ? name.substring(0, 10) + '...' : name;
+                    return `${shortName}: ${(percent * 100).toFixed(0)}%`;
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -131,13 +134,14 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
                 </Pie>
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value, currency)}
+                  contentStyle={{ maxWidth: '200px', wordWrap: 'break-word' }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              <p>Nenhum gasto registado ainda</p>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground px-4">
+              <p className="text-center text-sm">Nenhum gasto registado ainda</p>
             </div>
           )}
         </CardContent>
@@ -146,28 +150,43 @@ export const BudgetCharts = ({ categories, totalBudget, totalSpent }: BudgetChar
       {/* Bar Chart - Top Categories */}
       <Card className="card-romantic lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-lg">Top 5 Categorias - Orçado vs Gasto</CardTitle>
+          <CardTitle className="text-base sm:text-lg truncate">Top 5 Categorias - Orçado vs Gasto</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           {barData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} className="min-w-[300px]">
               <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => formatCurrency(value, currency)} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  tickFormatter={(value) => formatCurrency(value, currency)}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value, currency)}
-                  contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    maxWidth: '200px',
+                    fontSize: '12px'
+                  }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="orçado" fill="#3b82f6" name="Orçado" />
                 <Bar dataKey="gasto" fill="#ef4444" name="Gasto" />
                 <Bar dataKey="restante" fill="#10b981" name="Restante" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              <p>Adicione categorias e gastos para ver o gráfico</p>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground px-4">
+              <p className="text-center text-sm">Adicione categorias e gastos para ver o gráfico</p>
             </div>
           )}
         </CardContent>
