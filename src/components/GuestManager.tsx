@@ -354,22 +354,22 @@ export const GuestManager = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-primary">{guests.length}</p>
-            <p className="text-sm text-muted-foreground">{t('guests.total')}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="text-center p-2">
+            <p className="text-xl sm:text-2xl font-bold text-primary truncate">{guests.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('guests.total')}</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-success">{guests.filter(g => g.confirmed).length}</p>
-            <p className="text-sm text-muted-foreground">{t('guests.confirmed')}</p>
+          <div className="text-center p-2">
+            <p className="text-xl sm:text-2xl font-bold text-success truncate">{guests.filter(g => g.confirmed).length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('guests.confirmed')}</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-warning">{guests.filter(g => g.plus_one).length}</p>
-            <p className="text-sm text-muted-foreground">Com Acompanhante</p>
+          <div className="text-center p-2">
+            <p className="text-xl sm:text-2xl font-bold text-warning truncate">{guests.filter(g => g.plus_one).length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">Com Acompanhante</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-info">{specialCategories.length}</p>
-            <p className="text-sm text-muted-foreground">Funções Especiais</p>
+          <div className="text-center p-2">
+            <p className="text-xl sm:text-2xl font-bold text-info truncate">{specialCategories.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">Funções Especiais</p>
           </div>
         </div>
 
@@ -701,37 +701,39 @@ export const GuestManager = () => {
                 {filteredGuests.map((guest) => {
                   const CategoryIcon = getCategoryIcon(guest.category);
                   return (
-                    <div key={guest.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
-                      <div className="flex items-center gap-4">
-                        <CategoryIcon className="w-5 h-5 text-primary" />
-                        <div>
-                          <h4 className="font-medium">{guest.name}</h4>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant="secondary" className="text-xs">
+                    <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
+                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                        <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium truncate">{guest.name}</h4>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                            <Badge variant="secondary" className="text-xs shrink-0">
                               {getCategoryLabel(guest.category)}
                             </Badge>
                             {guest.special_role && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs shrink-0">
                                 {getSpecialRoleLabel(guest.special_role)}
                               </Badge>
                             )}
-                            {guest.confirmed ? (
-                              <CheckCircle className="w-4 h-4 text-success" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-muted-foreground" />
-                            )}
-                            {guest.plus_one && <span>+1</span>}
-                            {guest.printed_invitation && <span>📜</span>}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {guest.confirmed ? (
+                                <CheckCircle className="w-4 h-4 text-success" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-muted-foreground" />
+                              )}
+                              {guest.plus_one && <span>+1</span>}
+                              {guest.printed_invitation && <span>📜</span>}
+                            </div>
                           </div>
                           {guest.email && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Mail className="w-3 h-3" />
-                              {guest.email}
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
+                              <Mail className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{guest.email}</span>
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 shrink-0 self-end sm:self-auto">
                         <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -766,19 +768,19 @@ export const GuestManager = () => {
                   
                   return (
                     <div key={category} className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <CategoryIcon className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold text-lg">{getCategoryLabel(category)}</h3>
-                        <Badge variant="secondary">{categoryGuests.length}</Badge>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CategoryIcon className="w-5 h-5 text-primary shrink-0" />
+                        <h3 className="font-semibold text-base sm:text-lg">{getCategoryLabel(category)}</h3>
+                        <Badge variant="secondary" className="shrink-0">{categoryGuests.length}</Badge>
                       </div>
                       <div className="grid gap-3">
                         {categoryGuests.map(guest => (
-                          <div key={guest.id} className="flex items-center justify-between p-3 border rounded-lg bg-primary/5">
-                            <div>
-                              <h4 className="font-medium">{guest.name}</h4>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg bg-primary/5 gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-medium truncate">{guest.name}</h4>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                                 {guest.special_role && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs shrink-0">
                                     {getSpecialRoleLabel(guest.special_role)}
                                   </Badge>
                                 )}
@@ -789,7 +791,7 @@ export const GuestManager = () => {
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 shrink-0 self-end sm:self-auto">
                               <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
                                 <Edit className="w-4 h-4" />
                               </Button>

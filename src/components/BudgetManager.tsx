@@ -536,22 +536,22 @@ export const BudgetManager = () => {
 
               return (
                 <Card key={category.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{category.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start justify-between mb-3 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base sm:text-lg truncate">{category.name}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground break-words">
                           {formatCurrency(category.spent_amount, currency)} / {formatCurrency(category.budgeted_amount, currency)}
                         </p>
                         {category.description && (
-                          <p className="text-xs text-muted-foreground mt-1">{category.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{category.description}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(category.priority)}>
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                        <Badge className={`${getPriorityColor(category.priority)} text-xs`}>
                           {category.priority === 'alta' ? 'Alta' : category.priority === 'media' ? 'Média' : 'Baixa'}
                         </Badge>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
                           {categoryExpenses.length} gastos • {categoryOptions.length} opções
                         </div>
                       </div>
@@ -561,7 +561,7 @@ export const BudgetManager = () => {
                       className={`h-2 ${isOverBudget ? 'bg-red-100' : ''}`}
                     />
                     {isOverBudget && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p className="text-xs text-red-600 mt-1 break-words">
                         Acima do orçamento em {formatCurrency(category.spent_amount - category.budgeted_amount, currency)}
                       </p>
                     )}
@@ -661,20 +661,20 @@ export const BudgetManager = () => {
           <div className="grid gap-4">
             {categories.map((category) => (
               <Card key={category.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{category.name}</h4>
-                      <p className="text-sm text-muted-foreground">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold truncate">{category.name}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground break-words">
                         Orçamentado: {formatCurrency(category.budgeted_amount, currency)} | 
                         Gasto: {formatCurrency(category.spent_amount, currency)}
                       </p>
                       {category.description && (
-                        <p className="text-xs text-muted-foreground mt-1">{category.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{category.description}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getPriorityColor(category.priority)}>
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <Badge className={`${getPriorityColor(category.priority)} text-xs`}>
                         {category.priority === 'alta' ? 'Alta' : category.priority === 'media' ? 'Média' : 'Baixa'}
                       </Badge>
                       <Button
@@ -823,22 +823,22 @@ export const BudgetManager = () => {
                 const category = categories.find(c => c.id === expense.category_id);
                 return (
                   <Card key={expense.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{expense.name}</h4>
-                          <p className="text-sm text-muted-foreground">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold truncate">{expense.name}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground break-words">
                             {category?.name} • {formatCurrency(expense.amount, currency)} • {new Date(expense.date).toLocaleDateString()}
                           </p>
                           {expense.vendor && (
-                            <p className="text-xs text-muted-foreground">Fornecedor: {expense.vendor}</p>
+                            <p className="text-xs text-muted-foreground truncate">Fornecedor: {expense.vendor}</p>
                           )}
                           {expense.description && (
-                            <p className="text-xs text-muted-foreground mt-1">{expense.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{expense.description}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={expense.status === 'pago' ? 'default' : expense.status === 'pendente' ? 'secondary' : 'destructive'}>
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                          <Badge variant={expense.status === 'pago' ? 'default' : expense.status === 'pendente' ? 'secondary' : 'destructive'} className="text-xs">
                             {expense.status === 'pago' ? 'Pago' : expense.status === 'pendente' ? 'Pendente' : 'Cancelado'}
                           </Badge>
                           <Button

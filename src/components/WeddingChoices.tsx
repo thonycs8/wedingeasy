@@ -177,24 +177,24 @@ export const WeddingChoices = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Progress Overview */}
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="p-3 rounded-lg bg-success/10">
-            <p className="text-2xl font-bold text-success">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
+          <div className="p-2 sm:p-3 rounded-lg bg-success/10">
+            <p className="text-xl sm:text-2xl font-bold text-success truncate">
               {choices.filter(c => c.status === 'decided' || c.status === 'booked').length}
             </p>
-            <p className="text-xs text-muted-foreground">{t('choices.decided')}</p>
+            <p className="text-xs text-muted-foreground truncate">{t('choices.decided')}</p>
           </div>
-          <div className="p-3 rounded-lg bg-warning/10">
-            <p className="text-2xl font-bold text-warning">
+          <div className="p-2 sm:p-3 rounded-lg bg-warning/10">
+            <p className="text-xl sm:text-2xl font-bold text-warning truncate">
               {choices.filter(c => c.status === 'pending').length}
             </p>
-            <p className="text-xs text-muted-foreground">{t('choices.pending')}</p>
+            <p className="text-xs text-muted-foreground truncate">{t('choices.pending')}</p>
           </div>
-          <div className="p-3 rounded-lg bg-primary/10">
-            <p className="text-2xl font-bold text-primary">
+          <div className="p-2 sm:p-3 rounded-lg bg-primary/10">
+            <p className="text-xl sm:text-2xl font-bold text-primary truncate">
               {choices.filter(c => c.status === 'booked').length}
             </p>
-            <p className="text-xs text-muted-foreground">{t('choices.booked')}</p>
+            <p className="text-xs text-muted-foreground truncate">{t('choices.booked')}</p>
           </div>
         </div>
 

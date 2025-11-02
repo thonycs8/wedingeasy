@@ -396,26 +396,26 @@ export const TimelineManager = () => {
             <span className="font-semibold">{Math.round(progressPercentage)}% {t('timeline.completed')}</span>
           </div>
           <Progress value={progressPercentage} className="h-3" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-success">{completedTasks}</p>
-              <p className="text-xs text-muted-foreground">{t('timeline.completed')}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center">
+            <div className="p-2">
+              <p className="text-xl sm:text-2xl font-bold text-success truncate">{completedTasks}</p>
+              <p className="text-xs text-muted-foreground truncate">{t('timeline.completed')}</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">{tasks.length - completedTasks}</p>
-              <p className="text-xs text-muted-foreground">{t('timeline.pending')}</p>
+            <div className="p-2">
+              <p className="text-xl sm:text-2xl font-bold text-primary truncate">{tasks.length - completedTasks}</p>
+              <p className="text-xs text-muted-foreground truncate">{t('timeline.pending')}</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-destructive">
+            <div className="p-2">
+              <p className="text-xl sm:text-2xl font-bold text-destructive truncate">
                 {tasks.filter(t => isTaskOverdue(t.due_date, t.completed)).length}
               </p>
-              <p className="text-xs text-muted-foreground">{t('timeline.overdue')}</p>
+              <p className="text-xs text-muted-foreground truncate">{t('timeline.overdue')}</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-warning">
+            <div className="p-2">
+              <p className="text-xl sm:text-2xl font-bold text-warning truncate">
                 {tasks.filter(t => t.priority === 'alta' && !t.completed).length}
               </p>
-              <p className="text-xs text-muted-foreground">{t('timeline.highPriority')}</p>
+              <p className="text-xs text-muted-foreground truncate">{t('timeline.highPriority')}</p>
             </div>
           </div>
         </div>

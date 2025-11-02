@@ -138,11 +138,11 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-primary" />
               </div>
-              <Badge variant="outline" className="bg-background/50">
+              <Badge variant="outline" className="bg-background/50 shrink-0">
                 {weddingDate ? format(weddingDate, "dd MMM", { locale: pt }) : 'N/A'}
               </Badge>
             </div>
-            <h3 className="text-3xl font-bold text-foreground mb-1">
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 truncate">
               {daysUntilWedding !== null ? daysUntilWedding : '--'}
             </h3>
             <p className="text-muted-foreground text-sm">dias até o grande dia</p>
@@ -159,12 +159,12 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
               </div>
               <Badge 
                 variant="outline" 
-                className={budgetProgress > 90 ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'}
+                className={`shrink-0 ${budgetProgress > 90 ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'}`}
               >
                 {budgetProgress.toFixed(0)}%
               </Badge>
             </div>
-            <h3 className="text-3xl font-bold text-foreground mb-1">
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
               {formatCurrency(totalSpent, currency)}
             </h3>
             <p className="text-muted-foreground text-sm">de {formatCurrency(totalBudget, currency)}</p>
@@ -179,11 +179,11 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
               <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
                 <Users className="w-6 h-6 text-success" />
               </div>
-              <Badge variant="outline" className="bg-background/50">
+              <Badge variant="outline" className="bg-background/50 shrink-0">
                 {guestCount > 0 ? `${((confirmedCount / guestCount) * 100).toFixed(0)}%` : '0%'}
               </Badge>
             </div>
-            <h3 className="text-3xl font-bold text-foreground mb-1">
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 truncate">
               {confirmedCount}
             </h3>
             <p className="text-muted-foreground text-sm">de {guestCount} confirmados</p>
@@ -198,11 +198,11 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
-              <Badge variant="outline" className="bg-background/50">
+              <Badge variant="outline" className="bg-background/50 shrink-0">
                 {progressPercentage.toFixed(0)}%
               </Badge>
             </div>
-            <h3 className="text-3xl font-bold text-foreground mb-1">
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 truncate">
               {completedTasks}
             </h3>
             <p className="text-muted-foreground text-sm">de {totalTasks} tarefas</p>
@@ -231,28 +231,28 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-muted/50">
+            <div className="p-3 sm:p-4 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span className="text-sm font-medium">Concluídas</span>
+                <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+                <span className="text-sm font-medium truncate">Concluídas</span>
               </div>
-              <p className="text-2xl font-bold">{completedTasks}</p>
+              <p className="text-xl sm:text-2xl font-bold truncate">{completedTasks}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-warning/10">
+            <div className="p-3 sm:p-4 rounded-lg bg-warning/10">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-warning" />
-                <span className="text-sm font-medium">Próximas</span>
+                <Clock className="w-4 h-4 text-warning flex-shrink-0" />
+                <span className="text-sm font-medium truncate">Próximas</span>
               </div>
-              <p className="text-2xl font-bold">{upcomingTasks.length}</p>
+              <p className="text-xl sm:text-2xl font-bold truncate">{upcomingTasks.length}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-destructive/10">
+            <div className="p-3 sm:p-4 rounded-lg bg-destructive/10">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium">Atrasadas</span>
+                <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
+                <span className="text-sm font-medium truncate">Atrasadas</span>
               </div>
-              <p className="text-2xl font-bold">{overdueTasks.length}</p>
+              <p className="text-xl sm:text-2xl font-bold truncate">{overdueTasks.length}</p>
             </div>
           </div>
         </CardContent>
@@ -299,11 +299,11 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                     <CheckCircle2 className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{task.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           {format(new Date(task.due_date), "dd MMM", { locale: pt })}
                         </Badge>
-                        <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
+                        <Badge className={`text-xs shrink-0 ${getPriorityColor(task.priority)}`}>
                           {task.priority}
                         </Badge>
                       </div>
@@ -339,7 +339,7 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                       <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-destructive text-sm">Orçamento ultrapassado</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 break-words">
                           Ultrapassou em {formatCurrency(totalSpent - totalBudget, currency)}
                         </p>
                       </div>
@@ -353,7 +353,7 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                       <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-warning text-sm">Orçamento quase esgotado</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 break-words">
                           Restam apenas {formatCurrency(totalBudget - totalSpent, currency)}
                         </p>
                       </div>
@@ -369,8 +369,8 @@ export const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: 
                   >
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="font-medium text-destructive text-sm">{task.title}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-destructive text-sm truncate">{task.title}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Atrasada desde {format(new Date(task.due_date), "dd MMM", { locale: pt })}
                         </p>
