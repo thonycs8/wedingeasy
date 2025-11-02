@@ -301,21 +301,21 @@ export const TimelineManager = () => {
   return (
     <Card className="card-romantic">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            {t('timeline.title')}
+            <Calendar className="w-5 h-5 text-primary shrink-0" />
+            <span className="truncate">{t('timeline.title')}</span>
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {suggestedTasks.length > 0 && (
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowSuggestions(!showSuggestions)}
-                className="border-primary/20 bg-primary/5"
+                className="border-primary/20 bg-primary/5 flex-1 sm:flex-initial"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {suggestedTasks.length} Sugestões
+                <Sparkles className="w-4 h-4 mr-2 shrink-0" />
+                <span className="truncate">{suggestedTasks.length} Sugestões</span>
               </Button>
             )}
             <Button 
@@ -327,9 +327,10 @@ export const TimelineManager = () => {
                 weddingDate: weddingData?.wedding.date
               })}
               disabled={tasks.length === 0}
+              className="flex-1 sm:flex-initial"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar PDF
+              <Download className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Exportar PDF</span>
             </Button>
           </div>
         </div>
@@ -353,7 +354,7 @@ export const TimelineManager = () => {
                 Adicionar Todas
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground break-words">
               Baseado na data do seu casamento ({weddingData?.wedding.date ? new Date(weddingData.wedding.date).toLocaleDateString('pt-PT') : ''}), 
               sugerimos estas tarefas:
             </p>
@@ -361,17 +362,17 @@ export const TimelineManager = () => {
               {suggestedTasks.map((suggestion, index) => (
                 <div 
                   key={index}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-background border border-border hover:border-primary/30 transition-colors"
+                  className="flex flex-col sm:flex-row items-start gap-3 p-3 rounded-lg bg-background border border-border hover:border-primary/30 transition-colors"
                 >
-                  <div className="flex-1">
-                    <h5 className="font-medium">{suggestion.title}</h5>
-                    <p className="text-sm text-muted-foreground">{suggestion.description}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h5 className="font-medium truncate">{suggestion.title}</h5>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{suggestion.description}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Clock className="w-3 h-3" />
-                        {suggestion.dueDate.toLocaleDateString('pt-PT')}
+                        <span className="truncate">{suggestion.dueDate.toLocaleDateString('pt-PT')}</span>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs shrink-0">
                         {t(`timeline.categories.${suggestion.category}`)}
                       </Badge>
                     </div>
@@ -380,6 +381,7 @@ export const TimelineManager = () => {
                     size="sm" 
                     variant="ghost"
                     onClick={() => addSuggestedTask(suggestion)}
+                    className="self-end sm:self-auto shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -430,12 +432,14 @@ export const TimelineManager = () => {
           ) : (
             Object.entries(categorizedTasks).map(([category, categoryTasks]) => (
               <div key={category} className="space-y-3">
-                <h4 className="font-semibold text-foreground capitalize">
-                  {t(`timeline.categories.${category}`)}
-                  <Badge variant="secondary" className="ml-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-semibold text-foreground capitalize">
+                    {t(`timeline.categories.${category}`)}
+                  </h4>
+                  <Badge variant="secondary" className="shrink-0">
                     {categoryTasks.length}
                   </Badge>
-                </h4>
+                </div>
                 
                 <div className="space-y-2">
                   {categoryTasks.map((task) => {
@@ -444,7 +448,7 @@ export const TimelineManager = () => {
                     return (
                       <div 
                         key={task.id} 
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
+                        className={`flex flex-col sm:flex-row items-start gap-3 p-3 rounded-lg transition-all duration-300 ${
                           task.completed 
                             ? 'bg-success/10 text-success-foreground' 
                             : isOverdue
@@ -452,60 +456,62 @@ export const TimelineManager = () => {
                             : 'bg-muted/50 hover:bg-muted'
                         }`}
                       >
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleTask(task.id)}
-                          className="p-0 h-auto"
-                        >
-                          <CheckCircle 
-                            className={`w-5 h-5 ${
-                              task.completed ? 'text-success' : 'text-muted-foreground'
-                            }`}
-                          />
-                        </Button>
-                        
-                        <div className="flex-1">
-                          <h5 className={`font-medium ${task.completed ? 'line-through' : ''}`}>
-                            {task.title}
-                          </h5>
-                          {task.description && (
-                            <p className="text-sm text-muted-foreground">{task.description}</p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              {new Date(task.due_date).toLocaleDateString()}
-                            </div>
-                            {isOverdue && (
-                              <div className="flex items-center gap-1 text-xs text-destructive">
-                                <AlertCircle className="w-3 h-3" />
-                                {t('timeline.overdue')}
-                              </div>
+                        <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleTask(task.id)}
+                            className="p-0 h-auto shrink-0"
+                          >
+                            <CheckCircle 
+                              className={`w-5 h-5 ${
+                                task.completed ? 'text-success' : 'text-muted-foreground'
+                              }`}
+                            />
+                          </Button>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h5 className={`font-medium break-words ${task.completed ? 'line-through' : ''}`}>
+                              {task.title}
+                            </h5>
+                            {task.description && (
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{task.description}</p>
                             )}
-                            {(() => {
-                              const taskLink = getTaskLink(task);
-                              return taskLink && !task.completed ? (
-                                <Button
-                                  variant="link"
-                                  size="sm"
-                                  className="h-auto p-0 text-xs"
-                                  onClick={() => {
-                                    const tabButton = document.querySelector(
-                                      `[value="${taskLink.tab}"]`
-                                    ) as HTMLButtonElement;
-                                    tabButton?.click();
-                                  }}
-                                >
-                                  <ExternalLink className="h-3 w-3 mr-1" />
-                                  {taskLink.label}
-                                </Button>
-                              ) : null;
-                            })()}
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                                <Clock className="w-3 h-3" />
+                                <span className="truncate">{new Date(task.due_date).toLocaleDateString()}</span>
+                              </div>
+                              {isOverdue && (
+                                <div className="flex items-center gap-1 text-xs text-destructive shrink-0">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span className="truncate">{t('timeline.overdue')}</span>
+                                </div>
+                              )}
+                              {(() => {
+                                const taskLink = getTaskLink(task);
+                                return taskLink && !task.completed ? (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="h-auto p-0 text-xs"
+                                    onClick={() => {
+                                      const tabButton = document.querySelector(
+                                        `[value="${taskLink.tab}"]`
+                                      ) as HTMLButtonElement;
+                                      tabButton?.click();
+                                    }}
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1 shrink-0" />
+                                    <span className="truncate">{taskLink.label}</span>
+                                  </Button>
+                                ) : null;
+                              })()}
+                            </div>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                           <Badge 
                             variant={task.priority === 'alta' ? 'destructive' : 'secondary'}
                             className="text-xs"
