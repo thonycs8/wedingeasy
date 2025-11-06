@@ -324,9 +324,19 @@ export const ptTranslations = {
     "choices.colorOptions.navyGold": "Azul Marinho & Dourado",
     "choices.colorOptions.blushIvory": "Rosa & Marfim",
     "choices.colorOptions.sageEucalyptus": "Sálvia & Eucalipto",
+    "choices.colorOptions.lilacWhite": "Lilás & Branco",
     
     "choices.saved": "Guardado",
     "choices.savedDescription": "As suas escolhas foram guardadas com sucesso",
+    "choices.colorPalettes": "Paletas de Cores",
+    "choices.decoration": "Decoração",
+    "choices.groomsmen": "Padrinhos",
+    "choices.bridesmaids": "Madrinhas",
+    "choices.primaryColor": "Cor Primária",
+    "choices.secondaryColor": "Cor Secundária",
+    "choices.customColors": "Cores Personalizadas",
+    "choices.selectPalette": "Selecionar Paleta",
+    "choices.or": "ou",
     
     // Choice Options - Menu
     "choices.menuOptions.buffet": "Buffet",

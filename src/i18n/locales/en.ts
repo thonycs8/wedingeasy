@@ -299,9 +299,19 @@ export const enTranslations = {
     "choices.colorOptions.navyGold": "Navy & Gold",
     "choices.colorOptions.blushIvory": "Blush & Ivory",
     "choices.colorOptions.sageEucalyptus": "Sage & Eucalyptus",
+    "choices.colorOptions.lilacWhite": "Lilac & White",
     
     "choices.saved": "Saved",
     "choices.savedDescription": "Your choices have been saved successfully",
+    "choices.colorPalettes": "Color Palettes",
+    "choices.decoration": "Decoration",
+    "choices.groomsmen": "Groomsmen",
+    "choices.bridesmaids": "Bridesmaids",
+    "choices.primaryColor": "Primary Color",
+    "choices.secondaryColor": "Secondary Color",
+    "choices.customColors": "Custom Colors",
+    "choices.selectPalette": "Select Palette",
+    "choices.or": "or",
     
     // Choice Options - Menu
     "choices.menuOptions.buffet": "Buffet",

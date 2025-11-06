@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Palette, 
   Utensils,
@@ -23,6 +24,19 @@ import {
 import { useWeddingData } from "@/contexts/WeddingContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ColorPaletteSelector } from "./ColorPaletteSelector";
+
+interface ColorPalette {
+  name: string;
+  primary: string;
+  secondary: string;
+}
+
+interface ColorPalettes {
+  decoration?: ColorPalette;
+  groomsmen?: ColorPalette;
+  bridesmaids?: ColorPalette;
+}
 
 interface WeddingChoice {
   id: string;
@@ -34,6 +48,7 @@ interface WeddingChoice {
   notes?: string;
   budget?: number;
   status: 'pending' | 'decided' | 'booked';
+  colorPalettes?: ColorPalettes;
 }
 
 export const WeddingChoices = () => {
@@ -42,6 +57,7 @@ export const WeddingChoices = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [weddingId, setWeddingId] = useState<string | null>(null);
+  const [colorPalettes, setColorPalettes] = useState<ColorPalettes>({});
   
   const [choices, setChoices] = useState<WeddingChoice[]>([
     {
@@ -60,10 +76,10 @@ export const WeddingChoices = () => {
         t('choices.colorOptions.terracottaCream'),
         t('choices.colorOptions.navyGold'),
         t('choices.colorOptions.blushIvory'),
-        t('choices.colorOptions.sageEucalyptus')
+        t('choices.colorOptions.sageEucalyptus'),
+        t('choices.colorOptions.lilacWhite')
       ],
-      selected: t('choices.colorOptions.blushGold'),
-      status: 'decided'
+      status: 'pending'
     },
     {
       id: '2',
@@ -189,6 +205,16 @@ export const WeddingChoices = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
+        const colorChoice = data.find(c => c.category === 'colors');
+        if (colorChoice?.notes) {
+          try {
+            const palettes = JSON.parse(colorChoice.notes);
+            setColorPalettes(palettes);
+          } catch (e) {
+            console.error('Error parsing color palettes:', e);
+          }
+        }
+
         setChoices(data.map(choice => ({
           id: choice.id,
           category: choice.category,
@@ -217,6 +243,11 @@ export const WeddingChoices = () => {
     if (!weddingId) return;
 
     try {
+      // For color category, save palettes in notes field
+      const notesToSave = choice.category === 'colors' 
+        ? JSON.stringify(colorPalettes)
+        : choice.notes;
+
       const { error } = await supabase
         .from('wedding_choices')
         .upsert({
@@ -227,7 +258,7 @@ export const WeddingChoices = () => {
           description: choice.description,
           options: choice.options,
           selected: choice.selected,
-          notes: choice.notes,
+          notes: notesToSave,
           budget: choice.budget,
           status: choice.status
         });
@@ -245,6 +276,20 @@ export const WeddingChoices = () => {
         description: t('common.saveError'),
         variant: "destructive"
       });
+    }
+  };
+
+  const handleColorPaletteChange = async (
+    category: keyof ColorPalettes,
+    palette: ColorPalette
+  ) => {
+    const newPalettes = { ...colorPalettes, [category]: palette };
+    setColorPalettes(newPalettes);
+
+    // Find or create color choice
+    const colorChoice = choices.find(c => c.category === 'colors');
+    if (colorChoice) {
+      await saveChoice({ ...colorChoice, notes: JSON.stringify(newPalettes) });
     }
   };
 
@@ -375,9 +420,47 @@ export const WeddingChoices = () => {
           </div>
         </div>
 
-        {/* Choices by Category */}
+        {/* Color Palettes Section */}
+        {groupedChoices['colors'] && (
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground capitalize flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              {t('choices.colorPalettes')}
+            </h4>
+            <Tabs defaultValue="decoration" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="decoration">{t('choices.decoration')}</TabsTrigger>
+                <TabsTrigger value="groomsmen">{t('choices.groomsmen')}</TabsTrigger>
+                <TabsTrigger value="bridesmaids">{t('choices.bridesmaids')}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="decoration" className="mt-4">
+                <ColorPaletteSelector
+                  category="decoration"
+                  value={colorPalettes.decoration}
+                  onChange={(palette) => handleColorPaletteChange('decoration', palette)}
+                />
+              </TabsContent>
+              <TabsContent value="groomsmen" className="mt-4">
+                <ColorPaletteSelector
+                  category="groomsmen"
+                  value={colorPalettes.groomsmen}
+                  onChange={(palette) => handleColorPaletteChange('groomsmen', palette)}
+                />
+              </TabsContent>
+              <TabsContent value="bridesmaids" className="mt-4">
+                <ColorPaletteSelector
+                  category="bridesmaids"
+                  value={colorPalettes.bridesmaids}
+                  onChange={(palette) => handleColorPaletteChange('bridesmaids', palette)}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Other Choices by Category */}
         <div className="space-y-6 max-h-96 overflow-y-auto">
-          {Object.entries(groupedChoices).map(([category, categoryChoices]) => (
+          {Object.entries(groupedChoices).filter(([category]) => category !== 'colors').map(([category, categoryChoices]) => (
             <div key={category} className="space-y-4">
               <h4 className="font-semibold text-foreground capitalize flex items-center gap-2">
                 {getCategoryIcon(category)}
