@@ -66,7 +66,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
       </div>
 
       {/* Predefined Palettes - Mobile First Grid */}
-      <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-1">
+      <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-0.5">
         {predefinedPalettes.map((palette) => (
           <button
             key={palette.name}
