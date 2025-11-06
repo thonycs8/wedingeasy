@@ -36,6 +36,16 @@ const DEFAULT_ROLES = [
   "Convidado de Honra",
 ];
 
+// Map roles to their automatic side assignment
+const getRoleDefaultSide = (role: string): 'noivo' | 'noiva' | null => {
+  const groomRoles = ["Padrinho", "Amigo do Noivo"];
+  const brideRoles = ["Madrinha", "Amiga da Noiva", "Dama de Honor"];
+  
+  if (groomRoles.includes(role)) return "noivo";
+  if (brideRoles.includes(role)) return "noiva";
+  return null;
+};
+
 export const CeremonyRoles = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -102,10 +112,23 @@ export const CeremonyRoles = () => {
   };
 
   const addPerson = async () => {
-    if (!user || !newPerson.name || !newPerson.special_role || !newPerson.side) {
+    if (!user || !newPerson.name || !newPerson.special_role) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome, papel e lado (noivo/noiva)",
+        description: "Por favor, preencha o nome e papel",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Determine the side automatically if the role has a default side
+    const defaultSide = getRoleDefaultSide(newPerson.special_role);
+    const finalSide = defaultSide || newPerson.side;
+
+    if (!finalSide) {
+      toast({
+        title: "Lado obrigatório",
+        description: "Por favor, selecione o lado (noivo/noiva)",
         variant: "destructive",
       });
       return;
@@ -123,7 +146,7 @@ export const CeremonyRoles = () => {
             special_role: newPerson.special_role,
             category: "ceremony",
             confirmed: false,
-            side: newPerson.side,
+            side: finalSide,
           },
         ])
         .select();
@@ -216,10 +239,23 @@ export const CeremonyRoles = () => {
   };
 
   const updatePerson = async () => {
-    if (!editingPerson || !editingPerson.name || !editingPerson.special_role || !editingPerson.side) {
+    if (!editingPerson || !editingPerson.name || !editingPerson.special_role) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome, papel e lado (noivo/noiva)",
+        description: "Por favor, preencha o nome e papel",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Determine the side automatically if the role has a default side
+    const defaultSide = getRoleDefaultSide(editingPerson.special_role);
+    const finalSide = defaultSide || editingPerson.side;
+
+    if (!finalSide) {
+      toast({
+        title: "Lado obrigatório",
+        description: "Por favor, selecione o lado (noivo/noiva)",
         variant: "destructive",
       });
       return;
@@ -233,13 +269,14 @@ export const CeremonyRoles = () => {
           email: editingPerson.email || null,
           phone: editingPerson.phone || null,
           special_role: editingPerson.special_role,
-          side: editingPerson.side,
+          side: finalSide,
         })
         .eq("id", editingPerson.id);
 
       if (error) throw error;
 
-      setRoles(roles.map(r => r.id === editingPerson.id ? editingPerson : r));
+      const updatedPerson = { ...editingPerson, side: finalSide };
+      setRoles(roles.map(r => r.id === editingPerson.id ? updatedPerson : r));
       setIsEditDialogOpen(false);
       setEditingPerson(null);
 
@@ -381,23 +418,32 @@ export const CeremonyRoles = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="side">Lado *</Label>
-                      <Select
-                        value={newPerson.side}
-                        onValueChange={(value: 'noivo' | 'noiva') =>
-                          setNewPerson({ ...newPerson, side: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o lado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="noivo">Noivo</SelectItem>
-                          <SelectItem value="noiva">Noiva</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {!getRoleDefaultSide(newPerson.special_role) && (
+                      <div>
+                        <Label htmlFor="side">Lado *</Label>
+                        <Select
+                          value={newPerson.side}
+                          onValueChange={(value: 'noivo' | 'noiva') =>
+                            setNewPerson({ ...newPerson, side: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o lado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="noivo">Noivo</SelectItem>
+                            <SelectItem value="noiva">Noiva</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {getRoleDefaultSide(newPerson.special_role) && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Lado:</strong> {getRoleDefaultSide(newPerson.special_role) === 'noivo' ? 'Noivo' : 'Noiva'} (automático)
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -629,23 +675,32 @@ export const CeremonyRoles = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="edit-side">Lado *</Label>
-                <Select
-                  value={editingPerson.side || ''}
-                  onValueChange={(value: 'noivo' | 'noiva') =>
-                    setEditingPerson({ ...editingPerson, side: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o lado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="noivo">Noivo</SelectItem>
-                    <SelectItem value="noiva">Noiva</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {!getRoleDefaultSide(editingPerson.special_role) && (
+                <div>
+                  <Label htmlFor="edit-side">Lado *</Label>
+                  <Select
+                    value={editingPerson.side || ''}
+                    onValueChange={(value: 'noivo' | 'noiva') =>
+                      setEditingPerson({ ...editingPerson, side: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o lado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="noivo">Noivo</SelectItem>
+                      <SelectItem value="noiva">Noiva</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {getRoleDefaultSide(editingPerson.special_role) && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Lado:</strong> {getRoleDefaultSide(editingPerson.special_role) === 'noivo' ? 'Noivo' : 'Noiva'} (automático)
+                  </p>
+                </div>
+              )}
               <div>
                 <Label htmlFor="edit-email">Email</Label>
                 <Input
