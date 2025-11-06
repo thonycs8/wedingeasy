@@ -78,7 +78,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
             }`}
             title={t(`choices.colorOptions.${palette.name}`)}
           >
-            <div className="flex w-8 h-8 rounded-full overflow-hidden">
+            <div className="flex w-6 h-6 rounded-full overflow-hidden">
               <div
                 className="flex-1"
                 style={{ backgroundColor: palette.primary }}
