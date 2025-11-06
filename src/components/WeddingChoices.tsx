@@ -248,22 +248,35 @@ export const WeddingChoices = () => {
         ? JSON.stringify(colorPalettes)
         : choice.notes;
 
-      const { error } = await supabase
+      // Check if ID is a valid UUID
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(choice.id);
+      
+      const dataToSave = {
+        ...(isValidUUID ? { id: choice.id } : {}), // Only include ID if it's a valid UUID
+        wedding_id: weddingId,
+        category: choice.category,
+        title: choice.title,
+        description: choice.description,
+        options: choice.options,
+        selected: choice.selected,
+        notes: notesToSave,
+        budget: choice.budget,
+        status: choice.status
+      };
+
+      const { data, error } = await supabase
         .from('wedding_choices')
-        .upsert({
-          id: choice.id,
-          wedding_id: weddingId,
-          category: choice.category,
-          title: choice.title,
-          description: choice.description,
-          options: choice.options,
-          selected: choice.selected,
-          notes: notesToSave,
-          budget: choice.budget,
-          status: choice.status
-        });
+        .upsert(dataToSave)
+        .select();
 
       if (error) throw error;
+
+      // Update local state with the returned ID if it was a new record
+      if (data && data[0] && !isValidUUID) {
+        setChoices(prev => prev.map(c => 
+          c.id === choice.id ? { ...c, id: data[0].id } : c
+        ));
+      }
 
       toast({
         title: t('choices.saved'),
