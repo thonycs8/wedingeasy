@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
   Plus
 } from "lucide-react";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface WeddingChoice {
   id: string;
@@ -37,6 +39,9 @@ interface WeddingChoice {
 export const WeddingChoices = () => {
   const { t } = useTranslation();
   const { weddingData } = useWeddingData();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [weddingId, setWeddingId] = useState<string | null>(null);
   
   const [choices, setChoices] = useState<WeddingChoice[]>([
     {
@@ -47,7 +52,15 @@ export const WeddingChoices = () => {
         t('choices.colorOptions.blushGold'),
         t('choices.colorOptions.navyWhite'),
         t('choices.colorOptions.sageCream'),
-        t('choices.colorOptions.burgundyIvory')
+        t('choices.colorOptions.burgundyIvory'),
+        t('choices.colorOptions.lavenderSilver'),
+        t('choices.colorOptions.peachCoral'),
+        t('choices.colorOptions.emeraldGold'),
+        t('choices.colorOptions.dustyRoseMauve'),
+        t('choices.colorOptions.terracottaCream'),
+        t('choices.colorOptions.navyGold'),
+        t('choices.colorOptions.blushIvory'),
+        t('choices.colorOptions.sageEucalyptus')
       ],
       selected: t('choices.colorOptions.blushGold'),
       status: 'decided'
@@ -126,10 +139,126 @@ export const WeddingChoices = () => {
     budget: ''
   });
 
-  const updateChoice = (id: string, updates: Partial<WeddingChoice>) => {
-    setChoices(prev => prev.map(choice => 
+  // Fetch wedding ID on mount
+  useEffect(() => {
+    const fetchWeddingId = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('wedding_data')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data) {
+          setWeddingId(data.id);
+        }
+      } catch (error) {
+        console.error('Error fetching wedding ID:', error);
+      }
+    };
+
+    fetchWeddingId();
+  }, []);
+
+  // Load choices from database
+  useEffect(() => {
+    if (weddingId) {
+      loadChoices();
+    } else {
+      setIsLoading(false);
+    }
+  }, [weddingId]);
+
+  const loadChoices = async () => {
+    if (!weddingId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wedding_choices')
+        .select('*')
+        .eq('wedding_id', weddingId);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setChoices(data.map(choice => ({
+          id: choice.id,
+          category: choice.category,
+          title: choice.title,
+          description: choice.description,
+          options: choice.options,
+          selected: choice.selected ?? undefined,
+          notes: choice.notes ?? undefined,
+          budget: choice.budget ? Number(choice.budget) : undefined,
+          status: choice.status as 'pending' | 'decided' | 'booked'
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading choices:', error);
+      toast({
+        title: t('common.error'),
+        description: t('common.loadError'),
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveChoice = async (choice: WeddingChoice) => {
+    if (!weddingId) return;
+
+    try {
+      const { error } = await supabase
+        .from('wedding_choices')
+        .upsert({
+          id: choice.id,
+          wedding_id: weddingId,
+          category: choice.category,
+          title: choice.title,
+          description: choice.description,
+          options: choice.options,
+          selected: choice.selected,
+          notes: choice.notes,
+          budget: choice.budget,
+          status: choice.status
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t('choices.saved'),
+        description: t('choices.savedDescription')
+      });
+    } catch (error) {
+      console.error('Error saving choice:', error);
+      toast({
+        title: t('common.error'),
+        description: t('common.saveError'),
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateChoice = async (id: string, updates: Partial<WeddingChoice>) => {
+    const updatedChoices = choices.map(choice => 
       choice.id === id ? { ...choice, ...updates } : choice
-    ));
+    );
+    setChoices(updatedChoices);
+    
+    const updatedChoice = updatedChoices.find(c => c.id === id);
+    if (updatedChoice) {
+      await saveChoice(updatedChoice);
+    }
+    
     setEditingChoice(null);
   };
 
@@ -142,19 +271,25 @@ export const WeddingChoices = () => {
     ));
   };
 
-  const selectOption = (choiceId: string, option: string) => {
-    setChoices(prev => prev.map(choice => 
+  const selectOption = async (choiceId: string, option: string) => {
+    const updatedChoices = choices.map(choice => 
       choice.id === choiceId 
-        ? { ...choice, selected: option, status: 'decided' }
+        ? { ...choice, selected: option, status: 'decided' as const }
         : choice
-    ));
+    );
+    setChoices(updatedChoices);
+    
+    const updatedChoice = updatedChoices.find(c => c.id === choiceId);
+    if (updatedChoice) {
+      await saveChoice(updatedChoice);
+    }
   };
 
-  const addNewChoice = () => {
-    if (!newChoice.title || newChoice.options.filter(o => o.trim()).length === 0) return;
+  const addNewChoice = async () => {
+    if (!newChoice.title || newChoice.options.filter(o => o.trim()).length === 0 || !weddingId) return;
     
     const choice: WeddingChoice = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       category: newChoice.category || 'other',
       title: newChoice.title,
       description: newChoice.description,
@@ -164,6 +299,8 @@ export const WeddingChoices = () => {
     };
     
     setChoices(prev => [...prev, choice]);
+    await saveChoice(choice);
+    
     setNewChoice({ category: '', title: '', description: '', options: [''], budget: '' });
     setShowAddForm(false);
   };
@@ -196,6 +333,16 @@ export const WeddingChoices = () => {
     acc[choice.category].push(choice);
     return acc;
   }, {} as Record<string, WeddingChoice[]>);
+
+  if (isLoading) {
+    return (
+      <Card className="card-romantic">
+        <CardContent className="p-6">
+          <p className="text-center text-muted-foreground">{t('common.loading')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="card-romantic">

@@ -541,6 +541,59 @@ export type Database = {
         }
         Relationships: []
       }
+      wedding_choices: {
+        Row: {
+          budget: number | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          options: string[]
+          selected: string | null
+          status: string
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          budget?: number | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          options?: string[]
+          selected?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          budget?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          options?: string[]
+          selected?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_choices_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_collaborators: {
         Row: {
           id: string

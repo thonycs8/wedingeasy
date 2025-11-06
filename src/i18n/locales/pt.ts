@@ -316,6 +316,17 @@ export const ptTranslations = {
     "choices.colorOptions.navyWhite": "Azul Marinho & Branco",
     "choices.colorOptions.sageCream": "Verde Sálvia & Creme",
     "choices.colorOptions.burgundyIvory": "Bordeaux & Marfim",
+    "choices.colorOptions.lavenderSilver": "Lavanda & Prata",
+    "choices.colorOptions.peachCoral": "Pêssego & Coral",
+    "choices.colorOptions.emeraldGold": "Esmeralda & Dourado",
+    "choices.colorOptions.dustyRoseMauve": "Rosa Empoeirado & Malva",
+    "choices.colorOptions.terracottaCream": "Terracota & Creme",
+    "choices.colorOptions.navyGold": "Azul Marinho & Dourado",
+    "choices.colorOptions.blushIvory": "Rosa & Marfim",
+    "choices.colorOptions.sageEucalyptus": "Sálvia & Eucalipto",
+    
+    "choices.saved": "Guardado",
+    "choices.savedDescription": "As suas escolhas foram guardadas com sucesso",
     
     // Choice Options - Menu
     "choices.menuOptions.buffet": "Buffet",

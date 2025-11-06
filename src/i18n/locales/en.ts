@@ -291,6 +291,17 @@ export const enTranslations = {
     "choices.colorOptions.navyWhite": "Navy & White",
     "choices.colorOptions.sageCream": "Sage & Cream",
     "choices.colorOptions.burgundyIvory": "Burgundy & Ivory",
+    "choices.colorOptions.lavenderSilver": "Lavender & Silver",
+    "choices.colorOptions.peachCoral": "Peach & Coral",
+    "choices.colorOptions.emeraldGold": "Emerald & Gold",
+    "choices.colorOptions.dustyRoseMauve": "Dusty Rose & Mauve",
+    "choices.colorOptions.terracottaCream": "Terracotta & Cream",
+    "choices.colorOptions.navyGold": "Navy & Gold",
+    "choices.colorOptions.blushIvory": "Blush & Ivory",
+    "choices.colorOptions.sageEucalyptus": "Sage & Eucalyptus",
+    
+    "choices.saved": "Saved",
+    "choices.savedDescription": "Your choices have been saved successfully",
     
     // Choice Options - Menu
     "choices.menuOptions.buffet": "Buffet",
