@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Palette, Check } from "lucide-react";
+import { Palette } from "lucide-react";
 
 interface ColorPalette {
   name: string;
@@ -18,32 +18,10 @@ interface ColorPaletteSelectorProps {
   onChange: (palette: ColorPalette) => void;
 }
 
-const predefinedPalettes: ColorPalette[] = [
-  { name: 'blushGold', primary: '#FFC0CB', secondary: '#FFD700' },
-  { name: 'navyWhite', primary: '#000080', secondary: '#FFFFFF' },
-  { name: 'sageCream', primary: '#9DC183', secondary: '#FFFDD0' },
-  { name: 'burgundyIvory', primary: '#800020', secondary: '#FFFFF0' },
-  { name: 'lavenderSilver', primary: '#E6E6FA', secondary: '#C0C0C0' },
-  { name: 'peachCoral', primary: '#FFDAB9', secondary: '#FF7F50' },
-  { name: 'emeraldGold', primary: '#50C878', secondary: '#FFD700' },
-  { name: 'dustyRoseMauve', primary: '#DCAE96', secondary: '#E0B0FF' },
-  { name: 'terracottaCream', primary: '#E2725B', secondary: '#FFFDD0' },
-  { name: 'navyGold', primary: '#000080', secondary: '#FFD700' },
-  { name: 'blushIvory', primary: '#FFC0CB', secondary: '#FFFFF0' },
-  { name: 'sageEucalyptus', primary: '#9DC183', secondary: '#44A08D' },
-  { name: 'lilacWhite', primary: '#C8A2C8', secondary: '#FFFFFF' }
-];
-
 export const ColorPaletteSelector = ({ category, value, onChange }: ColorPaletteSelectorProps) => {
   const { t } = useTranslation();
   const [customPrimary, setCustomPrimary] = useState(value?.primary || '#FFC0CB');
   const [customSecondary, setCustomSecondary] = useState(value?.secondary || '#FFD700');
-  const [useCustom, setUseCustom] = useState(false);
-
-  const handlePredefinedSelect = (palette: ColorPalette) => {
-    setUseCustom(false);
-    onChange(palette);
-  };
 
   const handleCustomApply = () => {
     onChange({
@@ -51,10 +29,6 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
       primary: customPrimary,
       secondary: customSecondary
     });
-  };
-
-  const isSelected = (palette: ColorPalette) => {
-    return value?.primary === palette.primary && value?.secondary === palette.secondary;
   };
 
   return (
@@ -66,45 +40,8 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Predefined Palettes */}
-        <div>
-          <Label className="text-sm mb-2 block">{t('choices.selectPalette')}</Label>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {predefinedPalettes.map((palette) => (
-              <button
-                key={palette.name}
-                onClick={() => handlePredefinedSelect(palette)}
-                className={`relative p-2 rounded-lg border-2 transition-all hover:scale-105 ${
-                  isSelected(palette) && !useCustom
-                    ? 'border-primary shadow-lg'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <div className="flex gap-1 h-8">
-                  <div
-                    className="flex-1 rounded-l"
-                    style={{ backgroundColor: palette.primary }}
-                  />
-                  <div
-                    className="flex-1 rounded-r"
-                    style={{ backgroundColor: palette.secondary }}
-                  />
-                </div>
-                {isSelected(palette) && !useCustom && (
-                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
-                    <Check className="w-3 h-3" />
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {t(`choices.colorOptions.${palette.name}`)}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Custom Colors */}
-        <div className="pt-4 border-t border-border">
+        <div>
           <Label className="text-sm mb-3 block">{t('choices.customColors')}</Label>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -153,10 +90,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
             </div>
             <Button
               size="sm"
-              onClick={() => {
-                setUseCustom(true);
-                handleCustomApply();
-              }}
+              onClick={handleCustomApply}
               className="w-full btn-gradient"
             >
               {t('choices.save')}
@@ -182,9 +116,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
                 />
               </div>
               <Badge variant="secondary" className="text-xs">
-                {value.name === 'custom' 
-                  ? t('choices.customColors')
-                  : t(`choices.colorOptions.${value.name}`)}
+                {t('choices.customColors')}
               </Badge>
             </div>
           </div>
