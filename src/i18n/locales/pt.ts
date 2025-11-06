@@ -310,6 +310,42 @@ export const ptTranslations = {
     "choices.categories.photography": "Fotografia",
     "choices.categories.transport": "Transporte",
     "choices.categories.other": "Outros",
+    
+    // Choice Options - Colors
+    "choices.colorOptions.blushGold": "Rosa & Dourado",
+    "choices.colorOptions.navyWhite": "Azul Marinho & Branco",
+    "choices.colorOptions.sageCream": "Verde Sálvia & Creme",
+    "choices.colorOptions.burgundyIvory": "Bordeaux & Marfim",
+    
+    // Choice Options - Menu
+    "choices.menuOptions.buffet": "Buffet",
+    "choices.menuOptions.served": "Pratos Servidos",
+    "choices.menuOptions.cocktail": "Cocktail",
+    "choices.menuOptions.foodStations": "Food Stations",
+    
+    // Choice Options - Music
+    "choices.musicOptions.dj": "DJ",
+    "choices.musicOptions.liveBand": "Banda ao Vivo",
+    "choices.musicOptions.acousticDuo": "Duo Acústico",
+    "choices.musicOptions.djBand": "DJ + Banda",
+    
+    // Choice Options - Flowers
+    "choices.flowerOptions.rustic": "Rústico",
+    "choices.flowerOptions.classic": "Clássico",
+    "choices.flowerOptions.modern": "Moderno",
+    "choices.flowerOptions.bohemian": "Bohemian",
+    
+    // Choice Options - Photography
+    "choices.photographyOptions.photojournalism": "Fotojornalismo",
+    "choices.photographyOptions.fineArt": "Fine Art",
+    "choices.photographyOptions.lifestyle": "Lifestyle",
+    "choices.photographyOptions.traditional": "Tradicional",
+    
+    // Choice Options - Transport
+    "choices.transportOptions.classicCar": "Carro Clássico",
+    "choices.transportOptions.limousine": "Limousine",
+    "choices.transportOptions.carriage": "Carruagem",
+    "choices.transportOptions.ownCar": "Carro Próprio",
 
     // Common
     "common.next": "Próximo",

@@ -43,45 +43,75 @@ export const WeddingChoices = () => {
       id: '1',
       category: 'colors',
       title: t('choices.colorPalette'),
-      options: ['Blush & Gold', 'Navy & White', 'Sage & Cream', 'Burgundy & Ivory'],
-      selected: 'Blush & Gold',
+      options: [
+        t('choices.colorOptions.blushGold'),
+        t('choices.colorOptions.navyWhite'),
+        t('choices.colorOptions.sageCream'),
+        t('choices.colorOptions.burgundyIvory')
+      ],
+      selected: t('choices.colorOptions.blushGold'),
       status: 'decided'
     },
     {
       id: '2',
       category: 'menu',
       title: t('choices.menuStyle'),
-      options: ['Buffet', 'Pratos Servidos', 'Cocktail', 'Food Stations'],
-      selected: 'Pratos Servidos',
+      options: [
+        t('choices.menuOptions.buffet'),
+        t('choices.menuOptions.served'),
+        t('choices.menuOptions.cocktail'),
+        t('choices.menuOptions.foodStations')
+      ],
+      selected: t('choices.menuOptions.served'),
       status: 'decided'
     },
     {
       id: '3',
       category: 'music',
       title: t('choices.musicStyle'),
-      options: ['DJ', 'Banda Live', 'Acoustic Duo', 'DJ + Banda'],
+      options: [
+        t('choices.musicOptions.dj'),
+        t('choices.musicOptions.liveBand'),
+        t('choices.musicOptions.acousticDuo'),
+        t('choices.musicOptions.djBand')
+      ],
       status: 'pending'
     },
     {
       id: '4',
       category: 'flowers',
       title: t('choices.flowerStyle'),
-      options: ['Rústico', 'Clássico', 'Moderno', 'Bohemian'],
+      options: [
+        t('choices.flowerOptions.rustic'),
+        t('choices.flowerOptions.classic'),
+        t('choices.flowerOptions.modern'),
+        t('choices.flowerOptions.bohemian')
+      ],
       status: 'pending'
     },
     {
       id: '5',
       category: 'photography',
       title: t('choices.photographyStyle'),
-      options: ['Fotojornalismo', 'Fine Art', 'Lifestyle', 'Tradicional'],
-      selected: 'Fine Art',
+      options: [
+        t('choices.photographyOptions.photojournalism'),
+        t('choices.photographyOptions.fineArt'),
+        t('choices.photographyOptions.lifestyle'),
+        t('choices.photographyOptions.traditional')
+      ],
+      selected: t('choices.photographyOptions.fineArt'),
       status: 'booked'
     },
     {
       id: '6',
       category: 'transport',
       title: t('choices.transport'),
-      options: ['Carro Clássico', 'Limousine', 'Carruagem', 'Carro Próprio'],
+      options: [
+        t('choices.transportOptions.classicCar'),
+        t('choices.transportOptions.limousine'),
+        t('choices.transportOptions.carriage'),
+        t('choices.transportOptions.ownCar')
+      ],
       status: 'pending'
     }
   ]);
