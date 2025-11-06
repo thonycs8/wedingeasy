@@ -27,19 +27,24 @@ interface CeremonyRole {
 const DEFAULT_ROLES = [
   "Padrinho",
   "Madrinha",
+  "Pai do Noivo",
+  "Mãe do Noivo",
+  "Pai da Noiva",
+  "Mãe da Noiva",
   "Dama de Honor",
   "Pajem",
   "Florista",
   "Portador das Alianças",
   "Amigo do Noivo",
   "Amiga da Noiva",
+  "Celebrante",
   "Convidado de Honra",
 ];
 
 // Map roles to their automatic side assignment
 const getRoleDefaultSide = (role: string): 'noivo' | 'noiva' | null => {
-  const groomRoles = ["Padrinho", "Amigo do Noivo"];
-  const brideRoles = ["Madrinha", "Amiga da Noiva", "Dama de Honor"];
+  const groomRoles = ["Padrinho", "Amigo do Noivo", "Pai do Noivo", "Mãe do Noivo"];
+  const brideRoles = ["Madrinha", "Amiga da Noiva", "Dama de Honor", "Pai da Noiva", "Mãe da Noiva"];
   
   if (groomRoles.includes(role)) return "noivo";
   if (brideRoles.includes(role)) return "noiva";
