@@ -286,10 +286,50 @@ export const WeddingChoices = () => {
     const newPalettes = { ...colorPalettes, [category]: palette };
     setColorPalettes(newPalettes);
 
+    if (!weddingId) return;
+
     // Find or create color choice
-    const colorChoice = choices.find(c => c.category === 'colors');
-    if (colorChoice) {
-      await saveChoice({ ...colorChoice, notes: JSON.stringify(newPalettes) });
+    let colorChoice = choices.find(c => c.category === 'colors');
+    
+    if (!colorChoice) {
+      // Create new color choice with valid UUID
+      colorChoice = {
+        id: crypto.randomUUID(),
+        category: 'colors',
+        title: t('choices.colorPalette'),
+        options: [],
+        status: 'decided'
+      };
+      setChoices(prev => [...prev, colorChoice!]);
+    }
+
+    // Save with UUID
+    try {
+      const { error } = await supabase
+        .from('wedding_choices')
+        .upsert({
+          id: colorChoice.id,
+          wedding_id: weddingId,
+          category: 'colors',
+          title: colorChoice.title,
+          options: colorChoice.options,
+          notes: JSON.stringify(newPalettes),
+          status: 'decided'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t('choices.saved'),
+        description: t('choices.savedDescription')
+      });
+    } catch (error) {
+      console.error('Error saving color palette:', error);
+      toast({
+        title: t('common.error'),
+        description: t('common.saveError'),
+        variant: "destructive"
+      });
     }
   };
 
@@ -421,42 +461,32 @@ export const WeddingChoices = () => {
         </div>
 
         {/* Color Palettes Section */}
-        {groupedChoices['colors'] && (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground capitalize flex items-center gap-2">
-              <Palette className="w-5 h-5 text-primary" />
-              {t('choices.colorPalettes')}
-            </h4>
-            <Tabs defaultValue="decoration" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="decoration">{t('choices.decoration')}</TabsTrigger>
-                <TabsTrigger value="groomsmen">{t('choices.groomsmen')}</TabsTrigger>
-                <TabsTrigger value="bridesmaids">{t('choices.bridesmaids')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="decoration" className="mt-4">
-                <ColorPaletteSelector
-                  category="decoration"
-                  value={colorPalettes.decoration}
-                  onChange={(palette) => handleColorPaletteChange('decoration', palette)}
-                />
-              </TabsContent>
-              <TabsContent value="groomsmen" className="mt-4">
-                <ColorPaletteSelector
-                  category="groomsmen"
-                  value={colorPalettes.groomsmen}
-                  onChange={(palette) => handleColorPaletteChange('groomsmen', palette)}
-                />
-              </TabsContent>
-              <TabsContent value="bridesmaids" className="mt-4">
-                <ColorPaletteSelector
-                  category="bridesmaids"
-                  value={colorPalettes.bridesmaids}
-                  onChange={(palette) => handleColorPaletteChange('bridesmaids', palette)}
-                />
-              </TabsContent>
-            </Tabs>
+        <div className="space-y-4">
+          <h4 className="font-semibold text-foreground flex items-center gap-2">
+            <Palette className="w-5 h-5 text-primary" />
+            {t('choices.colorPalettes')}
+          </h4>
+          
+          <div className="grid gap-4">
+            <ColorPaletteSelector
+              category="decoration"
+              value={colorPalettes.decoration}
+              onChange={(palette) => handleColorPaletteChange('decoration', palette)}
+            />
+            
+            <ColorPaletteSelector
+              category="groomsmen"
+              value={colorPalettes.groomsmen}
+              onChange={(palette) => handleColorPaletteChange('groomsmen', palette)}
+            />
+            
+            <ColorPaletteSelector
+              category="bridesmaids"
+              value={colorPalettes.bridesmaids}
+              onChange={(palette) => handleColorPaletteChange('bridesmaids', palette)}
+            />
           </div>
-        )}
+        </div>
 
         {/* Other Choices by Category */}
         <div className="space-y-6 max-h-96 overflow-y-auto">
