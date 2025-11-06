@@ -66,30 +66,30 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
       </div>
 
       {/* Predefined Palettes - Mobile First Grid */}
-      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1">
+      <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-1">
         {predefinedPalettes.map((palette) => (
           <button
             key={palette.name}
             onClick={() => handlePredefinedSelect(palette)}
-            className={`relative rounded border transition-all hover:scale-110 ${
+            className={`relative rounded-full transition-all hover:scale-110 ${
               isSelected(palette) && !useCustom
-                ? 'border-primary border-2'
-                : 'border-border hover:border-primary/50'
+                ? 'ring-2 ring-primary ring-offset-1'
+                : 'hover:ring-1 hover:ring-primary/50'
             }`}
             title={t(`choices.colorOptions.${palette.name}`)}
           >
-            <div className="flex h-6">
+            <div className="flex w-8 h-8 rounded-full overflow-hidden">
               <div
-                className="flex-1 rounded-l"
+                className="flex-1"
                 style={{ backgroundColor: palette.primary }}
               />
               <div
-                className="flex-1 rounded-r"
+                className="flex-1"
                 style={{ backgroundColor: palette.secondary }}
               />
             </div>
             {isSelected(palette) && !useCustom && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
                 <Check className="w-3 h-3 text-white" />
               </div>
             )}
@@ -103,14 +103,14 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
           type="color"
           value={customPrimary}
           onChange={(e) => setCustomPrimary(e.target.value)}
-          className="w-7 h-7 rounded cursor-pointer border border-border"
+          className="w-8 h-8 rounded-full cursor-pointer border border-border"
           title={t('choices.primaryColor')}
         />
         <input
           type="color"
           value={customSecondary}
           onChange={(e) => setCustomSecondary(e.target.value)}
-          className="w-7 h-7 rounded cursor-pointer border border-border"
+          className="w-8 h-8 rounded-full cursor-pointer border border-border"
           title={t('choices.secondaryColor')}
         />
         <Button
@@ -120,7 +120,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
             handleCustomApply();
           }}
           variant="outline"
-          className="flex-1 h-7 text-xs px-2"
+          className="flex-1 h-8 text-xs px-2"
         >
           {t('choices.customColors')}
         </Button>
@@ -129,7 +129,7 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
       {/* Selected Preview - Compact */}
       {value && (
         <div className="flex items-center gap-1.5 p-1.5 rounded bg-muted/30">
-          <div className="flex h-6 w-12 rounded overflow-hidden shadow-sm shrink-0">
+          <div className="flex h-6 w-12 rounded-full overflow-hidden shadow-sm shrink-0">
             <div className="flex-1" style={{ backgroundColor: value.primary }} />
             <div className="flex-1" style={{ backgroundColor: value.secondary }} />
           </div>
