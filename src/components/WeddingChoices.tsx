@@ -467,24 +467,30 @@ export const WeddingChoices = () => {
             {t('choices.colorPalettes')}
           </h4>
           
-          <div className="grid gap-4">
-            <ColorPaletteSelector
-              category="decoration"
-              value={colorPalettes.decoration}
-              onChange={(palette) => handleColorPaletteChange('decoration', palette)}
-            />
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+              <ColorPaletteSelector
+                category="decoration"
+                value={colorPalettes.decoration}
+                onChange={(palette) => handleColorPaletteChange('decoration', palette)}
+              />
+            </div>
             
-            <ColorPaletteSelector
-              category="groomsmen"
-              value={colorPalettes.groomsmen}
-              onChange={(palette) => handleColorPaletteChange('groomsmen', palette)}
-            />
+            <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+              <ColorPaletteSelector
+                category="groomsmen"
+                value={colorPalettes.groomsmen}
+                onChange={(palette) => handleColorPaletteChange('groomsmen', palette)}
+              />
+            </div>
             
-            <ColorPaletteSelector
-              category="bridesmaids"
-              value={colorPalettes.bridesmaids}
-              onChange={(palette) => handleColorPaletteChange('bridesmaids', palette)}
-            />
+            <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+              <ColorPaletteSelector
+                category="bridesmaids"
+                value={colorPalettes.bridesmaids}
+                onChange={(palette) => handleColorPaletteChange('bridesmaids', palette)}
+              />
+            </div>
           </div>
         </div>
 
