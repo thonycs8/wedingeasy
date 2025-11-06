@@ -182,6 +182,7 @@ export const CeremonyRoles = () => {
     saveCustomRoles(updatedRoles);
     setNewRoleName("");
     setIsNewRoleDialogOpen(false);
+    loadRoles(); // Recarrega a tabela após adicionar novo papel
 
     toast({
       title: "Papel criado",
