@@ -58,88 +58,138 @@ export const ColorPaletteSelector = ({ category, value, onChange }: ColorPalette
   };
 
   return (
-    <div className="space-y-2">
-      {/* Category Label */}
-      <div className="flex items-center gap-1.5 text-xs font-medium">
-        <Palette className="w-3 h-3 text-primary" />
-        {t(`choices.${category}`)}
-      </div>
-
-      {/* Predefined Palettes - Mobile First Grid */}
-      <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-0 justify-items-center">
-        {predefinedPalettes.map((palette) => (
-          <button
-            key={palette.name}
-            onClick={() => handlePredefinedSelect(palette)}
-            className={`relative rounded-full transition-all hover:scale-110 ${
-              isSelected(palette) && !useCustom
-                ? 'ring-2 ring-primary ring-offset-1'
-                : 'hover:ring-1 hover:ring-primary/50'
-            }`}
-            title={t(`choices.colorOptions.${palette.name}`)}
-          >
-            <div className="flex w-6 h-6 rounded-full overflow-hidden">
-              <div
-                className="flex-1"
-                style={{ backgroundColor: palette.primary }}
-              />
-              <div
-                className="flex-1"
-                style={{ backgroundColor: palette.secondary }}
-              />
-            </div>
-            {isSelected(palette) && !useCustom && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-                <Check className="w-3 h-3 text-white" />
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Custom Colors - Compact */}
-      <div className="flex items-center gap-1.5 pt-1.5 border-t border-border">
-        <input
-          type="color"
-          value={customPrimary}
-          onChange={(e) => setCustomPrimary(e.target.value)}
-          className="w-8 h-8 rounded-full cursor-pointer border border-border"
-          title={t('choices.primaryColor')}
-        />
-        <input
-          type="color"
-          value={customSecondary}
-          onChange={(e) => setCustomSecondary(e.target.value)}
-          className="w-8 h-8 rounded-full cursor-pointer border border-border"
-          title={t('choices.secondaryColor')}
-        />
-        <Button
-          size="sm"
-          onClick={() => {
-            setUseCustom(true);
-            handleCustomApply();
-          }}
-          variant="outline"
-          className="flex-1 h-8 text-xs px-2"
-        >
-          {t('choices.customColors')}
-        </Button>
-      </div>
-
-      {/* Selected Preview - Compact */}
-      {value && (
-        <div className="flex items-center gap-1.5 p-1.5 rounded bg-muted/30">
-          <div className="flex h-6 w-12 rounded-full overflow-hidden shadow-sm shrink-0">
-            <div className="flex-1" style={{ backgroundColor: value.primary }} />
-            <div className="flex-1" style={{ backgroundColor: value.secondary }} />
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Palette className="w-4 h-4" />
+          {t(`choices.${category}`)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Predefined Palettes */}
+        <div>
+          <Label className="text-sm mb-2 block">{t('choices.selectPalette')}</Label>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {predefinedPalettes.map((palette) => (
+              <button
+                key={palette.name}
+                onClick={() => handlePredefinedSelect(palette)}
+                className={`relative p-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                  isSelected(palette) && !useCustom
+                    ? 'border-primary shadow-lg'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex gap-1 h-8">
+                  <div
+                    className="flex-1 rounded-l"
+                    style={{ backgroundColor: palette.primary }}
+                  />
+                  <div
+                    className="flex-1 rounded-r"
+                    style={{ backgroundColor: palette.secondary }}
+                  />
+                </div>
+                {isSelected(palette) && !useCustom && (
+                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
+                    <Check className="w-3 h-3" />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  {t(`choices.colorOptions.${palette.name}`)}
+                </p>
+              </button>
+            ))}
           </div>
-          <span className="text-xs text-muted-foreground truncate">
-            {value.name === 'custom' 
-              ? t('choices.customColors')
-              : t(`choices.colorOptions.${value.name}`)}
-          </span>
         </div>
-      )}
-    </div>
+
+        {/* Custom Colors */}
+        <div className="pt-4 border-t border-border">
+          <Label className="text-sm mb-3 block">{t('choices.customColors')}</Label>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor={`${category}-primary`} className="text-xs">
+                  {t('choices.primaryColor')}
+                </Label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    id={`${category}-primary`}
+                    type="color"
+                    value={customPrimary}
+                    onChange={(e) => setCustomPrimary(e.target.value)}
+                    className="w-12 h-10 rounded cursor-pointer border border-border"
+                  />
+                  <input
+                    type="text"
+                    value={customPrimary}
+                    onChange={(e) => setCustomPrimary(e.target.value)}
+                    className="flex-1 px-2 py-1 text-xs rounded border border-input bg-background"
+                    placeholder="#FFC0CB"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor={`${category}-secondary`} className="text-xs">
+                  {t('choices.secondaryColor')}
+                </Label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    id={`${category}-secondary`}
+                    type="color"
+                    value={customSecondary}
+                    onChange={(e) => setCustomSecondary(e.target.value)}
+                    className="w-12 h-10 rounded cursor-pointer border border-border"
+                  />
+                  <input
+                    type="text"
+                    value={customSecondary}
+                    onChange={(e) => setCustomSecondary(e.target.value)}
+                    className="flex-1 px-2 py-1 text-xs rounded border border-input bg-background"
+                    placeholder="#FFD700"
+                  />
+                </div>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                setUseCustom(true);
+                handleCustomApply();
+              }}
+              className="w-full btn-gradient"
+            >
+              {t('choices.save')}
+            </Button>
+          </div>
+        </div>
+
+        {/* Selected Preview */}
+        {value && (
+          <div className="p-3 rounded-lg bg-muted/50">
+            <Label className="text-xs text-muted-foreground mb-2 block">
+              {t('choices.selected')}
+            </Label>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1 h-12 flex-1 rounded-lg overflow-hidden shadow-sm">
+                <div
+                  className="flex-1"
+                  style={{ backgroundColor: value.primary }}
+                />
+                <div
+                  className="flex-1"
+                  style={{ backgroundColor: value.secondary }}
+                />
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {value.name === 'custom' 
+                  ? t('choices.customColors')
+                  : t(`choices.colorOptions.${value.name}`)}
+              </Badge>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
