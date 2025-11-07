@@ -305,10 +305,11 @@ export const exportCeremonyRolesPDF = (roles: CeremonyRole[], headerData?: Weddi
     
     autoTable(doc, {
       startY: currentY,
-      head: [['Nome', 'Papel', 'Email', 'Telefone', 'Confirmado']],
+      head: [['Nome', 'Papel', 'Lado', 'Email', 'Telefone', 'Confirmado']],
       body: groomRoles.map(role => [
         role.name,
         role.special_role,
+        'Noivo',
         role.email || '-',
         role.phone || '-',
         role.confirmed ? 'Sim' : 'Não'
@@ -339,10 +340,11 @@ export const exportCeremonyRolesPDF = (roles: CeremonyRole[], headerData?: Weddi
     
     autoTable(doc, {
       startY: currentY,
-      head: [['Nome', 'Papel', 'Email', 'Telefone', 'Confirmado']],
+      head: [['Nome', 'Papel', 'Lado', 'Email', 'Telefone', 'Confirmado']],
       body: brideRoles.map(role => [
         role.name,
         role.special_role,
+        'Noiva',
         role.email || '-',
         role.phone || '-',
         role.confirmed ? 'Sim' : 'Não'
