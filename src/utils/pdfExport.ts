@@ -90,10 +90,10 @@ export const exportGuestListPDF = (guests: Guest[], currency: string, headerData
   // Table
   autoTable(doc, {
     startY: startY,
-    head: [['Nome', 'Categoria', 'Email', 'Telefone', 'Confirmado', '+1', 'Mesa']],
+    head: [['Nome', 'Função na Cerimônia', 'Email', 'Telefone', 'Confirmado', '+1', 'Mesa']],
     body: guests.map(guest => [
       guest.name,
-      guest.category,
+      guest.special_role || '-',
       guest.email || '-',
       guest.phone || '-',
       guest.confirmed ? 'Sim' : 'Não',
