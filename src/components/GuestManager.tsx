@@ -31,6 +31,7 @@ import {
   Sparkles,
   UserCheck
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -242,6 +243,31 @@ export const GuestManager = () => {
     } catch (error) {
       console.error('Error importing guests:', error);
       toast.error('Erro ao importar convidados');
+    }
+  };
+
+  const toggleConfirmation = async (guest: Guest) => {
+    // Prevent toggling virtual couple guests (already confirmed)
+    if (guest.id.includes('-virtual')) return;
+
+    try {
+      const newConfirmedStatus = !guest.confirmed;
+      
+      const { error } = await supabase
+        .from('guests')
+        .update({ confirmed: newConfirmedStatus })
+        .eq('id', guest.id);
+
+      if (error) throw error;
+
+      setGuests(prev => prev.map(g => 
+        g.id === guest.id ? { ...g, confirmed: newConfirmedStatus } : g
+      ));
+      
+      toast.success(newConfirmedStatus ? 'Presença confirmada' : 'Confirmação removida');
+    } catch (error) {
+      console.error('Error toggling confirmation:', error);
+      toast.error('Erro ao atualizar confirmação');
     }
   };
 
@@ -743,7 +769,15 @@ export const GuestManager = () => {
                   return (
                     <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
                       <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-                        <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            checked={guest.confirmed}
+                            onCheckedChange={() => toggleConfirmation(guest)}
+                            disabled={guest.id.includes('-virtual')}
+                            className="mt-1"
+                          />
+                          <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="font-medium truncate">{guest.name}</h4>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
@@ -760,9 +794,9 @@ export const GuestManager = () => {
                             )}
                             <div className="flex items-center gap-1 shrink-0">
                               {guest.confirmed ? (
-                                <CheckCircle className="w-4 h-4 text-success" />
+                                <span className="text-success text-xs">Confirmado</span>
                               ) : (
-                                <XCircle className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground text-xs">Pendente</span>
                               )}
                               {guest.plus_one && <span>+1</span>}
                               {guest.printed_invitation && <span>📜</span>}
