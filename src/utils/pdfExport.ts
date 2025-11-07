@@ -283,16 +283,37 @@ interface CeremonyRole {
 export const exportCeremonyRolesPDF = (roles: CeremonyRole[], headerData?: WeddingHeaderData) => {
   const doc = new jsPDF();
   
-  const groomRoles = roles.filter(r => r.side === 'noivo');
-  const brideRoles = roles.filter(r => r.side === 'noiva');
+  // Add couple to the roles list automatically
+  const allRoles = [...roles];
+  
+  if (headerData?.coupleName) {
+    allRoles.unshift({
+      name: headerData.coupleName,
+      special_role: 'Noivo',
+      confirmed: true,
+      side: 'noivo'
+    });
+  }
+  
+  if (headerData?.partnerName) {
+    allRoles.unshift({
+      name: headerData.partnerName,
+      special_role: 'Noiva',
+      confirmed: true,
+      side: 'noiva'
+    });
+  }
+  
+  const groomRoles = allRoles.filter(r => r.side === 'noivo');
+  const brideRoles = allRoles.filter(r => r.side === 'noiva');
   
   // Header
   let currentY = addWeddingHeader(doc, 'Lista de Papéis na Cerimônia', headerData);
   
   doc.setFontSize(10);
   doc.text(`Data de Exportação: ${new Date().toLocaleDateString('pt-PT')}`, 14, currentY);
-  doc.text(`Total: ${roles.length} pessoas`, 14, currentY + 6);
-  doc.text(`Confirmados: ${roles.filter(r => r.confirmed).length}`, 14, currentY + 12);
+  doc.text(`Total: ${allRoles.length} pessoas`, 14, currentY + 6);
+  doc.text(`Confirmados: ${allRoles.filter(r => r.confirmed).length}`, 14, currentY + 12);
   
   currentY += 20;
   
