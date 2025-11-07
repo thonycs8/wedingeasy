@@ -100,7 +100,35 @@ export const GuestManager = () => {
         .order('name');
 
       if (error) throw error;
-      setGuests((data || []) as Guest[]);
+      
+      const guestsFromDb = (data || []) as Guest[];
+      
+      // Add couple as confirmed guests at the beginning
+      const coupleGuests: Guest[] = [];
+      
+      if (weddingData?.couple?.name) {
+        coupleGuests.push({
+          id: 'groom-virtual',
+          name: weddingData.couple.name,
+          category: 'honor_guests' as Guest['category'],
+          confirmed: true,
+          plus_one: false,
+          special_role: 'Noivo'
+        });
+      }
+      
+      if (weddingData?.couple?.partnerName) {
+        coupleGuests.push({
+          id: 'bride-virtual',
+          name: weddingData.couple.partnerName,
+          category: 'honor_guests' as Guest['category'],
+          confirmed: true,
+          plus_one: false,
+          special_role: 'Noiva'
+        });
+      }
+      
+      setGuests([...coupleGuests, ...guestsFromDb]);
     } catch (error) {
       console.error('Error loading guests:', error);
       toast.error('Erro ao carregar convidados');
@@ -218,6 +246,12 @@ export const GuestManager = () => {
   };
 
   const deleteGuest = async (id: string) => {
+    // Prevent deleting virtual couple guests
+    if (id.includes('-virtual')) {
+      toast.error('Os noivos não podem ser removidos da lista');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('guests')
@@ -235,6 +269,12 @@ export const GuestManager = () => {
   };
 
   const editGuest = (guest: Guest) => {
+    // Prevent editing virtual couple guests
+    if (guest.id.includes('-virtual')) {
+      toast.error('Os dados dos noivos não podem ser editados aqui');
+      return;
+    }
+    
     setFormData({
       name: guest.name,
       email: guest.email || '',
@@ -734,10 +774,20 @@ export const GuestManager = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 shrink-0 self-end sm:self-auto">
-                        <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => editGuest(guest)}
+                          disabled={guest.id.includes('-virtual')}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => deleteGuest(guest.id)}>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => deleteGuest(guest.id)}
+                          disabled={guest.id.includes('-virtual')}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -792,10 +842,20 @@ export const GuestManager = () => {
                               </div>
                             </div>
                             <div className="flex gap-2 shrink-0 self-end sm:self-auto">
-                              <Button size="sm" variant="ghost" onClick={() => editGuest(guest)}>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => editGuest(guest)}
+                                disabled={guest.id.includes('-virtual')}
+                              >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => deleteGuest(guest.id)}>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => deleteGuest(guest.id)}
+                                disabled={guest.id.includes('-virtual')}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
