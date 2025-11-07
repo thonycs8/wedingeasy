@@ -751,7 +751,10 @@ export const GuestManager = () => {
                               {getCategoryLabel(guest.category)}
                             </Badge>
                             {guest.special_role && (
-                              <Badge variant="outline" className="text-xs shrink-0">
+                              <Badge 
+                                variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'} 
+                                className="text-xs shrink-0"
+                              >
                                 {getSpecialRoleLabel(guest.special_role)}
                               </Badge>
                             )}
@@ -830,7 +833,10 @@ export const GuestManager = () => {
                               <h4 className="font-medium truncate">{guest.name}</h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                                 {guest.special_role && (
-                                  <Badge variant="outline" className="text-xs shrink-0">
+                                  <Badge 
+                                    variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'} 
+                                    className="text-xs shrink-0"
+                                  >
                                     {getSpecialRoleLabel(guest.special_role)}
                                   </Badge>
                                 )}
