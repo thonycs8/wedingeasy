@@ -590,17 +590,6 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
 
         if (collabError) throw collabError;
 
-        // Update profile if name is different
-        if (existingUser.first_name !== directFirstName || existingUser.last_name !== directLastName) {
-          await supabase
-            .from('profiles')
-            .update({
-              first_name: directFirstName,
-              last_name: directLastName
-            })
-            .eq('user_id', existingUser.user_id);
-        }
-
         toast({
           title: "Colaborador adicionado",
           description: `${directFirstName} foi adicionado como ${t(`roles.${directRole}`)}`,
