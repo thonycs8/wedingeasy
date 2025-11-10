@@ -44,8 +44,8 @@ const DEFAULT_ROLES = [
 
 // Map roles to their automatic side assignment
 const getRoleDefaultSide = (role: string): 'noivo' | 'noiva' | null => {
-  const groomRoles = ["Padrinho", "Amigo do Noivo", "Pai do Noivo", "Mãe do Noivo"];
-  const brideRoles = ["Madrinha", "Amiga da Noiva", "Dama de Honor", "Pai da Noiva", "Mãe da Noiva"];
+  const groomRoles = ["Amigo do Noivo", "Pai do Noivo", "Mãe do Noivo"];
+  const brideRoles = ["Amiga da Noiva", "Dama de Honor", "Pai da Noiva", "Mãe da Noiva"];
   
   if (groomRoles.includes(role)) return "noivo";
   if (brideRoles.includes(role)) return "noiva";
