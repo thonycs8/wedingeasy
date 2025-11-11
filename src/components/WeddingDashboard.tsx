@@ -13,7 +13,7 @@ import {
   Palette,
   Settings,
   LogOut,
-  Camera,
+  // Camera,
   LayoutDashboard,
   UserPlus,
   Menu,
@@ -57,7 +57,7 @@ import { BudgetManager } from "@/components/BudgetManager";
 import { TimelineManager } from "@/components/TimelineManager";
 import { WeddingChoices } from "@/components/WeddingChoices";
 import { GuestManager } from "@/components/GuestManager";
-import { PhotoGallery } from "@/components/PhotoGallery";
+// import { PhotoGallery } from "@/components/PhotoGallery";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { DashboardOverview } from "@/components/DashboardOverview";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
@@ -219,7 +219,7 @@ const WeddingDashboard = () => {
     { value: "guests", icon: Users, label: "Convidados", fullLabel: "Convidados" },
     { value: "ceremony", icon: Heart, label: "Cerimônia", fullLabel: "Cerimônia" },
     { value: "services", icon: ShoppingBag, label: "Serviços", fullLabel: "Serviços" },
-    { value: "photos", icon: Camera, label: "Galeria", fullLabel: "Galeria" },
+    // { value: "photos", icon: Camera, label: "Galeria", fullLabel: "Galeria" },
     { value: "notifications", icon: Settings, label: "Configurações", fullLabel: "Notificações" },
   ];
 
@@ -392,7 +392,7 @@ const WeddingDashboard = () => {
           {activeTab === "guests" && <GuestManager />}
           {activeTab === "ceremony" && <CeremonyRoles />}
           {activeTab === "services" && <ServicesMarketplace />}
-          {activeTab === "photos" && <PhotoGallery />}
+          {/* {activeTab === "photos" && <PhotoGallery />} */}
           {activeTab === "notifications" && <NotificationCenter />}
         </div>
       </div>
