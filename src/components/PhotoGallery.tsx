@@ -344,10 +344,10 @@ export const PhotoGallery = () => {
             <div>
               <Label htmlFor="photo-category">Categoria</Label>
               <Select value={newPhoto.category} onValueChange={(value: Photo['category']) => setNewPhoto({ ...newPhoto, category: value })}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Selecione categoria" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-[100]">
                   <SelectItem value="general">Geral</SelectItem>
                   <SelectItem value="venue">Local</SelectItem>
                   <SelectItem value="dress">Vestido</SelectItem>
@@ -655,10 +655,10 @@ export const PhotoGallery = () => {
               <div>
                 <Label htmlFor="edit-category">Categoria</Label>
                 <Select value={editingPhoto.category} onValueChange={(value: Photo['category']) => setEditingPhoto({ ...editingPhoto, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Selecione categoria" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-[100]">
                     <SelectItem value="general">Geral</SelectItem>
                     <SelectItem value="venue">Local</SelectItem>
                     <SelectItem value="dress">Vestido</SelectItem>

@@ -878,10 +878,10 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             <div>
               <Label htmlFor="inviteRole">{t('collaborators.selectRole')}</Label>
               <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
+                <SelectTrigger className="mt-2 bg-background">
+                  <SelectValue placeholder="Selecione papel" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-[100]">
                   <SelectItem value="colaborador">{t('roles.colaborador')}</SelectItem>
                   <SelectItem value="noivo">{t('roles.noivo')}</SelectItem>
                   <SelectItem value="noiva">{t('roles.noiva')}</SelectItem>
@@ -971,10 +971,10 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             <div>
               <Label htmlFor="directRole">Papel *</Label>
               <Select value={directRole} onValueChange={setDirectRole}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
+                <SelectTrigger className="mt-2 bg-background">
+                  <SelectValue placeholder="Selecione papel" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-[100]">
                   <SelectItem value="noiva">{t('roles.noiva')}</SelectItem>
                   <SelectItem value="noivo">{t('roles.noivo')}</SelectItem>
                   <SelectItem value="colaborador">{t('roles.colaborador')}</SelectItem>

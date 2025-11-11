@@ -487,10 +487,10 @@ export const GuestManager = () => {
                         value={formData.category} 
                         onValueChange={(value: Guest['category']) => setFormData(prev => ({ ...prev, category: value }))}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Selecione categoria" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background z-[100]">
                           <SelectItem value="family">Família</SelectItem>
                           <SelectItem value="friends">Amigos</SelectItem>
                           <SelectItem value="work">Trabalho</SelectItem>
@@ -662,10 +662,10 @@ export const GuestManager = () => {
                   <div>
                     <Label>Formato de Importação</Label>
                     <Select value={importFormat} onValueChange={(value: 'names' | 'csv') => setImportFormat(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Selecione formato" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background z-[100]">
                         <SelectItem value="names">Lista de Nomes (um por linha)</SelectItem>
                         <SelectItem value="csv">Formato CSV (Nome,Email,Telefone,Categoria)</SelectItem>
                       </SelectContent>
@@ -725,11 +725,11 @@ export const GuestManager = () => {
               />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-background">
                 <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
+                <SelectValue placeholder="Categoria" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-[100]">
                 <SelectItem value="all">Todas categorias</SelectItem>
                 <SelectItem value="family">Família</SelectItem>
                 <SelectItem value="friends">Amigos</SelectItem>

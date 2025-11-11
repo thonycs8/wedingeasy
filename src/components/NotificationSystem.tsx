@@ -222,10 +222,10 @@ export const NotificationSystem = () => {
                         setNewNotification(prev => ({ ...prev, type: value }))
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue />
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Selecione tipo" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background z-[100]">
                         <SelectItem value="info">Informação</SelectItem>
                         <SelectItem value="reminder">Lembrete</SelectItem>
                         <SelectItem value="warning">Aviso</SelectItem>

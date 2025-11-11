@@ -623,10 +623,10 @@ export const BudgetManager = () => {
                     <div>
                       <Label htmlFor="priority">Prioridade</Label>
                       <Select value={newCategory.priority} onValueChange={(value: any) => setNewCategory({ ...newCategory, priority: value })}>
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Selecione prioridade" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background z-[100]">
                           <SelectItem value="alta">Alta</SelectItem>
                           <SelectItem value="media">Média</SelectItem>
                           <SelectItem value="baixa">Baixa</SelectItem>
@@ -764,10 +764,10 @@ export const BudgetManager = () => {
                     <div>
                       <Label htmlFor="expense-status">Status</Label>
                       <Select value={newExpense.status} onValueChange={(value: any) => setNewExpense({ ...newExpense, status: value })}>
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Selecione status" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background z-[100]">
                           <SelectItem value="pago">Pago</SelectItem>
                           <SelectItem value="pendente">Pendente</SelectItem>
                           <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -1076,10 +1076,10 @@ export const BudgetManager = () => {
                               <Heart className={`w-4 h-4 ${option.is_favorite ? 'fill-current' : ''}`} />
                             </Button>
                             <Select value={option.status} onValueChange={(value: any) => updateOptionStatus(option.id, value)}>
-                              <SelectTrigger className="w-8 h-8 p-1">
+                              <SelectTrigger className="w-8 h-8 p-1 bg-background">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="bg-background z-[100]">
                                 <SelectItem value="considerando">Considerando</SelectItem>
                                 <SelectItem value="contactado">Contactado</SelectItem>
                                 <SelectItem value="cotacao">Cotação</SelectItem>
@@ -1128,10 +1128,10 @@ export const BudgetManager = () => {
                 <div>
                   <Label htmlFor="edit-priority">Prioridade</Label>
                   <Select value={editingCategory.priority} onValueChange={(value: any) => setEditingCategory({ ...editingCategory, priority: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Selecione prioridade" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background z-[100]">
                       <SelectItem value="alta">Alta</SelectItem>
                       <SelectItem value="media">Média</SelectItem>
                       <SelectItem value="baixa">Baixa</SelectItem>
