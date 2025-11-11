@@ -552,6 +552,23 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
     try {
       const cleanEmail = directEmail.toLowerCase().trim();
 
+      // Get wedding data to check partner name
+      const { data: weddingData } = await supabase
+        .from('wedding_data')
+        .select('partner_name')
+        .eq('id', weddingId)
+        .single();
+
+      // Auto-detect if this is the bride (noiva) based on partner_name
+      let finalRole = directRole;
+      const partnerName = weddingData?.partner_name?.toLowerCase() || '';
+      const fullName = `${directFirstName} ${directLastName}`.toLowerCase();
+      
+      // If adding partner as collaborator, automatically set as "noiva" (owner)
+      if (partnerName && fullName.includes(partnerName.split(' ')[0])) {
+        finalRole = "noiva";
+      }
+
       // Check if user exists with this email
       const { data: existingUser } = await supabase
         .from('profiles')
@@ -578,13 +595,13 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
           return;
         }
 
-        // Add as collaborator
+        // Add as collaborator with auto-detected role if applicable
         const { error: collabError } = await supabase
           .from('wedding_collaborators')
           .insert({
             wedding_id: weddingId,
             user_id: existingUser.user_id,
-            role: directRole as any,
+            role: finalRole as any,
             invited_by: user?.id
           });
 
@@ -592,7 +609,7 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
 
         toast({
           title: "Colaborador adicionado",
-          description: `${directFirstName} foi adicionado como ${t(`roles.${directRole}`)}`,
+          description: `${directFirstName} foi adicionado como ${t(`roles.${finalRole}`)}`,
         });
 
         setDirectFirstName("");
@@ -602,11 +619,11 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
         setShowAddDirectModal(false);
         loadWeddingData();
       } else {
-        // User doesn't exist, send invitation
+        // User doesn't exist, send invitation with auto-detected role
         const { error } = await supabase.functions.invoke('send-wedding-invitation', {
           body: {
             email: cleanEmail,
-            role: directRole,
+            role: finalRole,
             weddingId: weddingId,
             inviterName: inviterName,
             weddingNames: weddingNames,
@@ -617,7 +634,7 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
 
         toast({
           title: "Convite enviado",
-          description: `Um convite foi enviado para ${cleanEmail}. Quando aceitar, o perfil será criado com os dados informados.`,
+          description: `Um convite foi enviado para ${cleanEmail} como ${t(`roles.${finalRole}`)}. Quando aceitar, terá privilégios de owner.`,
         });
 
         setDirectFirstName("");
