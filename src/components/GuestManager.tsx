@@ -71,6 +71,10 @@ export const GuestManager = () => {
   const [bulkImportText, setBulkImportText] = useState('');
   const [importFormat, setImportFormat] = useState<'names' | 'csv'>('names');
 
+  const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState('');
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -130,6 +134,7 @@ export const GuestManager = () => {
       }
       
       setGuests([...coupleGuests, ...guestsFromDb]);
+      setSelectedGuestIds(new Set());
     } catch (error) {
       console.error('Error loading guests:', error);
       toast.error('Erro ao carregar convidados');
@@ -287,6 +292,11 @@ export const GuestManager = () => {
       if (error) throw error;
 
       setGuests(prev => prev.filter(g => g.id !== id));
+      setSelectedGuestIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       toast.success('Convidado removido');
     } catch (error) {
       console.error('Error deleting guest:', error);
@@ -348,6 +358,57 @@ export const GuestManager = () => {
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const isGuestDeletable = (guest: Guest) => !guest.id.includes('-virtual');
+
+  const toggleGuestSelection = (guestId: string, checked: boolean) => {
+    setSelectedGuestIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(guestId);
+      else next.delete(guestId);
+      return next;
+    });
+  };
+
+  const selectAllFilteredDeletable = () => {
+    const ids = filteredGuests.filter(isGuestDeletable).map(g => g.id);
+    setSelectedGuestIds(new Set(ids));
+  };
+
+  const clearSelection = () => setSelectedGuestIds(new Set());
+
+  const bulkDeleteSelected = async () => {
+    if (!user) return;
+
+    const ids = Array.from(selectedGuestIds).filter((id) => !id.includes('-virtual'));
+    if (ids.length === 0) {
+      toast.error('Nenhum convidado selecionado');
+      return;
+    }
+
+    if (bulkDeleteConfirmText.trim().toUpperCase() !== 'APAGAR') {
+      toast.error('Digite APAGAR para confirmar');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+
+      setGuests(prev => prev.filter(g => !ids.includes(g.id)));
+      clearSelection();
+      setIsBulkDeleteOpen(false);
+      setBulkDeleteConfirmText('');
+      toast.success(`${ids.length} convidado(s) removido(s)`);
+    } catch (error) {
+      console.error('Error bulk deleting guests:', error);
+      toast.error('Erro ao remover convidados');
+    }
+  };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -714,7 +775,55 @@ export const GuestManager = () => {
             </Dialog>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 w-full lg:w-auto">
+            {selectedGuestIds.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+                <Badge variant="secondary">Selecionados: {selectedGuestIds.size}</Badge>
+                <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
+                  Selecionar filtrados
+                </Button>
+                <Button size="sm" variant="outline" onClick={clearSelection}>
+                  Limpar
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => setIsBulkDeleteOpen(true)}>
+                  Excluir selecionados
+                </Button>
+              </div>
+            )}
+
+            <Dialog open={isBulkDeleteOpen} onOpenChange={(open) => {
+              setIsBulkDeleteOpen(open);
+              if (!open) setBulkDeleteConfirmText('');
+            }}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Excluir em massa</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Você está prestes a excluir <strong>{selectedGuestIds.size}</strong> convidado(s). Esta ação não pode ser desfeita.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-delete-confirm">Digite <strong>APAGAR</strong> para confirmar</Label>
+                    <Input
+                      id="bulk-delete-confirm"
+                      value={bulkDeleteConfirmText}
+                      onChange={(e) => setBulkDeleteConfirmText(e.target.value)}
+                      placeholder="APAGAR"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setIsBulkDeleteOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={bulkDeleteSelected}>
+                      Excluir
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
@@ -822,7 +931,15 @@ export const GuestManager = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2 shrink-0 self-end sm:self-auto">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        <div className="flex items-center gap-2 pr-1">
+                          <Checkbox
+                            checked={selectedGuestIds.has(guest.id)}
+                            onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
+                            disabled={!isGuestDeletable(guest)}
+                            aria-label="Selecionar convidado"
+                          />
+                        </div>
                         <Button 
                           size="sm" 
                           variant="ghost" 
