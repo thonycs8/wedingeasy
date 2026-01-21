@@ -56,6 +56,8 @@ interface Guest {
   dietary_restrictions?: string;
   table_number?: number;
   special_role?: string;
+  side?: 'noivo' | 'noiva' | null;
+  age_band?: '0_4' | '5_10' | '11_plus' | 'adult' | null;
 }
 
 interface BudgetCategory {
@@ -80,39 +82,97 @@ export const exportGuestListPDF = (guests: Guest[], currency: string, headerData
   // Header
   let startY = addWeddingHeader(doc, 'Lista de Convidados', headerData);
   
+  const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
+    switch (ageBand) {
+      case '0_4':
+        return 'Bebé (0–4)';
+      case '5_10':
+        return 'Criança (5–10)';
+      case '11_plus':
+        return 'Adolescente (11+)';
+      case 'adult':
+      default:
+        return 'Adulto';
+    }
+  };
+
+  // Include the couple in the export (confirmed by default)
+  const allGuests: Guest[] = [...guests];
+  if (headerData?.coupleName) {
+    allGuests.unshift({
+      name: headerData.coupleName,
+      category: 'honor_guests',
+      confirmed: true,
+      plus_one: false,
+      special_role: 'Noivo',
+      side: 'noivo',
+      age_band: 'adult',
+    });
+  }
+  if (headerData?.partnerName) {
+    allGuests.unshift({
+      name: headerData.partnerName,
+      category: 'honor_guests',
+      confirmed: true,
+      plus_one: false,
+      special_role: 'Noiva',
+      side: 'noiva',
+      age_band: 'adult',
+    });
+  }
+
+  const groomGuests = allGuests.filter((g) => g.side === 'noivo');
+  const brideGuests = allGuests.filter((g) => g.side === 'noiva');
+
   doc.setFontSize(10);
   doc.text(`Data de Exportação: ${new Date().toLocaleDateString('pt-PT')}`, 14, startY);
-  doc.text(`Total: ${guests.length} convidados`, 14, startY + 6);
-  doc.text(`Confirmados: ${guests.filter(g => g.confirmed).length}`, 14, startY + 12);
-  
+  doc.text(`Total: ${allGuests.length} convidados`, 14, startY + 6);
+  doc.text(`Confirmados: ${allGuests.filter(g => g.confirmed).length}`, 14, startY + 12);
+
   startY += 20;
-  
-  // Table
-  autoTable(doc, {
-    startY: startY,
-    head: [['Nome', 'Função na Cerimônia', 'Email', 'Telefone', 'Confirmado', '+1', 'Mesa']],
-    body: guests.map(guest => [
-      guest.name,
-      guest.special_role || '-',
-      guest.email || '-',
-      guest.phone || '-',
-      guest.confirmed ? 'Sim' : 'Não',
-      guest.plus_one ? 'Sim' : 'Não',
-      guest.table_number?.toString() || '-'
-    ]),
-    headStyles: {
-      fillColor: [219, 39, 119],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    alternateRowStyles: {
-      fillColor: [253, 242, 248]
-    },
-    styles: {
-      fontSize: 8,
-      cellPadding: 3
-    }
-  });
+
+  const renderSideSection = (title: string, sideLabel: string, sideGuests: Guest[], y: number) => {
+    if (sideGuests.length === 0) return y;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text(title, 14, y);
+    y += 8;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Nome', 'Faixa', 'Função', 'Lado', 'Email', 'Telefone', 'Confirmado', '+1', 'Mesa']],
+      body: sideGuests.map((guest) => [
+        guest.name,
+        getAgeBandLabel(guest.age_band),
+        guest.special_role || '-',
+        sideLabel,
+        guest.email || '-',
+        guest.phone || '-',
+        guest.confirmed ? 'Sim' : 'Não',
+        guest.plus_one ? 'Sim' : 'Não',
+        guest.table_number?.toString() || '-',
+      ]),
+      headStyles: {
+        fillColor: [219, 39, 119],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [253, 242, 248],
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+      },
+    });
+
+    return (doc as any).lastAutoTable.finalY + 10;
+  };
+
+  let currentY = startY;
+  currentY = renderSideSection('Lado do Noivo', 'Noivo', groomGuests, currentY);
+  currentY = renderSideSection('Lado da Noiva', 'Noiva', brideGuests, currentY);
   
   // Footer
   const pageCount = (doc as any).internal.getNumberOfPages();
