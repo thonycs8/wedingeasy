@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +65,10 @@ export const CeremonyRoles = () => {
   const [isNewRoleDialogOpen, setIsNewRoleDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<CeremonyRole | null>(null);
+
+  const [selectedRoleIds, setSelectedRoleIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState("");
   
   const [newPerson, setNewPerson] = useState({
     name: "",
@@ -94,6 +99,7 @@ export const CeremonyRoles = () => {
 
       if (error) throw error;
       setRoles((data || []) as CeremonyRole[]);
+      setSelectedRoleIds(new Set());
     } catch (error: any) {
       toast({
         title: "Erro ao carregar papéis",
@@ -198,6 +204,11 @@ export const CeremonyRoles = () => {
       if (error) throw error;
 
       setRoles(roles.filter((r) => r.id !== id));
+      setSelectedRoleIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       toast({
         title: "Pessoa removida",
         description: "A pessoa foi removida da lista",
@@ -315,6 +326,74 @@ export const CeremonyRoles = () => {
   const groomGrouped = groupBySide(groomRoles);
   const brideGrouped = groupBySide(brideRoles);
 
+  const isPersonDeletable = (person: CeremonyRole) => !['Noivo', 'Noiva'].includes(person.special_role);
+
+  const togglePersonSelection = (personId: string, checked: boolean) => {
+    setSelectedRoleIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(personId);
+      else next.delete(personId);
+      return next;
+    });
+  };
+
+  const selectAllDeletable = () => {
+    const ids = roles.filter(isPersonDeletable).map((r) => r.id);
+    setSelectedRoleIds(new Set(ids));
+  };
+
+  const clearSelection = () => setSelectedRoleIds(new Set());
+
+  const bulkDeleteSelected = async () => {
+    const ids = Array.from(selectedRoleIds);
+    const deletableIds = ids.filter((id) => {
+      const person = roles.find((r) => r.id === id);
+      return person ? isPersonDeletable(person) : false;
+    });
+
+    if (deletableIds.length === 0) {
+      toast({
+        title: "Nenhuma pessoa selecionada",
+        description: "Selecione pelo menos 1 pessoa para excluir",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (bulkDeleteConfirmText.trim().toUpperCase() !== 'APAGAR') {
+      toast({
+        title: "Confirmação necessária",
+        description: "Digite APAGAR para confirmar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .delete()
+        .in('id', deletableIds);
+
+      if (error) throw error;
+
+      setRoles((prev) => prev.filter((r) => !deletableIds.includes(r.id)));
+      clearSelection();
+      setIsBulkDeleteOpen(false);
+      setBulkDeleteConfirmText('');
+      toast({
+        title: "Removido",
+        description: `${deletableIds.length} pessoa(s) removida(s)`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Carregando...</div>;
   }
@@ -334,6 +413,52 @@ export const CeremonyRoles = () => {
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
+              {selectedRoleIds.size > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">Selecionados: {selectedRoleIds.size}</Badge>
+                  <Button variant="outline" size="sm" onClick={selectAllDeletable}>
+                    Selecionar todos
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={clearSelection}>
+                    Limpar
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteOpen(true)}>
+                    Excluir selecionados
+                  </Button>
+                </div>
+              )}
+
+              <Dialog open={isBulkDeleteOpen} onOpenChange={(open) => {
+                setIsBulkDeleteOpen(open);
+                if (!open) setBulkDeleteConfirmText('');
+              }}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Excluir em massa</DialogTitle>
+                    <DialogDescription>
+                      Você está prestes a excluir {selectedRoleIds.size} pessoa(s). Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-delete-ceremony-confirm">Digite <strong>APAGAR</strong> para confirmar</Label>
+                    <Input
+                      id="bulk-delete-ceremony-confirm"
+                      value={bulkDeleteConfirmText}
+                      onChange={(e) => setBulkDeleteConfirmText(e.target.value)}
+                      placeholder="APAGAR"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsBulkDeleteOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={bulkDeleteSelected}>
+                      Excluir
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <Button 
                 variant="outline" 
                 size="sm"
@@ -501,22 +626,30 @@ export const CeremonyRoles = () => {
                           key={person.id}
                           className="flex items-center justify-between p-4 border rounded-lg bg-card"
                         >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{person.name}</p>
-                              {person.confirmed && (
-                                <Badge variant="default" className="gap-1">
-                                  <Check className="h-3 w-3" />
-                                  Confirmado
-                                </Badge>
+                          <div className="flex items-start gap-3 flex-1">
+                            <Checkbox
+                              checked={selectedRoleIds.has(person.id)}
+                              onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
+                              disabled={!isPersonDeletable(person)}
+                              aria-label="Selecionar pessoa"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{person.name}</p>
+                                {person.confirmed && (
+                                  <Badge variant="default" className="gap-1">
+                                    <Check className="h-3 w-3" />
+                                    Confirmado
+                                  </Badge>
+                                )}
+                              </div>
+                              {person.email && (
+                                <p className="text-sm text-muted-foreground">{person.email}</p>
+                              )}
+                              {person.phone && (
+                                <p className="text-sm text-muted-foreground">{person.phone}</p>
                               )}
                             </div>
-                            {person.email && (
-                              <p className="text-sm text-muted-foreground">{person.email}</p>
-                            )}
-                            {person.phone && (
-                              <p className="text-sm text-muted-foreground">{person.phone}</p>
-                            )}
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -574,22 +707,30 @@ export const CeremonyRoles = () => {
                           key={person.id}
                           className="flex items-center justify-between p-4 border rounded-lg bg-card"
                         >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{person.name}</p>
-                              {person.confirmed && (
-                                <Badge variant="default" className="gap-1">
-                                  <Check className="h-3 w-3" />
-                                  Confirmado
-                                </Badge>
+                          <div className="flex items-start gap-3 flex-1">
+                            <Checkbox
+                              checked={selectedRoleIds.has(person.id)}
+                              onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
+                              disabled={!isPersonDeletable(person)}
+                              aria-label="Selecionar pessoa"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{person.name}</p>
+                                {person.confirmed && (
+                                  <Badge variant="default" className="gap-1">
+                                    <Check className="h-3 w-3" />
+                                    Confirmado
+                                  </Badge>
+                                )}
+                              </div>
+                              {person.email && (
+                                <p className="text-sm text-muted-foreground">{person.email}</p>
+                              )}
+                              {person.phone && (
+                                <p className="text-sm text-muted-foreground">{person.phone}</p>
                               )}
                             </div>
-                            {person.email && (
-                              <p className="text-sm text-muted-foreground">{person.email}</p>
-                            )}
-                            {person.phone && (
-                              <p className="text-sm text-muted-foreground">{person.phone}</p>
-                            )}
                           </div>
                           <div className="flex gap-2">
                             <Button
