@@ -53,6 +53,8 @@ interface Guest {
   special_role?: string;
   table_number?: number;
   relationship?: string;
+  side?: 'noivo' | 'noiva' | null;
+  age_band?: '0_4' | '5_10' | '11_plus' | 'adult' | null;
 }
 
 export const GuestManager = () => {
@@ -81,6 +83,8 @@ export const GuestManager = () => {
     email: '',
     phone: '',
     category: 'family' as Guest['category'],
+    side: '' as 'noivo' | 'noiva' | '',
+    age_band: 'adult' as NonNullable<Guest['age_band']>,
     confirmed: false,
     plus_one: false,
     dietary_restrictions: '',
@@ -118,7 +122,9 @@ export const GuestManager = () => {
           category: 'honor_guests' as Guest['category'],
           confirmed: true,
           plus_one: false,
-          special_role: 'Noivo'
+          special_role: 'Noivo',
+          side: 'noivo',
+          age_band: 'adult'
         });
       }
       
@@ -129,7 +135,9 @@ export const GuestManager = () => {
           category: 'honor_guests' as Guest['category'],
           confirmed: true,
           plus_one: false,
-          special_role: 'Noiva'
+          special_role: 'Noiva',
+          side: 'noiva',
+          age_band: 'adult'
         });
       }
       
@@ -153,6 +161,8 @@ export const GuestManager = () => {
         email: formData.email || null,
         phone: formData.phone || null,
         category: formData.category,
+        side: formData.side || null,
+        age_band: formData.age_band || 'adult',
         confirmed: formData.confirmed,
         plus_one: formData.plus_one,
         dietary_restrictions: formData.dietary_restrictions || null,
@@ -204,6 +214,8 @@ export const GuestManager = () => {
             guestsToAdd.push({
               name,
               category: 'other',
+              side: null,
+              age_band: 'adult',
               confirmed: false,
               plus_one: false,
               user_id: user.id
@@ -222,6 +234,8 @@ export const GuestManager = () => {
               email: parts[1] || null,
               phone: parts[2] || null,
               category: parts[3] || 'other',
+              side: null,
+              age_band: 'adult',
               confirmed: false,
               plus_one: false,
               user_id: user.id
@@ -316,6 +330,8 @@ export const GuestManager = () => {
       email: guest.email || '',
       phone: guest.phone || '',
       category: guest.category,
+      side: (guest.side || '') as 'noivo' | 'noiva' | '',
+      age_band: (guest.age_band || 'adult') as NonNullable<Guest['age_band']>,
       confirmed: guest.confirmed,
       plus_one: guest.plus_one,
       dietary_restrictions: guest.dietary_restrictions || '',
@@ -335,6 +351,8 @@ export const GuestManager = () => {
       email: '',
       phone: '',
       category: 'family',
+      side: '',
+      age_band: 'adult',
       confirmed: false,
       plus_one: false,
       dietary_restrictions: '',
@@ -358,6 +376,43 @@ export const GuestManager = () => {
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
+    switch (ageBand) {
+      case '0_4':
+        return 'Bebés (0–4)';
+      case '5_10':
+        return 'Crianças (5–10)';
+      case '11_plus':
+        return 'Adolescentes (11+)';
+      case 'adult':
+      default:
+        return 'Adultos';
+    }
+  };
+
+  const getSideLabel = (side?: Guest['side']) => {
+    if (side === 'noivo') return 'Lado do Noivo';
+    if (side === 'noiva') return 'Lado da Noiva';
+    return 'Sem lado';
+  };
+
+  const countByAgeBand = (list: Guest[]) => {
+    const normalized = list.map((g) => ({ ...g, age_band: (g.age_band || 'adult') as NonNullable<Guest['age_band']> }));
+    return {
+      total: normalized.length,
+      babies: normalized.filter((g) => g.age_band === '0_4').length,
+      children: normalized.filter((g) => g.age_band === '5_10').length,
+      teens: normalized.filter((g) => g.age_band === '11_plus').length,
+      adults: normalized.filter((g) => g.age_band === 'adult').length,
+    };
+  };
+
+  const groomGuests = filteredGuests.filter((g) => g.side === 'noivo');
+  const brideGuests = filteredGuests.filter((g) => g.side === 'noiva');
+
+  const groomStats = countByAgeBand(groomGuests);
+  const brideStats = countByAgeBand(brideGuests);
 
   const isGuestDeletable = (guest: Guest) => !guest.id.includes('-virtual');
 
@@ -500,6 +555,59 @@ export const GuestManager = () => {
           </div>
         </div>
 
+        {/* Side + Age breakdown */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-4 border rounded-lg bg-card">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-semibold">{getSideLabel('noivo')}</h3>
+              <Badge variant="secondary">{groomStats.total}</Badge>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <span>Bebés (0–4)</span>
+                <span className="font-medium text-foreground">{groomStats.babies}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Crianças (5–10)</span>
+                <span className="font-medium text-foreground">{groomStats.children}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Adolescentes (11+)</span>
+                <span className="font-medium text-foreground">{groomStats.teens}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Adultos</span>
+                <span className="font-medium text-foreground">{groomStats.adults}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg bg-card">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-semibold">{getSideLabel('noiva')}</h3>
+              <Badge variant="secondary">{brideStats.total}</Badge>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <span>Bebés (0–4)</span>
+                <span className="font-medium text-foreground">{brideStats.babies}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Crianças (5–10)</span>
+                <span className="font-medium text-foreground">{brideStats.children}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Adolescentes (11+)</span>
+                <span className="font-medium text-foreground">{brideStats.teens}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Adultos</span>
+                <span className="font-medium text-foreground">{brideStats.adults}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Controls */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-2">
@@ -565,6 +673,42 @@ export const GuestManager = () => {
                           <SelectItem value="pastor">Pastor</SelectItem>
                           <SelectItem value="musicians">Músicos</SelectItem>
                           <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="side">Lado</Label>
+                      <Select
+                        value={formData.side}
+                        onValueChange={(value: 'noivo' | 'noiva') => setFormData(prev => ({ ...prev, side: value }))}
+                      >
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Selecione o lado" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-[100]">
+                          <SelectItem value="noivo">Noivo</SelectItem>
+                          <SelectItem value="noiva">Noiva</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="age_band">Faixa etária</Label>
+                      <Select
+                        value={formData.age_band}
+                        onValueChange={(value: NonNullable<Guest['age_band']>) => setFormData(prev => ({ ...prev, age_band: value }))}
+                      >
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Selecione a faixa" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-[100]">
+                          <SelectItem value="0_4">Bebé (0–4) — 0%</SelectItem>
+                          <SelectItem value="5_10">Criança (5–10) — 50%</SelectItem>
+                          <SelectItem value="11_plus">Adolescente (11+) — 100%</SelectItem>
+                          <SelectItem value="adult">Adulto — 100%</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -884,82 +1028,104 @@ export const GuestManager = () => {
                 <p className="text-muted-foreground">Nenhum convidado encontrado</p>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {filteredGuests.map((guest) => {
-                  const CategoryIcon = getCategoryIcon(guest.category);
-                  return (
-                    <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
-                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Checkbox 
-                            checked={guest.confirmed}
-                            onCheckedChange={() => toggleConfirmation(guest)}
-                            disabled={guest.id.includes('-virtual')}
-                            className="mt-1"
-                          />
-                          <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-medium truncate">{guest.name}</h4>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                            <Badge variant="secondary" className="text-xs shrink-0">
-                              {getCategoryLabel(guest.category)}
-                            </Badge>
-                            {guest.special_role && (
-                              <Badge 
-                                variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'} 
-                                className="text-xs shrink-0"
-                              >
-                                {getSpecialRoleLabel(guest.special_role)}
-                              </Badge>
-                            )}
-                            <div className="flex items-center gap-1 shrink-0">
-                              {guest.confirmed ? (
-                                <span className="text-success text-xs">Confirmado</span>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">Pendente</span>
-                              )}
-                              {guest.plus_one && <span>+1</span>}
-                              {guest.printed_invitation && <span>📜</span>}
-                            </div>
-                          </div>
-                          {guest.email && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
-                              <Mail className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{guest.email}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                        <div className="flex items-center gap-2 pr-1">
-                          <Checkbox
-                            checked={selectedGuestIds.has(guest.id)}
-                            onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
-                            disabled={!isGuestDeletable(guest)}
-                            aria-label="Selecionar convidado"
-                          />
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => editGuest(guest)}
-                          disabled={guest.id.includes('-virtual')}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => deleteGuest(guest.id)}
-                          disabled={guest.id.includes('-virtual')}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {([
+                  { key: 'noivo' as const, title: 'Lado do Noivo', list: groomGuests },
+                  { key: 'noiva' as const, title: 'Lado da Noiva', list: brideGuests },
+                ]).map((section) => (
+                  <div key={section.key} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">{section.title}</h3>
+                      <Badge variant="secondary">{section.list.length}</Badge>
                     </div>
-                  );
-                })}
+                    {section.list.length === 0 ? (
+                      <div className="p-4 border rounded-lg text-sm text-muted-foreground">
+                        Nenhum convidado neste lado.
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {section.list.map((guest) => {
+                          const CategoryIcon = getCategoryIcon(guest.category);
+                          return (
+                            <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
+                              <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Checkbox
+                                    checked={guest.confirmed}
+                                    onCheckedChange={() => toggleConfirmation(guest)}
+                                    disabled={guest.id.includes('-virtual')}
+                                    className="mt-1"
+                                  />
+                                  <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="font-medium truncate">{guest.name}</h4>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                      {getCategoryLabel(guest.category)}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs shrink-0">
+                                      {getAgeBandLabel(guest.age_band)}
+                                    </Badge>
+                                    {guest.special_role && (
+                                      <Badge
+                                        variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'}
+                                        className="text-xs shrink-0"
+                                      >
+                                        {getSpecialRoleLabel(guest.special_role)}
+                                      </Badge>
+                                    )}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {guest.confirmed ? (
+                                        <span className="text-success text-xs">Confirmado</span>
+                                      ) : (
+                                        <span className="text-muted-foreground text-xs">Pendente</span>
+                                      )}
+                                      {guest.plus_one && <span>+1</span>}
+                                      {guest.printed_invitation && <span>📜</span>}
+                                    </div>
+                                  </div>
+                                  {guest.email && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
+                                      <Mail className="w-3 h-3 shrink-0" />
+                                      <span className="truncate">{guest.email}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                <div className="flex items-center gap-2 pr-1">
+                                  <Checkbox
+                                    checked={selectedGuestIds.has(guest.id)}
+                                    onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
+                                    disabled={!isGuestDeletable(guest)}
+                                    aria-label="Selecionar convidado"
+                                  />
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => editGuest(guest)}
+                                  disabled={guest.id.includes('-virtual')}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteGuest(guest.id)}
+                                  disabled={guest.id.includes('-virtual')}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>

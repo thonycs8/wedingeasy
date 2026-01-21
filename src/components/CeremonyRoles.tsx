@@ -609,165 +609,168 @@ export const CeremonyRoles = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
-          {/* Lado do Noivo */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-primary">Lado do Noivo</h2>
-            <div className="space-y-6">
-              {allRoles.map((roleName) => {
-                const peopleInRole = groomGrouped[roleName] || [];
-                if (peopleInRole.length === 0) return null;
+          {/* Two columns: Noivo vs Noiva */}
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Lado do Noivo */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-primary">Lado do Noivo</h2>
+              <div className="space-y-6">
+                {allRoles.map((roleName) => {
+                  const peopleInRole = groomGrouped[roleName] || [];
+                  if (peopleInRole.length === 0) return null;
 
-                return (
-                  <div key={`groom-${roleName}`} className="space-y-3">
-                    <h3 className="font-semibold text-lg">{roleName}</h3>
-                    <div className="grid gap-3">
-                      {peopleInRole.map((person) => (
-                        <div
-                          key={person.id}
-                          className="flex items-center justify-between p-4 border rounded-lg bg-card"
-                        >
-                          <div className="flex items-start gap-3 flex-1">
-                            <Checkbox
-                              checked={selectedRoleIds.has(person.id)}
-                              onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
-                              disabled={!isPersonDeletable(person)}
-                              aria-label="Selecionar pessoa"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{person.name}</p>
-                                {person.confirmed && (
-                                  <Badge variant="default" className="gap-1">
-                                    <Check className="h-3 w-3" />
-                                    Confirmado
-                                  </Badge>
+                  return (
+                    <div key={`groom-${roleName}`} className="space-y-3">
+                      <h3 className="font-semibold text-lg">{roleName}</h3>
+                      <div className="grid gap-3">
+                        {peopleInRole.map((person) => (
+                          <div
+                            key={person.id}
+                            className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                          >
+                            <div className="flex items-start gap-3 flex-1">
+                              <Checkbox
+                                checked={selectedRoleIds.has(person.id)}
+                                onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
+                                disabled={!isPersonDeletable(person)}
+                                aria-label="Selecionar pessoa"
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium">{person.name}</p>
+                                  {person.confirmed && (
+                                    <Badge variant="default" className="gap-1">
+                                      <Check className="h-3 w-3" />
+                                      Confirmado
+                                    </Badge>
+                                  )}
+                                </div>
+                                {person.email && (
+                                  <p className="text-sm text-muted-foreground">{person.email}</p>
+                                )}
+                                {person.phone && (
+                                  <p className="text-sm text-muted-foreground">{person.phone}</p>
                                 )}
                               </div>
-                              {person.email && (
-                                <p className="text-sm text-muted-foreground">{person.email}</p>
-                              )}
-                              {person.phone && (
-                                <p className="text-sm text-muted-foreground">{person.phone}</p>
-                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(person)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={person.confirmed ? "outline" : "default"}
+                                onClick={() => toggleConfirmation(person.id, person.confirmed)}
+                              >
+                                {person.confirmed ? (
+                                  <X className="h-4 w-4" />
+                                ) : (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteRole(person.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditDialog(person)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={person.confirmed ? "outline" : "default"}
-                              onClick={() => toggleConfirmation(person.id, person.confirmed)}
-                            >
-                              {person.confirmed ? (
-                                <X className="h-4 w-4" />
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteRole(person.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {groomRoles.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado do noivo</p>
-              )}
+                  );
+                })}
+                {groomRoles.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado do noivo</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Lado da Noiva */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-primary">Lado da Noiva</h2>
-            <div className="space-y-6">
-              {allRoles.map((roleName) => {
-                const peopleInRole = brideGrouped[roleName] || [];
-                if (peopleInRole.length === 0) return null;
+            {/* Lado da Noiva */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-primary">Lado da Noiva</h2>
+              <div className="space-y-6">
+                {allRoles.map((roleName) => {
+                  const peopleInRole = brideGrouped[roleName] || [];
+                  if (peopleInRole.length === 0) return null;
 
-                return (
-                  <div key={`bride-${roleName}`} className="space-y-3">
-                    <h3 className="font-semibold text-lg">{roleName}</h3>
-                    <div className="grid gap-3">
-                      {peopleInRole.map((person) => (
-                        <div
-                          key={person.id}
-                          className="flex items-center justify-between p-4 border rounded-lg bg-card"
-                        >
-                          <div className="flex items-start gap-3 flex-1">
-                            <Checkbox
-                              checked={selectedRoleIds.has(person.id)}
-                              onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
-                              disabled={!isPersonDeletable(person)}
-                              aria-label="Selecionar pessoa"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{person.name}</p>
-                                {person.confirmed && (
-                                  <Badge variant="default" className="gap-1">
-                                    <Check className="h-3 w-3" />
-                                    Confirmado
-                                  </Badge>
+                  return (
+                    <div key={`bride-${roleName}`} className="space-y-3">
+                      <h3 className="font-semibold text-lg">{roleName}</h3>
+                      <div className="grid gap-3">
+                        {peopleInRole.map((person) => (
+                          <div
+                            key={person.id}
+                            className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                          >
+                            <div className="flex items-start gap-3 flex-1">
+                              <Checkbox
+                                checked={selectedRoleIds.has(person.id)}
+                                onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
+                                disabled={!isPersonDeletable(person)}
+                                aria-label="Selecionar pessoa"
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium">{person.name}</p>
+                                  {person.confirmed && (
+                                    <Badge variant="default" className="gap-1">
+                                      <Check className="h-3 w-3" />
+                                      Confirmado
+                                    </Badge>
+                                  )}
+                                </div>
+                                {person.email && (
+                                  <p className="text-sm text-muted-foreground">{person.email}</p>
+                                )}
+                                {person.phone && (
+                                  <p className="text-sm text-muted-foreground">{person.phone}</p>
                                 )}
                               </div>
-                              {person.email && (
-                                <p className="text-sm text-muted-foreground">{person.email}</p>
-                              )}
-                              {person.phone && (
-                                <p className="text-sm text-muted-foreground">{person.phone}</p>
-                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(person)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={person.confirmed ? "outline" : "default"}
+                                onClick={() => toggleConfirmation(person.id, person.confirmed)}
+                              >
+                                {person.confirmed ? (
+                                  <X className="h-4 w-4" />
+                                ) : (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteRole(person.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditDialog(person)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={person.confirmed ? "outline" : "default"}
-                              onClick={() => toggleConfirmation(person.id, person.confirmed)}
-                            >
-                              {person.confirmed ? (
-                                <X className="h-4 w-4" />
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteRole(person.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {brideRoles.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado da noiva</p>
-              )}
+                  );
+                })}
+                {brideRoles.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhuma pessoa adicionada do lado da noiva</p>
+                )}
+              </div>
             </div>
           </div>
 
