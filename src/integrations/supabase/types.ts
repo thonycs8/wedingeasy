@@ -182,6 +182,7 @@ export type Database = {
       }
       guests: {
         Row: {
+          age_band: string | null
           category: string
           confirmed: boolean | null
           created_at: string
@@ -201,6 +202,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          age_band?: string | null
           category: string
           confirmed?: boolean | null
           created_at?: string
@@ -220,6 +222,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          age_band?: string | null
           category?: string
           confirmed?: boolean | null
           created_at?: string
@@ -683,6 +686,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wedding_date?: string | null
+        }
+        Relationships: []
+      }
+      wedding_guest_pricing: {
+        Row: {
+          adult_price: number
+          created_at: string
+          id: string
+          pct_0_4: number
+          pct_11_plus: number
+          pct_5_10: number
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          adult_price?: number
+          created_at?: string
+          id?: string
+          pct_0_4?: number
+          pct_11_plus?: number
+          pct_5_10?: number
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          adult_price?: number
+          created_at?: string
+          id?: string
+          pct_0_4?: number
+          pct_11_plus?: number
+          pct_5_10?: number
+          updated_at?: string
+          wedding_id?: string
         }
         Relationships: []
       }
