@@ -742,6 +742,18 @@ export const GuestManager = () => {
                 <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-44 bg-background">
+                <UserCheck className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Confirmação" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-[100]">
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="confirmed">Confirmados</SelectItem>
+                <SelectItem value="pending">Não confirmados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
