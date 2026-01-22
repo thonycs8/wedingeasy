@@ -432,7 +432,7 @@ export const CeremonyRoles = () => {
                 setIsBulkDeleteOpen(open);
                 if (!open) setBulkDeleteConfirmText('');
               }}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Excluir em massa</DialogTitle>
                     <DialogDescription>
@@ -480,7 +480,7 @@ export const CeremonyRoles = () => {
                     Novo Papel
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Criar Novo Papel</DialogTitle>
                     <DialogDescription>
@@ -511,7 +511,7 @@ export const CeremonyRoles = () => {
                     Adicionar Pessoa
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Adicionar Pessoa</DialogTitle>
                     <DialogDescription>
@@ -786,7 +786,7 @@ export const CeremonyRoles = () => {
 
       {/* Edit Person Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Pessoa</DialogTitle>
             <DialogDescription>
