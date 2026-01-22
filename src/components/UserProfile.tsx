@@ -16,7 +16,14 @@ import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X, Trash2
 const nameSchema = z.string().trim().min(1, 'Nome não pode estar vazio').max(100, 'Nome muito longo');
 const emailSchema = z.string().trim().email('Email inválido').max(255, 'Email muito longo');
 const phoneSchema = z.string().trim().regex(/^[\d\s\-\+\(\)]*$/, 'Telefone inválido').max(20, 'Telefone muito longo').optional().or(z.literal(''));
-const eventCodeSchema = z.string().trim().min(1, 'Código do evento é obrigatório').max(50, 'Código muito longo');
+// Accept legacy (WEPLAN-XXXXXX) and hardened codes (WEPLAN-<16+ chars>)
+const eventCodeSchema = z
+  .string()
+  .trim()
+  .transform((v) => v.toUpperCase())
+  .refine((v) => /^WEPLAN-[A-Z0-9]{6,32}$/.test(v), {
+    message: 'Código inválido. Formato: WEPLAN-ABC123',
+  });
 
 const profileSchema = z.object({
   firstName: nameSchema,

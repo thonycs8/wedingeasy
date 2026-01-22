@@ -35,10 +35,14 @@ interface SignupModalProps {
 }
 
 // Validation schemas
-const eventCodeSchema = z.string()
+// Accept legacy (WEPLAN-XXXXXX) and hardened codes (WEPLAN-<16+ chars>)
+const eventCodeSchema = z
+  .string()
   .trim()
-  .regex(/^WEPLAN-[A-Z0-9]{6}$/, 'Código inválido. Formato: WEPLAN-ABC123')
-  .length(13, 'Código deve ter 13 caracteres');
+  .transform((v) => v.toUpperCase())
+  .refine((v) => /^WEPLAN-[A-Z0-9]{6,32}$/.test(v), {
+    message: 'Código inválido. Formato: WEPLAN-ABC123',
+  });
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
