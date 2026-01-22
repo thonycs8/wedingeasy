@@ -80,6 +80,7 @@ export const GuestManager = () => {
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [bulkEditSide, setBulkEditSide] = useState<'noivo' | 'noiva' | 'none' | ''>('');
   const [bulkEditCategory, setBulkEditCategory] = useState<string>('');
+  const [bulkEditAgeBand, setBulkEditAgeBand] = useState<'' | NonNullable<Guest['age_band']>>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -482,6 +483,7 @@ export const GuestManager = () => {
     const patch: Record<string, unknown> = {};
     if (bulkEditSide) patch.side = bulkEditSide === 'none' ? null : bulkEditSide;
     if (bulkEditCategory) patch.category = bulkEditCategory as Guest['category'];
+    if (bulkEditAgeBand) patch.age_band = bulkEditAgeBand;
 
     if (Object.keys(patch).length === 0) {
       toast.error('Selecione pelo menos 1 campo para atualizar');
@@ -500,6 +502,7 @@ export const GuestManager = () => {
       setIsBulkEditOpen(false);
       setBulkEditSide('');
       setBulkEditCategory('');
+      setBulkEditAgeBand('');
       clearSelection();
       loadGuests();
     } catch (error) {
@@ -988,6 +991,7 @@ export const GuestManager = () => {
                 if (!open) {
                   setBulkEditSide('');
                   setBulkEditCategory('');
+                  setBulkEditAgeBand('');
                 }
               }}
             >
@@ -1038,6 +1042,24 @@ export const GuestManager = () => {
                         <SelectItem value="pastor">Pastor</SelectItem>
                         <SelectItem value="musicians">Músicos</SelectItem>
                         <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Faixa etária</Label>
+                    <Select
+                      value={bulkEditAgeBand}
+                      onValueChange={(v: typeof bulkEditAgeBand) => setBulkEditAgeBand(v)}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Manter como está" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-[100]">
+                        <SelectItem value="0_4">Bebés (0–4)</SelectItem>
+                        <SelectItem value="5_10">Crianças (5–10)</SelectItem>
+                        <SelectItem value="11_plus">Adolescentes (11+)</SelectItem>
+                        <SelectItem value="adult">Adultos</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
