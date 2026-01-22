@@ -17,6 +17,7 @@ import Cookies from "./pages/Cookies";
 import UserGuide from "./pages/UserGuide";
 import FAQ from "./pages/FAQ";
 import AdminPanel from "./pages/AdminPanel";
+import GuestList from "./pages/GuestList";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/user-guide" element={<UserGuide />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/guest-list" element={<GuestList />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

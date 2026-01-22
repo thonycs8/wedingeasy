@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ interface Guest {
 
 export const GuestManager = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { currency } = useSettings();
   const { weddingData } = useWeddingData();
@@ -439,6 +441,10 @@ export const GuestManager = () => {
 
   const selectAllFilteredDeletable = () => {
     const ids = filteredGuests.filter(isGuestDeletable).map(g => g.id);
+    if (ids.length === 0) {
+      toast.error('Nenhum convidado nos filtros atuais');
+      return;
+    }
     setSelectedGuestIds(new Set(ids));
   };
 
@@ -1141,6 +1147,23 @@ export const GuestManager = () => {
                 className="pl-10 w-64"
               />
             </div>
+
+            <Button
+              variant="outline"
+              onClick={selectAllFilteredDeletable}
+              className="w-full lg:w-auto"
+            >
+              Selecionar filtrados
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate('/guest-list')}
+              className="w-full lg:w-auto"
+            >
+              Abrir lista (tabela)
+            </Button>
+
             <Select value={filterCategory} onValueChange={setFilterCategory}>
               <SelectTrigger className="w-40 bg-background">
                 <Filter className="w-4 h-4 mr-2" />
