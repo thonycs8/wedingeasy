@@ -992,26 +992,29 @@ export const GuestManager = () => {
           </div>
 
           <div className="flex flex-col gap-2 w-full lg:w-auto">
-            {selectedGuestIds.size > 0 && (
-              <div className="flex flex-wrap items-center gap-2 justify-end">
-                <Badge variant="secondary">Selecionados: {selectedGuestIds.size}</Badge>
-                <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
-                  Selecionar filtrados
-                </Button>
-                <Button size="sm" variant="outline" onClick={selectAllUnassignedFilteredDeletable}>
-                  Selecionar sem lado
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
-                  Atualizar selecionados
-                </Button>
-                <Button size="sm" variant="outline" onClick={clearSelection}>
-                  Limpar
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => setIsBulkDeleteOpen(true)}>
-                  Excluir selecionados
-                </Button>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
+                Selecionar filtrados
+              </Button>
+              <Button size="sm" variant="outline" onClick={selectAllUnassignedFilteredDeletable}>
+                Selecionar sem lado
+              </Button>
+
+              {selectedGuestIds.size > 0 && (
+                <>
+                  <Badge variant="secondary">Selecionados: {selectedGuestIds.size}</Badge>
+                  <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
+                    Atualizar selecionados
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={clearSelection}>
+                    Limpar
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setIsBulkDeleteOpen(true)}>
+                    Excluir selecionados
+                  </Button>
+                </>
+              )}
+            </div>
 
             <Dialog
               open={isBulkEditOpen}
