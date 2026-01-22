@@ -67,6 +67,7 @@ export const GuestManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterSide, setFilterSide] = useState<'all' | 'noivo' | 'noiva' | 'none'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
@@ -378,8 +379,13 @@ export const GuestManager = () => {
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'confirmed' && guest.confirmed) ||
                          (filterStatus === 'pending' && !guest.confirmed);
+
+    const matchesSide =
+      filterSide === 'all' ||
+      (filterSide === 'none' && !guest.side) ||
+      (filterSide !== 'none' && guest.side === filterSide);
     
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus && matchesSide;
   });
 
   const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
@@ -433,6 +439,20 @@ export const GuestManager = () => {
 
   const selectAllFilteredDeletable = () => {
     const ids = filteredGuests.filter(isGuestDeletable).map(g => g.id);
+    setSelectedGuestIds(new Set(ids));
+  };
+
+  const selectAllUnassignedFilteredDeletable = () => {
+    const ids = filteredGuests
+      .filter(isGuestDeletable)
+      .filter((g) => !g.side)
+      .map((g) => g.id);
+
+    if (ids.length === 0) {
+      toast.error('Não há convidados "Sem lado" nos filtros atuais');
+      return;
+    }
+
     setSelectedGuestIds(new Set(ids));
   };
 
@@ -972,6 +992,9 @@ export const GuestManager = () => {
                 <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
                   Selecionar filtrados
                 </Button>
+                <Button size="sm" variant="outline" onClick={selectAllUnassignedFilteredDeletable}>
+                  Selecionar sem lado
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
                   Atualizar selecionados
                 </Button>
@@ -1134,6 +1157,19 @@ export const GuestManager = () => {
                 <SelectItem value="officiant">Celebrante</SelectItem>
                 <SelectItem value="musicians">Músicos</SelectItem>
                 <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterSide} onValueChange={(v) => setFilterSide(v as typeof filterSide)}>
+              <SelectTrigger className="w-36 bg-background">
+                <Users className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Lado" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-[100]">
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="noivo">Noivo</SelectItem>
+                <SelectItem value="noiva">Noiva</SelectItem>
+                <SelectItem value="none">Sem lado</SelectItem>
               </SelectContent>
             </Select>
 
