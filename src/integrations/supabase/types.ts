@@ -657,7 +657,7 @@ export type Database = {
           couple_name?: string | null
           created_at?: string
           estimated_budget?: number | null
-          event_code: string
+          event_code?: string
           guest_count?: number | null
           id?: string
           is_setup_complete?: boolean | null
@@ -771,6 +771,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_event_code: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
       get_user_wedding_id: { Args: { _user_id: string }; Returns: string }
       get_wedding_id_from_user: { Args: { _user_id: string }; Returns: string }
