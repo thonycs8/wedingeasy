@@ -410,6 +410,7 @@ export const GuestManager = () => {
 
   const groomGuests = filteredGuests.filter((g) => g.side === 'noivo');
   const brideGuests = filteredGuests.filter((g) => g.side === 'noiva');
+  const unassignedGuests = filteredGuests.filter((g) => !g.side);
 
   const groomStats = countByAgeBand(groomGuests);
   const brideStats = countByAgeBand(brideGuests);
@@ -1028,104 +1029,195 @@ export const GuestManager = () => {
                 <p className="text-muted-foreground">Nenhum convidado encontrado</p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {([
-                  { key: 'noivo' as const, title: 'Lado do Noivo', list: groomGuests },
-                  { key: 'noiva' as const, title: 'Lado da Noiva', list: brideGuests },
-                ]).map((section) => (
-                  <div key={section.key} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">{section.title}</h3>
-                      <Badge variant="secondary">{section.list.length}</Badge>
-                    </div>
-                    {section.list.length === 0 ? (
-                      <div className="p-4 border rounded-lg text-sm text-muted-foreground">
-                        Nenhum convidado neste lado.
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {([
+                    { key: 'noivo' as const, title: 'Lado do Noivo', list: groomGuests },
+                    { key: 'noiva' as const, title: 'Lado da Noiva', list: brideGuests },
+                  ]).map((section) => (
+                    <div key={section.key} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">{section.title}</h3>
+                        <Badge variant="secondary">{section.list.length}</Badge>
                       </div>
-                    ) : (
-                      <div className="grid gap-3">
-                        {section.list.map((guest) => {
-                          const CategoryIcon = getCategoryIcon(guest.category);
-                          return (
-                            <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
-                              <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <Checkbox
-                                    checked={guest.confirmed}
-                                    onCheckedChange={() => toggleConfirmation(guest)}
-                                    disabled={guest.id.includes('-virtual')}
-                                    className="mt-1"
-                                  />
-                                  <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-medium truncate">{guest.name}</h4>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                                    <Badge variant="secondary" className="text-xs shrink-0">
-                                      {getCategoryLabel(guest.category)}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs shrink-0">
-                                      {getAgeBandLabel(guest.age_band)}
-                                    </Badge>
-                                    {guest.special_role && (
-                                      <Badge
-                                        variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'}
-                                        className="text-xs shrink-0"
-                                      >
-                                        {getSpecialRoleLabel(guest.special_role)}
-                                      </Badge>
-                                    )}
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      {guest.confirmed ? (
-                                        <span className="text-success text-xs">Confirmado</span>
-                                      ) : (
-                                        <span className="text-muted-foreground text-xs">Pendente</span>
-                                      )}
-                                      {guest.plus_one && <span>+1</span>}
-                                      {guest.printed_invitation && <span>📜</span>}
-                                    </div>
+                      {section.list.length === 0 ? (
+                        <div className="p-4 border rounded-lg text-sm text-muted-foreground">
+                          Nenhum convidado neste lado.
+                        </div>
+                      ) : (
+                        <div className="grid gap-3">
+                          {section.list.map((guest) => {
+                            const CategoryIcon = getCategoryIcon(guest.category);
+                            return (
+                              <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
+                                <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <Checkbox
+                                      checked={guest.confirmed}
+                                      onCheckedChange={() => toggleConfirmation(guest)}
+                                      disabled={guest.id.includes('-virtual')}
+                                      className="mt-1"
+                                    />
+                                    <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
                                   </div>
-                                  {guest.email && (
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
-                                      <Mail className="w-3 h-3 shrink-0" />
-                                      <span className="truncate">{guest.email}</span>
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="font-medium truncate">{guest.name}</h4>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                      <Badge variant="secondary" className="text-xs shrink-0">
+                                        {getCategoryLabel(guest.category)}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs shrink-0">
+                                        {getAgeBandLabel(guest.age_band)}
+                                      </Badge>
+                                      {guest.special_role && (
+                                        <Badge
+                                          variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'}
+                                          className="text-xs shrink-0"
+                                        >
+                                          {getSpecialRoleLabel(guest.special_role)}
+                                        </Badge>
+                                      )}
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        {guest.confirmed ? (
+                                          <span className="text-success text-xs">Confirmado</span>
+                                        ) : (
+                                          <span className="text-muted-foreground text-xs">Pendente</span>
+                                        )}
+                                        {guest.plus_one && <span>+1</span>}
+                                        {guest.printed_invitation && <span>📜</span>}
+                                      </div>
                                     </div>
-                                  )}
+                                    {guest.email && (
+                                      <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
+                                        <Mail className="w-3 h-3 shrink-0" />
+                                        <span className="truncate">{guest.email}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                  <div className="flex items-center gap-2 pr-1">
+                                    <Checkbox
+                                      checked={selectedGuestIds.has(guest.id)}
+                                      onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
+                                      disabled={!isGuestDeletable(guest)}
+                                      aria-label="Selecionar convidado"
+                                    />
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => editGuest(guest)}
+                                    disabled={guest.id.includes('-virtual')}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => deleteGuest(guest.id)}
+                                    disabled={guest.id.includes('-virtual')}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                                <div className="flex items-center gap-2 pr-1">
-                                  <Checkbox
-                                    checked={selectedGuestIds.has(guest.id)}
-                                    onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
-                                    disabled={!isGuestDeletable(guest)}
-                                    aria-label="Selecionar convidado"
-                                  />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Unassigned (no side) guests */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Sem lado</h3>
+                    <Badge variant="secondary">{unassignedGuests.length}</Badge>
+                  </div>
+                  {unassignedGuests.length === 0 ? (
+                    <div className="p-4 border rounded-lg text-sm text-muted-foreground">
+                      Nenhum convidado sem lado.
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {unassignedGuests.map((guest) => {
+                        const CategoryIcon = getCategoryIcon(guest.category);
+                        return (
+                          <div key={guest.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
+                            <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={guest.confirmed}
+                                  onCheckedChange={() => toggleConfirmation(guest)}
+                                  disabled={guest.id.includes('-virtual')}
+                                  className="mt-1"
+                                />
+                                <CategoryIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-medium truncate">{guest.name}</h4>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                  <Badge variant="secondary" className="text-xs shrink-0">
+                                    {getCategoryLabel(guest.category)}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs shrink-0">
+                                    {getAgeBandLabel(guest.age_band)}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs shrink-0">
+                                    {getSideLabel(guest.side)}
+                                  </Badge>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {guest.confirmed ? (
+                                      <span className="text-success text-xs">Confirmado</span>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">Pendente</span>
+                                    )}
+                                    {guest.plus_one && <span>+1</span>}
+                                    {guest.printed_invitation && <span>📜</span>}
+                                  </div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => editGuest(guest)}
-                                  disabled={guest.id.includes('-virtual')}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => deleteGuest(guest.id)}
-                                  disabled={guest.id.includes('-virtual')}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                {guest.email && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
+                                    <Mail className="w-3 h-3 shrink-0" />
+                                    <span className="truncate">{guest.email}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                              <div className="flex items-center gap-2 pr-1">
+                                <Checkbox
+                                  checked={selectedGuestIds.has(guest.id)}
+                                  onCheckedChange={(checked) => toggleGuestSelection(guest.id, Boolean(checked))}
+                                  disabled={!isGuestDeletable(guest)}
+                                  aria-label="Selecionar convidado"
+                                />
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => editGuest(guest)}
+                                disabled={guest.id.includes('-virtual')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteGuest(guest.id)}
+                                disabled={guest.id.includes('-virtual')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </TabsContent>
