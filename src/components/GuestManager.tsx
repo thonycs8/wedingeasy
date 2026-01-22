@@ -77,6 +77,10 @@ export const GuestManager = () => {
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState('');
 
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [bulkEditSide, setBulkEditSide] = useState<'noivo' | 'noiva' | 'none' | ''>('');
+  const [bulkEditCategory, setBulkEditCategory] = useState<string>('');
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -463,6 +467,44 @@ export const GuestManager = () => {
     } catch (error) {
       console.error('Error bulk deleting guests:', error);
       toast.error('Erro ao remover convidados');
+    }
+  };
+
+  const bulkUpdateSelected = async () => {
+    if (!user) return;
+
+    const ids = Array.from(selectedGuestIds).filter((id) => !id.includes('-virtual'));
+    if (ids.length === 0) {
+      toast.error('Nenhum convidado selecionado');
+      return;
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (bulkEditSide) patch.side = bulkEditSide === 'none' ? null : bulkEditSide;
+    if (bulkEditCategory) patch.category = bulkEditCategory as Guest['category'];
+
+    if (Object.keys(patch).length === 0) {
+      toast.error('Selecione pelo menos 1 campo para atualizar');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update(patch)
+        .in('id', ids);
+
+      if (error) throw error;
+
+      toast.success(`Atualizado: ${ids.length} convidado(s)`);
+      setIsBulkEditOpen(false);
+      setBulkEditSide('');
+      setBulkEditCategory('');
+      clearSelection();
+      loadGuests();
+    } catch (error) {
+      console.error('Error bulk updating guests:', error);
+      toast.error('Erro ao atualizar convidados');
     }
   };
 
@@ -927,6 +969,9 @@ export const GuestManager = () => {
                 <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
                   Selecionar filtrados
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
+                  Atualizar selecionados
+                </Button>
                 <Button size="sm" variant="outline" onClick={clearSelection}>
                   Limpar
                 </Button>
@@ -935,6 +980,79 @@ export const GuestManager = () => {
                 </Button>
               </div>
             )}
+
+            <Dialog
+              open={isBulkEditOpen}
+              onOpenChange={(open) => {
+                setIsBulkEditOpen(open);
+                if (!open) {
+                  setBulkEditSide('');
+                  setBulkEditCategory('');
+                }
+              }}
+            >
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Atualizar em massa</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Atualizar <strong>{selectedGuestIds.size}</strong> convidado(s). Campos vazios não serão alterados.
+                  </p>
+
+                  <div className="space-y-2">
+                    <Label>Lado</Label>
+                    <Select value={bulkEditSide} onValueChange={(v: typeof bulkEditSide) => setBulkEditSide(v)}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Manter como está" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-[100]">
+                        <SelectItem value="noivo">Noivo</SelectItem>
+                        <SelectItem value="noiva">Noiva</SelectItem>
+                        <SelectItem value="none">Sem lado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <Select
+                      value={bulkEditCategory}
+                      onValueChange={(v) => setBulkEditCategory(v)}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Manter como está" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-[100]">
+                        <SelectItem value="family">Família</SelectItem>
+                        <SelectItem value="friends">Amigos</SelectItem>
+                        <SelectItem value="work">Trabalho</SelectItem>
+                        <SelectItem value="other">Outros</SelectItem>
+                        <SelectItem value="groomsmen">Padrinhos do Noivo</SelectItem>
+                        <SelectItem value="bridesmaids">Madrinhas da Noiva</SelectItem>
+                        <SelectItem value="groomsman_friends">Amigos do Noivo</SelectItem>
+                        <SelectItem value="bridesmaid_friends">Amigas da Noiva</SelectItem>
+                        <SelectItem value="witnesses">Testemunhas</SelectItem>
+                        <SelectItem value="officiant">Celebrante</SelectItem>
+                        <SelectItem value="pastor">Pastor</SelectItem>
+                        <SelectItem value="musicians">Músicos</SelectItem>
+                        <SelectItem value="honor_guests">Convidados de Honra</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-2">
+                    <Button variant="outline" onClick={() => setIsBulkEditOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button className="btn-gradient" onClick={bulkUpdateSelected}>
+                      Aplicar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={isBulkDeleteOpen} onOpenChange={(open) => {
               setIsBulkDeleteOpen(open);
