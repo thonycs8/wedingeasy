@@ -1,6 +1,6 @@
 // Tipos compartilhados entre todas as features
 
-export type Side = 'Noivo' | 'Noiva' | null;
+export type Side = 'noivo' | 'noiva' | null;
 
 export type AgeBand = 'Bebés (0-4)' | 'Crianças (5-10)' | 'Adolescentes (11+)' | 'Adultos';
 
@@ -52,6 +52,6 @@ export const AGE_BANDS: AgeBand[] = [
   'Adultos'
 ];
 
-export const SIDES: Side[] = ['Noivo', 'Noiva', null];
+export const SIDES: Side[] = ['noivo', 'noiva', null];
 
 export const PRIORITIES: Priority[] = ['alta', 'media', 'baixa'];
