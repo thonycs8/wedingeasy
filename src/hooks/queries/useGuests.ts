@@ -185,13 +185,14 @@ function calculateStats(guests: Guest[]): GuestStats {
     byCategory[guest.category] = (byCategory[guest.category] || 0) + 1;
     
     // Por lado
-    if (guest.side === 'Noivo') bySide.noivo++;
-    else if (guest.side === 'Noiva') bySide.noiva++;
+    if (guest.side === 'noivo') bySide.noivo++;
+    else if (guest.side === 'noiva') bySide.noiva++;
     else bySide.semLado++;
     
     // Por faixa etária
-    if (guest.age_band && byAgeBand[guest.age_band] !== undefined) {
-      byAgeBand[guest.age_band]++;
+    const ageBand = guest.age_band as string;
+    if (ageBand && byAgeBand[ageBand] !== undefined) {
+      byAgeBand[ageBand]++;
     }
     
     // Com +1

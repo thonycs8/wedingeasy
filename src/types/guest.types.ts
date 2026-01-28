@@ -9,7 +9,7 @@ export interface Guest {
   phone: string | null;
   category: Category | string;
   side: Side;
-  age_band: AgeBand | null;
+  age_band: AgeBand | string | null;
   confirmed: boolean;
   plus_one: boolean;
   table_number: number | null;
@@ -30,7 +30,7 @@ export interface GuestCreate {
   phone?: string | null;
   category: Category | string;
   side?: Side;
-  age_band?: AgeBand | null;
+  age_band?: AgeBand | string | null;
   confirmed?: boolean;
   plus_one?: boolean;
   table_number?: number | null;
