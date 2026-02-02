@@ -680,24 +680,12 @@ export const GuestManager = () => {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => exportGuestListPDF(guests, currency, {
-                coupleName: weddingData?.couple.name,
-                partnerName: weddingData?.couple.partnerName,
-                weddingDate: weddingData?.wedding.date
-              })}
-              disabled={guests.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar PDF
-            </Button>
+        {/* Action Buttons - Primary Actions */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
             <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
               <DialogTrigger asChild>
-                <Button className="btn-gradient">
+                <Button className="btn-gradient flex-1 sm:flex-none">
                   <Plus className="w-4 h-4 mr-2" />
                   {t('guests.addGuest')}
                 </Button>
@@ -989,31 +977,124 @@ export const GuestManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                  <Upload className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Importar</span>
+                  <span className="sm:hidden">Importar</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Importar Lista de Convidados
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Formato de Importação</Label>
+                    <Select value={importFormat} onValueChange={(value: 'names' | 'csv') => setImportFormat(value)}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Selecione formato" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-[100]">
+                        <SelectItem value="names">Lista de Nomes (um por linha)</SelectItem>
+                        <SelectItem value="csv">Formato CSV (Nome,Email,Telefone,Categoria)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bulk_import">
+                      {importFormat === 'names' ? 'Lista de Nomes' : 'Dados CSV'}
+                    </Label>
+                    <Textarea
+                      id="bulk_import"
+                      value={bulkImportText}
+                      onChange={(e) => setBulkImportText(e.target.value)}
+                      placeholder={
+                        importFormat === 'names' 
+                          ? "João Silva\nMaria Santos\nCarlos Oliveira\n..."
+                          : "Nome,Email,Telefone,Categoria\nJoão Silva,joao@email.com,123456789,family\nMaria Santos,maria@email.com,987654321,friends\n..."
+                      }
+                      rows={10}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
+                  {importFormat === 'csv' && (
+                    <Alert>
+                      <FileText className="w-4 h-4" />
+                      <AlertDescription>
+                        <strong>Formato CSV:</strong> Nome,Email,Telefone,Categoria<br/>
+                        <strong>Categorias válidas:</strong> family, friends, work, other, groomsmen, bridesmaids, witnesses, officiant, pastor, musicians, honor_guests
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={handleBulkImport} className="btn-gradient" disabled={!bulkImportText.trim()}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Importar Convidados
+                    </Button>
+                    <Button variant="outline" onClick={() => {setBulkImportText(''); setShowImportModal(false);}}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex-1 sm:flex-none"
+              onClick={() => exportGuestListPDF(guests, currency, {
+                coupleName: weddingData?.couple.name,
+                partnerName: weddingData?.couple.partnerName,
+                weddingDate: weddingData?.wedding.date
+              })}
+              disabled={guests.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Exportar PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </Button>
           </div>
 
-          <div className="flex flex-col gap-2 w-full lg:w-auto">
-            <div className="flex flex-wrap items-center gap-2 justify-end">
-              <Button size="sm" variant="outline" onClick={selectAllFilteredDeletable}>
-                Selecionar filtrados
-              </Button>
-              <Button size="sm" variant="outline" onClick={selectAllUnassignedFilteredDeletable}>
-                Selecionar sem lado
-              </Button>
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/guest-list')}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Users className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Ver tabela</span>
+              <span className="sm:hidden">Tabela</span>
+            </Button>
+          </div>
+        </div>
 
-              {selectedGuestIds.size > 0 && (
-                <>
-                  <Badge variant="secondary">Selecionados: {selectedGuestIds.size}</Badge>
-                  <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
-                    Atualizar selecionados
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={clearSelection}>
-                    Limpar
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setIsBulkDeleteOpen(true)}>
-                    Excluir selecionados
-                  </Button>
-                </>
-              )}
+        {/* Bulk Selection Actions */}
+        {selectedGuestIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border">
+            <Badge variant="secondary" className="font-medium">
+              {selectedGuestIds.size} selecionados
+            </Badge>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => setIsBulkEditOpen(true)}>
+                Atualizar
+              </Button>
+              <Button size="sm" variant="outline" onClick={clearSelection}>
+                Limpar
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => setIsBulkDeleteOpen(true)}>
+                Excluir
+              </Button>
             </div>
 
             <Dialog
@@ -1140,36 +1221,38 @@ export const GuestManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+          </div>
+        )}
 
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+        {/* Filters Section */}
+        <div className="space-y-3">
+          {/* Search and Selection */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Pesquisar convidados..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
+                className="pl-10"
               />
             </div>
+            
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={selectAllFilteredDeletable}>
+                Selecionar filtrados
+              </Button>
+              <Button size="sm" variant="ghost" onClick={selectAllUnassignedFilteredDeletable}>
+                Selecionar sem lado
+              </Button>
+            </div>
+          </div>
 
-            <Button
-              variant="outline"
-              onClick={selectAllFilteredDeletable}
-              className="w-full lg:w-auto"
-            >
-              Selecionar filtrados
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate('/guest-list')}
-              className="w-full lg:w-auto"
-            >
-              Abrir lista (tabela)
-            </Button>
-
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap gap-2">
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-40 bg-background">
-                <Filter className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-full sm:w-40 bg-background">
+                <Filter className="w-4 h-4 mr-2 shrink-0" />
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent className="bg-background z-[100]">
@@ -1187,8 +1270,8 @@ export const GuestManager = () => {
             </Select>
 
             <Select value={filterSide} onValueChange={(v) => setFilterSide(v as typeof filterSide)}>
-              <SelectTrigger className="w-36 bg-background">
-                <Users className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-full sm:w-32 bg-background">
+                <Users className="w-4 h-4 mr-2 shrink-0" />
                 <SelectValue placeholder="Lado" />
               </SelectTrigger>
               <SelectContent className="bg-background z-[100]">
@@ -1200,8 +1283,8 @@ export const GuestManager = () => {
             </Select>
 
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-44 bg-background">
-                <UserCheck className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-full sm:w-40 bg-background">
+                <UserCheck className="w-4 h-4 mr-2 shrink-0" />
                 <SelectValue placeholder="Confirmação" />
               </SelectTrigger>
               <SelectContent className="bg-background z-[100]">
