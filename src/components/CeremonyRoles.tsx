@@ -626,34 +626,35 @@ export const CeremonyRoles = () => {
                         {peopleInRole.map((person) => (
                           <div
                             key={person.id}
-                            className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                            className="flex flex-col gap-3 p-3 sm:p-4 border rounded-lg bg-card overflow-hidden"
                           >
-                            <div className="flex items-start gap-3 flex-1">
+                            <div className="flex items-start gap-3 min-w-0">
                               <Checkbox
                                 checked={selectedRoleIds.has(person.id)}
                                 onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
                                 disabled={!isPersonDeletable(person)}
                                 aria-label="Selecionar pessoa"
+                                className="mt-0.5 shrink-0"
                               />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium">{person.name}</p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium truncate">{person.name}</p>
                                   {person.confirmed && (
-                                    <Badge variant="default" className="gap-1">
+                                    <Badge variant="default" className="gap-1 shrink-0">
                                       <Check className="h-3 w-3" />
-                                      Confirmado
+                                      <span className="hidden sm:inline">Confirmado</span>
                                     </Badge>
                                   )}
                                 </div>
                                 {person.email && (
-                                  <p className="text-sm text-muted-foreground">{person.email}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{person.email}</p>
                                 )}
                                 {person.phone && (
-                                  <p className="text-sm text-muted-foreground">{person.phone}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{person.phone}</p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 justify-end">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -707,34 +708,35 @@ export const CeremonyRoles = () => {
                         {peopleInRole.map((person) => (
                           <div
                             key={person.id}
-                            className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                            className="flex flex-col gap-3 p-3 sm:p-4 border rounded-lg bg-card overflow-hidden"
                           >
-                            <div className="flex items-start gap-3 flex-1">
+                            <div className="flex items-start gap-3 min-w-0">
                               <Checkbox
                                 checked={selectedRoleIds.has(person.id)}
                                 onCheckedChange={(checked) => togglePersonSelection(person.id, Boolean(checked))}
                                 disabled={!isPersonDeletable(person)}
                                 aria-label="Selecionar pessoa"
+                                className="mt-0.5 shrink-0"
                               />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium">{person.name}</p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium truncate">{person.name}</p>
                                   {person.confirmed && (
-                                    <Badge variant="default" className="gap-1">
+                                    <Badge variant="default" className="gap-1 shrink-0">
                                       <Check className="h-3 w-3" />
-                                      Confirmado
+                                      <span className="hidden sm:inline">Confirmado</span>
                                     </Badge>
                                   )}
                                 </div>
                                 {person.email && (
-                                  <p className="text-sm text-muted-foreground">{person.email}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{person.email}</p>
                                 )}
                                 {person.phone && (
-                                  <p className="text-sm text-muted-foreground">{person.phone}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{person.phone}</p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 justify-end">
                               <Button
                                 size="sm"
                                 variant="outline"
