@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 interface WeddingData {
+  id?: string; // wedding_id from database
   couple: {
     name: string;
     email: string;
@@ -22,6 +23,7 @@ interface WeddingData {
 
 interface WeddingContextType {
   weddingData: WeddingData | null;
+  weddingId: string | null; // Exposed wedding_id for easy access
   setWeddingData: (data: WeddingData) => void;
   clearWeddingData: () => void;
   saveToCloud: (data: WeddingData) => Promise<void>;
@@ -190,7 +192,8 @@ export const WeddingProvider = ({ children }: WeddingProviderProps) => {
 
       if (data) {
         console.log('[WeddingContext] Wedding data loaded successfully');
-        const weddingData: WeddingData = {
+        const weddingDataObj: WeddingData = {
+          id: data.id, // Store the wedding_id
           couple: {
             name: data.couple_name || '',
             email: user.email || '',
@@ -207,8 +210,8 @@ export const WeddingProvider = ({ children }: WeddingProviderProps) => {
           },
           isSetupComplete: data.is_setup_complete || false
         };
-        setWeddingDataState(weddingData);
-        localStorage.setItem('weddingData', JSON.stringify(weddingData));
+        setWeddingDataState(weddingDataObj);
+        localStorage.setItem('weddingData', JSON.stringify(weddingDataObj));
       }
     } catch (error) {
       console.error('[WeddingContext] Error loading from cloud:', error);
@@ -232,9 +235,13 @@ export const WeddingProvider = ({ children }: WeddingProviderProps) => {
     }
   };
 
+  // Compute weddingId from weddingData
+  const weddingId = weddingData?.id || null;
+
   return (
     <WeddingContext.Provider value={{ 
       weddingData, 
+      weddingId,
       setWeddingData, 
       clearWeddingData, 
       saveToCloud, 

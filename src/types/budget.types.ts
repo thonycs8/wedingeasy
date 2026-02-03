@@ -12,6 +12,7 @@ export type OptionStatus = typeof OPTION_STATUSES[number];
 export interface BudgetCategory {
   id: string;
   user_id: string;
+  wedding_id: string | null;
   name: string;
   description: string | null;
   budgeted_amount: number;
@@ -27,6 +28,7 @@ export interface BudgetCategory {
 // Tipo para criação de Category
 export interface BudgetCategoryCreate {
   user_id: string;
+  wedding_id: string;
   name: string;
   description?: string | null;
   budgeted_amount?: number;
@@ -45,6 +47,7 @@ export interface BudgetCategoryUpdate extends Partial<Omit<BudgetCategory, 'id' 
 export interface BudgetExpense {
   id: string;
   user_id: string;
+  wedding_id: string | null;
   category_id: string;
   name: string;
   description: string | null;
@@ -60,6 +63,7 @@ export interface BudgetExpense {
 // Tipo para criação de Expense
 export interface BudgetExpenseCreate {
   user_id: string;
+  wedding_id: string;
   category_id: string;
   name: string;
   description?: string | null;
@@ -79,6 +83,7 @@ export interface BudgetExpenseUpdate extends Partial<Omit<BudgetExpense, 'id' | 
 export interface BudgetOption {
   id: string;
   user_id: string;
+  wedding_id: string | null;
   category_id: string;
   name: string;
   vendor: string | null;

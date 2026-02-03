@@ -6,3 +6,4 @@ export * from './timeline.types';
 export * from './budget.types';
 export * from './ceremony.types';
 export * from './notification.types';
+export * from './wedding.types';
