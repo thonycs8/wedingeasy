@@ -16,7 +16,9 @@ export const queryClient = new QueryClient({
 });
 
 // Query Keys centralizadas para consistência
+// Migrado para usar wedding_id como chave principal (multi-wedding)
 export const queryKeys = {
+  // Legacy keys (user_id based) - mantidos para compatibilidade durante migração
   guests: (userId: string) => ['guests', userId] as const,
   guest: (userId: string, guestId: string) => ['guests', userId, guestId] as const,
   timeline: (userId: string) => ['timeline', userId] as const,
@@ -30,4 +32,20 @@ export const queryKeys = {
   notifications: (userId: string) => ['notifications', userId] as const,
   wedding: (userId: string) => ['wedding', userId] as const,
   collaborators: (weddingId: string) => ['collaborators', weddingId] as const,
+
+  // New keys (wedding_id based) - preferidos para novas features
+  byWedding: {
+    guests: (weddingId: string) => ['guests', 'wedding', weddingId] as const,
+    guestsPaginated: (weddingId: string) => ['guests-paginated', weddingId] as const,
+    timeline: (weddingId: string) => ['timeline', 'wedding', weddingId] as const,
+    budget: {
+      categories: (weddingId: string) => ['budget-categories', weddingId] as const,
+      expenses: (weddingId: string) => ['budget-expenses', weddingId] as const,
+      expensesPaginated: (weddingId: string) => ['budget-expenses-paginated', weddingId] as const,
+      options: (weddingId: string) => ['budget-options', weddingId] as const,
+    },
+    notifications: (weddingId: string) => ['notifications', 'wedding', weddingId] as const,
+    photos: (weddingId: string) => ['photos', 'wedding', weddingId] as const,
+    dashboard: (weddingId: string) => ['dashboard-metrics', weddingId] as const,
+  },
 } as const;

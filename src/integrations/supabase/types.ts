@@ -28,6 +28,7 @@ export type Database = {
           spent_amount: number | null
           updated_at: string
           user_id: string
+          wedding_id: string | null
         }
         Insert: {
           budgeted_amount?: number | null
@@ -42,6 +43,7 @@ export type Database = {
           spent_amount?: number | null
           updated_at?: string
           user_id: string
+          wedding_id?: string | null
         }
         Update: {
           budgeted_amount?: number | null
@@ -56,8 +58,17 @@ export type Database = {
           spent_amount?: number | null
           updated_at?: string
           user_id?: string
+          wedding_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_expenses: {
         Row: {
@@ -73,6 +84,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vendor: string | null
+          wedding_id: string | null
         }
         Insert: {
           amount: number
@@ -87,6 +99,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vendor?: string | null
+          wedding_id?: string | null
         }
         Update: {
           amount?: number
@@ -101,6 +114,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vendor?: string | null
+          wedding_id?: string | null
         }
         Relationships: [
           {
@@ -108,6 +122,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_expenses_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
             referencedColumns: ["id"]
           },
         ]
@@ -131,6 +152,7 @@ export type Database = {
           user_id: string
           vendor: string | null
           website: string | null
+          wedding_id: string | null
         }
         Insert: {
           address?: string | null
@@ -150,6 +172,7 @@ export type Database = {
           user_id: string
           vendor?: string | null
           website?: string | null
+          wedding_id?: string | null
         }
         Update: {
           address?: string | null
@@ -169,6 +192,7 @@ export type Database = {
           user_id?: string
           vendor?: string | null
           website?: string | null
+          wedding_id?: string | null
         }
         Relationships: [
           {
@@ -176,6 +200,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_options_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
             referencedColumns: ["id"]
           },
         ]
@@ -200,6 +231,7 @@ export type Database = {
           table_number: number | null
           updated_at: string
           user_id: string
+          wedding_id: string | null
         }
         Insert: {
           age_band?: string | null
@@ -220,6 +252,7 @@ export type Database = {
           table_number?: number | null
           updated_at?: string
           user_id: string
+          wedding_id?: string | null
         }
         Update: {
           age_band?: string | null
@@ -240,8 +273,17 @@ export type Database = {
           table_number?: number | null
           updated_at?: string
           user_id?: string
+          wedding_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "guests_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -253,6 +295,7 @@ export type Database = {
           title: string
           type: string | null
           user_id: string
+          wedding_id: string | null
         }
         Insert: {
           created_at?: string
@@ -263,6 +306,7 @@ export type Database = {
           title: string
           type?: string | null
           user_id: string
+          wedding_id?: string | null
         }
         Update: {
           created_at?: string
@@ -273,8 +317,17 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string
+          wedding_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partners: {
         Row: {
@@ -332,6 +385,7 @@ export type Database = {
           title: string | null
           uploaded_at: string
           user_id: string
+          wedding_id: string | null
         }
         Insert: {
           category?: string | null
@@ -343,6 +397,7 @@ export type Database = {
           title?: string | null
           uploaded_at?: string
           user_id: string
+          wedding_id?: string | null
         }
         Update: {
           category?: string | null
@@ -354,8 +409,17 @@ export type Database = {
           title?: string | null
           uploaded_at?: string
           user_id?: string
+          wedding_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -494,6 +558,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          wedding_id: string | null
         }
         Insert: {
           category?: string
@@ -507,6 +572,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          wedding_id?: string | null
         }
         Update: {
           category?: string
@@ -520,8 +586,17 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          wedding_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "timeline_tasks_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -773,7 +848,37 @@ export type Database = {
     Functions: {
       generate_event_code: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
+      get_budget_paginated: {
+        Args: {
+          _category_id?: string
+          _order_by?: string
+          _order_dir?: string
+          _page?: number
+          _page_size?: number
+          _status?: string
+          _wedding_id: string
+        }
+        Returns: Json
+      }
+      get_guests_paginated: {
+        Args: {
+          _category?: string
+          _confirmed?: boolean
+          _order_by?: string
+          _order_dir?: string
+          _page?: number
+          _page_size?: number
+          _search?: string
+          _side?: string
+          _wedding_id: string
+        }
+        Returns: Json
+      }
       get_user_wedding_id: { Args: { _user_id: string }; Returns: string }
+      get_wedding_dashboard_metrics: {
+        Args: { _wedding_id: string }
+        Returns: Json
+      }
       get_wedding_id_from_user: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -793,6 +898,10 @@ export type Database = {
       is_wedding_owner: {
         Args: { _user_id: string; _wedding_id: string }
         Returns: boolean
+      }
+      seed_wedding_defaults: {
+        Args: { _wedding_id: string }
+        Returns: undefined
       }
     }
     Enums: {

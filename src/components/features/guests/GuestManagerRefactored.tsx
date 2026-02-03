@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { exportGuestListPDF } from '@/utils/pdfExport';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
 import { useGuests } from '@/hooks/queries/useGuests';
+import { useWeddingId } from '@/hooks/useWeddingId';
 import { LoadingState, EmptyGuests } from '@/components/shared';
 import { 
   GuestFilters, 
@@ -49,6 +50,7 @@ export const GuestManagerRefactored = () => {
   const { user } = useAuth();
   const { currency } = useSettings();
   const { weddingData } = useWeddingData();
+  const { weddingId } = useWeddingId();
 
   // React Query hook
   const {
@@ -190,7 +192,7 @@ export const GuestManagerRefactored = () => {
     table_number: string;
     relationship: string;
   }) => {
-    if (!user) return;
+    if (!user || !weddingId) return;
 
     const guestData = {
       name: formData.name.trim(),
@@ -207,7 +209,8 @@ export const GuestManagerRefactored = () => {
       special_role: formData.special_role || null,
       table_number: formData.table_number ? parseInt(formData.table_number) : null,
       relationship: formData.relationship || null,
-      user_id: user.id
+      user_id: user.id,
+      wedding_id: weddingId
     };
 
     try {

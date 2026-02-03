@@ -4,6 +4,7 @@ import type { Side, AgeBand, Category, ConfirmationStatus } from './common.types
 export interface Guest {
   id: string;
   user_id: string;
+  wedding_id: string | null;
   name: string;
   email: string | null;
   phone: string | null;
@@ -25,6 +26,7 @@ export interface Guest {
 // Tipo para criação de Guest (sem campos automáticos)
 export interface GuestCreate {
   user_id: string;
+  wedding_id: string;
   name: string;
   email?: string | null;
   phone?: string | null;
