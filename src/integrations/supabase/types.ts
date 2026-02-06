@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_features: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          feature_key: string
+          id: string
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          feature_key: string
+          id?: string
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          feature_key?: string
+          id?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       budget_categories: {
         Row: {
           budgeted_amount: number | null
@@ -421,6 +451,42 @@ export type Database = {
           },
         ]
       }
+      plan_features: {
+        Row: {
+          enabled: boolean | null
+          feature_id: string
+          id: string
+          plan_id: string
+        }
+        Insert: {
+          enabled?: boolean | null
+          feature_id: string
+          id?: string
+          plan_id: string
+        }
+        Update: {
+          enabled?: boolean | null
+          feature_id?: string
+          id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "app_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -544,6 +610,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          max_collaborators: number | null
+          max_guests: number | null
+          name: string
+          price: number | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          max_collaborators?: number | null
+          max_guests?: number | null
+          name: string
+          price?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          max_collaborators?: number | null
+          max_guests?: number | null
+          name?: string
+          price?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       timeline_tasks: {
         Row: {
@@ -718,6 +826,7 @@ export type Database = {
           event_code: string
           guest_count: number | null
           id: string
+          is_active: boolean | null
           is_setup_complete: boolean | null
           partner_name: string | null
           priorities: string[] | null
@@ -735,6 +844,7 @@ export type Database = {
           event_code?: string
           guest_count?: number | null
           id?: string
+          is_active?: boolean | null
           is_setup_complete?: boolean | null
           partner_name?: string | null
           priorities?: string[] | null
@@ -752,6 +862,7 @@ export type Database = {
           event_code?: string
           guest_count?: number | null
           id?: string
+          is_active?: boolean | null
           is_setup_complete?: boolean | null
           partner_name?: string | null
           priorities?: string[] | null
@@ -836,6 +947,54 @@ export type Database = {
             foreignKeyName: "wedding_invitations_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wedding_subscriptions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          plan_id: string
+          starts_at: string | null
+          status: string | null
+          updated_at: string | null
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          plan_id: string
+          starts_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          plan_id?: string
+          starts_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wedding_subscriptions_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: true
             referencedRelation: "wedding_data"
             referencedColumns: ["id"]
           },

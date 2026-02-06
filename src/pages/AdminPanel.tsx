@@ -3,9 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PartnersManager } from "@/components/admin/PartnersManager";
 import { ServicesManager } from "@/components/admin/ServicesManager";
+import { AdminOverview } from "@/components/admin/AdminOverview";
+import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
+import { AdminEventsManager } from "@/components/admin/AdminEventsManager";
+import { AdminAdminsManager } from "@/components/admin/AdminAdminsManager";
+import { AdminModulesManager } from "@/components/admin/AdminModulesManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Users, Calendar, Shield, Puzzle, Handshake, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPanel() {
@@ -57,8 +62,8 @@ export default function AdminPanel() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-lg text-muted-foreground">Carregando...</div>
       </div>
     );
   }
@@ -67,9 +72,20 @@ export default function AdminPanel() {
     return null;
   }
 
+  const tabs = [
+    { value: "overview", label: "Visão Geral", icon: LayoutDashboard },
+    { value: "users", label: "Utilizadores", icon: Users },
+    { value: "events", label: "Eventos", icon: Calendar },
+    { value: "admins", label: "Admins", icon: Shield },
+    { value: "modules", label: "Módulos", icon: Puzzle },
+    { value: "partners", label: "Parceiros", icon: Handshake },
+    { value: "services", label: "Serviços", icon: ShoppingBag },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-6 px-4">
+        {/* Header */}
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -79,17 +95,48 @@ export default function AdminPanel() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao Dashboard
           </Button>
-          <h1 className="text-4xl font-bold">Painel Administrativo</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie parceiros e serviços da plataforma
+          <h1 className="text-3xl font-bold">Painel Administrativo</h1>
+          <p className="text-muted-foreground mt-1">
+            Gestão completa da plataforma WeddingEasy
           </p>
         </div>
 
-        <Tabs defaultValue="partners" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="partners">Parceiros</TabsTrigger>
-            <TabsTrigger value="services">Serviços</TabsTrigger>
-          </TabsList>
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <div className="overflow-x-auto">
+            <TabsList className="inline-flex h-auto flex-wrap gap-1">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="flex items-center gap-1.5 text-xs sm:text-sm"
+                >
+                  <tab.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <TabsContent value="overview">
+            <AdminOverview />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <AdminUsersManager />
+          </TabsContent>
+
+          <TabsContent value="events">
+            <AdminEventsManager />
+          </TabsContent>
+
+          <TabsContent value="admins">
+            <AdminAdminsManager />
+          </TabsContent>
+
+          <TabsContent value="modules">
+            <AdminModulesManager />
+          </TabsContent>
 
           <TabsContent value="partners">
             <PartnersManager />
