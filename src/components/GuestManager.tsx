@@ -39,6 +39,7 @@ import { toast } from 'sonner';
 import { exportGuestListPDF } from '@/utils/pdfExport';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
+import { useWeddingId } from '@/hooks/useWeddingId';
 
 interface Guest {
   id: string;
@@ -64,6 +65,7 @@ export const GuestManager = () => {
   const { user } = useAuth();
   const { currency } = useSettings();
   const { weddingData } = useWeddingData();
+  const { weddingId } = useWeddingId();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -161,7 +163,7 @@ export const GuestManager = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !user) return;
+    if (!formData.name.trim() || !user || !weddingId) return;
 
     try {
       const guestData = {
@@ -179,7 +181,8 @@ export const GuestManager = () => {
         special_role: formData.special_role || null,
         table_number: formData.table_number ? parseInt(formData.table_number) : null,
         relationship: formData.relationship || null,
-        user_id: user.id
+        user_id: user.id,
+        wedding_id: weddingId
       };
 
       if (editingGuest) {
@@ -208,7 +211,7 @@ export const GuestManager = () => {
   };
 
   const handleBulkImport = async () => {
-    if (!bulkImportText.trim() || !user) return;
+    if (!bulkImportText.trim() || !user || !weddingId) return;
 
     try {
       const lines = bulkImportText.trim().split('\n');
@@ -226,7 +229,8 @@ export const GuestManager = () => {
               age_band: 'adult',
               confirmed: false,
               plus_one: false,
-              user_id: user.id
+              user_id: user.id,
+              wedding_id: weddingId
             });
           }
         });
@@ -246,7 +250,8 @@ export const GuestManager = () => {
               age_band: 'adult',
               confirmed: false,
               plus_one: false,
-              user_id: user.id
+              user_id: user.id,
+              wedding_id: weddingId
             });
           }
         });

@@ -14,6 +14,7 @@ import { Users, Plus, Trash2, Check, X, Download, Pencil } from "lucide-react";
 import { exportCeremonyRolesPDF } from "@/utils/pdfExport";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { useWeddingId } from "@/hooks/useWeddingId";
 
 interface CeremonyRole {
   id: string;
@@ -58,6 +59,7 @@ export const CeremonyRoles = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { weddingData } = useWeddingData();
+  const { weddingId } = useWeddingId();
   const [roles, setRoles] = useState<CeremonyRole[]>([]);
   const [customRoles, setCustomRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +126,7 @@ export const CeremonyRoles = () => {
   };
 
   const addPerson = async () => {
-    if (!user || !newPerson.name || !newPerson.special_role) {
+    if (!user || !weddingId || !newPerson.name || !newPerson.special_role) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha o nome e papel",
@@ -152,6 +154,7 @@ export const CeremonyRoles = () => {
         .insert([
           {
             user_id: user.id,
+            wedding_id: weddingId,
             name: newPerson.name,
             email: newPerson.email || null,
             phone: newPerson.phone || null,
