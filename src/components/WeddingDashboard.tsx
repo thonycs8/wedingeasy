@@ -1,5 +1,6 @@
 import { useState, createElement, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,13 @@ import {
   Palette,
   Settings,
   LogOut,
-  // Camera,
   LayoutDashboard,
   UserPlus,
   Menu,
   ShoppingBag,
   Bell,
-  User
+  User,
+  Shield
 } from "lucide-react";
 import {
   Sheet,
@@ -70,6 +71,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const WeddingDashboard = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { weddingData, clearWeddingData } = useWeddingData();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
@@ -80,6 +82,7 @@ const WeddingDashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [coupleNames, setCoupleNames] = useState<string>(t('hero.title'));
   const [userName, setUserName] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const isMobile = useIsMobile();
 
   const loadCoupleNames = async () => {
@@ -160,6 +163,18 @@ const WeddingDashboard = () => {
 
     loadUnreadCount();
     loadCoupleNames();
+
+    // Check admin role
+    const checkAdmin = async () => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      setIsAdmin(!!data);
+    };
+    checkAdmin();
 
     // Subscribe to real-time updates for notifications
     const notificationChannel = supabase
@@ -276,6 +291,20 @@ const WeddingDashboard = () => {
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline sm:ml-2">{t('collaborators.manage')}</span>
             </Button>
+
+            {/* Admin Panel */}
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/admin')}
+                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3 text-destructive hover:text-destructive"
+                title="Painel de Administração"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline sm:ml-2">Admin</span>
+              </Button>
+            )}
 
             {/* User Profile */}
             <Button 
