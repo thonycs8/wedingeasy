@@ -1,0 +1,1 @@
+ALTER TABLE public.guests ADD COLUMN couple_pair_id uuid DEFAULT NULL;
