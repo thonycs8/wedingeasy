@@ -19,6 +19,7 @@ import UserGuide from "./pages/UserGuide";
 import FAQ from "./pages/FAQ";
 import AdminPanel from "./pages/AdminPanel";
 import GuestList from "./pages/GuestList";
+import WeddingEvent from "./pages/WeddingEvent";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/user-guide" element={<UserGuide />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/guest-list" element={<GuestList />} />
+                <Route path="/evento/:eventCode" element={<WeddingEvent />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

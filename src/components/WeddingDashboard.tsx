@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Users, DollarSign, Calendar, Palette, Settings, LogOut, LayoutDashboard, UserPlus, Menu, ShoppingBag, Bell, User, Shield } from "lucide-react";
+import { Heart, Users, DollarSign, Calendar, Palette, Settings, LogOut, LayoutDashboard, UserPlus, Menu, ShoppingBag, Bell, User, Shield, Globe } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
@@ -30,6 +30,7 @@ import { WeddingDetailsEditor } from "@/components/WeddingDetailsEditor";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FeatureGate } from "@/components/shared/FeatureGate";
+import { LandingPageEditor } from "@/components/event/LandingPageEditor";
 const WeddingDashboard = () => {
   const {
     t
@@ -195,6 +196,11 @@ const WeddingDashboard = () => {
   },
   // { value: "photos", icon: Camera, label: "Galeria", fullLabel: "Galeria" },
   {
+    value: "landing",
+    icon: Globe,
+    label: "Evento",
+    fullLabel: "Página do Evento"
+  }, {
     value: "notifications",
     icon: Settings,
     label: "Configurações",
@@ -352,6 +358,11 @@ const WeddingDashboard = () => {
             </FeatureGate>
           )}
           {/* {activeTab === "photos" && <PhotoGallery />} */}
+          {activeTab === "landing" && (
+            <FeatureGate featureKey="wedding_landing" featureName="Página do Evento">
+              <LandingPageEditor />
+            </FeatureGate>
+          )}
           {activeTab === "notifications" && (
             <FeatureGate featureKey="notifications_system" featureName="Notificações">
               <NotificationCenter />

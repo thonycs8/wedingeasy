@@ -952,6 +952,80 @@ export type Database = {
           },
         ]
       }
+      wedding_landing_pages: {
+        Row: {
+          ceremony_time: string | null
+          cover_image_url: string | null
+          created_at: string
+          custom_message: string | null
+          dress_code: string | null
+          hero_message: string | null
+          id: string
+          is_published: boolean
+          party_time: string | null
+          show_countdown: boolean
+          show_map: boolean
+          show_rsvp: boolean
+          theme_color: string | null
+          updated_at: string
+          venue_address: string | null
+          venue_lat: number | null
+          venue_lng: number | null
+          venue_name: string | null
+          wedding_id: string
+        }
+        Insert: {
+          ceremony_time?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          custom_message?: string | null
+          dress_code?: string | null
+          hero_message?: string | null
+          id?: string
+          is_published?: boolean
+          party_time?: string | null
+          show_countdown?: boolean
+          show_map?: boolean
+          show_rsvp?: boolean
+          theme_color?: string | null
+          updated_at?: string
+          venue_address?: string | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_name?: string | null
+          wedding_id: string
+        }
+        Update: {
+          ceremony_time?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          custom_message?: string | null
+          dress_code?: string | null
+          hero_message?: string | null
+          id?: string
+          is_published?: boolean
+          party_time?: string | null
+          show_countdown?: boolean
+          show_map?: boolean
+          show_rsvp?: boolean
+          theme_color?: string | null
+          updated_at?: string
+          venue_address?: string | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_name?: string | null
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_landing_pages_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: true
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_subscriptions: {
         Row: {
           created_at: string | null
@@ -1057,6 +1131,10 @@ export type Database = {
       is_wedding_owner: {
         Args: { _user_id: string; _wedding_id: string }
         Returns: boolean
+      }
+      public_rsvp: {
+        Args: { _confirmed?: boolean; _event_code: string; _guest_name: string }
+        Returns: Json
       }
       seed_wedding_defaults: {
         Args: { _wedding_id: string }
