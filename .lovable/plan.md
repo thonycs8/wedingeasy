@@ -1,96 +1,123 @@
 
-# Gestao de Dominios no Painel Administrativo
+# Plano Consolidado -- Landing Page do Evento
 
-## Resumo
-
-Criar uma nova tab "Dominios" no painel de administracao que permita:
-1. Definir o dominio publicado da plataforma (usado para gerar links de convite)
-2. Preparar a infraestrutura para gestao de dominios personalizados por casamento (revenda futura)
-
-## O que muda para o utilizador (admin)
-
-- Nova tab "Dominios" no painel administrativo com icone Globe
-- Seccao "Dominio da Plataforma" onde o admin define o URL principal (ex: `https://wedingeasy.lovable.app`) -- este valor e guardado no banco de dados e usado por `getPublicBaseUrl()` para gerar todos os links
-- Seccao "Dominios Personalizados" (preparacao futura) com tabela para registar dominios custom por casamento, com campos para dominio, estado (pendente, activo, expirado), casamento associado, e data de expiracao
-- Badge "Em breve" na seccao de dominios personalizados, indicando que a funcionalidade de revenda sera activada futuramente
+Este plano combina as tres aprovacoes anteriores num unico bloco de implementacao.
 
 ---
 
-## Alteracoes Tecnicas
+## 1. Migracao de Base de Dados
 
-### 1. Migracao DB -- tabela `platform_settings` + `custom_domains`
+Adicionar colunas a `wedding_landing_pages`:
 
-**`platform_settings`** (key-value para configuracoes globais):
-- `id` uuid PK
-- `key` text UNIQUE NOT NULL (ex: `published_url`)
-- `value` text
-- `updated_at` timestamptz
-- `updated_by` uuid (referencia ao admin que alterou)
-
-RLS: apenas admins podem ler e escrever.
-
-**`custom_domains`** (preparacao para revenda):
-- `id` uuid PK
-- `wedding_id` uuid NOT NULL
-- `domain` text NOT NULL UNIQUE
-- `status` text DEFAULT 'pending' (pending, verifying, active, expired, failed)
-- `ssl_status` text DEFAULT 'pending'
-- `expires_at` timestamptz
-- `created_at` timestamptz
-- `updated_at` timestamptz
-- `notes` text
-
-RLS: apenas admins podem gerir; owners do casamento podem ver o seu.
-
-### 2. Novo componente `AdminDomainsManager.tsx`
-
-Duas seccoes:
-
-**Seccao 1 -- Dominio da Plataforma:**
-- Input para URL publicado
-- Botao "Guardar"
-- Ao guardar, insere/actualiza `platform_settings` com key `published_url`
-- Mostra o dominio activo actual
-
-**Seccao 2 -- Dominios Personalizados (Futuro):**
-- Tabela com dominios registados (ou mensagem vazia)
-- Formulario para adicionar dominio: seleccionar casamento, inserir dominio
-- Badge de estado (Pendente, Activo, Expirado)
-- Botao desactivado "Configurar DNS" com tooltip "Em breve"
-- Esta seccao ja funciona para registar dominios no DB mas sem integracao DNS real
-
-### 3. Actualizar `getPublicBaseUrl.ts`
-
-Alterar a logica para:
-1. Primeiro verificar se ha um valor em `platform_settings` (cached via query com staleTime longo)
-2. Fallback para `VITE_PUBLIC_URL` env var
-3. Fallback para `window.location.origin`
-
-Criar um hook `usePlatformUrl()` que faz o fetch do `platform_settings` e exporta o URL. O `getPublicBaseUrl()` continua a existir como funcao sincrona para compatibilidade, mas usa um valor global que e populado pelo hook na inicializacao da app.
-
-### 4. Actualizar `AdminPanel.tsx`
-
-- Adicionar tab "Dominios" com icone Globe
-- Importar e renderizar `AdminDomainsManager`
-
-### 5. Inicializar o URL na App
-
-No `App.tsx` ou no `WeddingDashboard`, chamar o hook `usePlatformUrl()` uma vez para popular o cache global, garantindo que `getPublicBaseUrl()` retorna o valor correcto desde o inicio.
+| Coluna | Tipo | Default | Descricao |
+|--------|------|---------|-----------|
+| same_venue | boolean | true | Cerimonia e recepcao no mesmo local |
+| reception_venue_name | text | null | Nome do local do Copo d'Agua (se diferente) |
+| reception_venue_address | text | null | Morada do Copo d'Agua (se diferente) |
+| theme_preset | text | null | Tema pre-definido (romantic, rustic, etc.) |
+| video_url | text | null | URL de video YouTube/Vimeo |
+| gallery_urls | text[] | '{}' | Array de URLs de imagens |
+| show_gallery | boolean | true | Mostrar galeria |
+| show_video | boolean | true | Mostrar video |
+| verse_text | text | null | Texto do verso/poema |
+| show_verse | boolean | true | Mostrar verso apos hero |
+| font_family | text | null | Fonte do tema |
 
 ---
 
-## Ficheiros a criar
+## 2. Temas Pre-definidos
 
-- `src/components/admin/AdminDomainsManager.tsx`
-- `src/hooks/usePlatformSettings.ts`
+Criar `src/config/weddingThemes.ts` com 6 temas: Romantico, Rustico, Classico, Moderno, Jardim, Praia. Cada tema define primaryColor, secondaryColor, fontFamily, heroOverlay.
 
-## Ficheiros a modificar
+---
 
-- `src/pages/AdminPanel.tsx` -- nova tab
-- `src/utils/getPublicBaseUrl.ts` -- usar platform_settings
-- `src/App.tsx` ou `src/components/WeddingDashboard.tsx` -- inicializar cache
+## 3. Galeria de Capas Pre-definidas
 
-## Migracao DB
+Criar `src/config/coverImages.ts` com 12-18 imagens Unsplash tematicas (amor, casamento) organizadas por estilo. Usadas tanto no editor como no hero do dashboard.
 
-- Criar tabelas `platform_settings` e `custom_domains` com RLS
-- Inserir valor inicial: `published_url` = `https://wedingeasy.lovable.app`
+---
+
+## 4. Novos Componentes
+
+| Componente | Descricao |
+|-----------|-----------|
+| `src/config/weddingThemes.ts` | Configuracao dos 6 temas |
+| `src/config/coverImages.ts` | Galeria de imagens pre-definidas |
+| `src/components/event/ThemePresetSelector.tsx` | Grid visual de seleccao de tema |
+| `src/components/event/CoverImageSelector.tsx` | Galeria visual de seleccao de capa |
+| `src/components/event/WeddingEventVerse.tsx` | Verso/poema estilizado apos o hero |
+| `src/components/event/WeddingEventVideo.tsx` | Embed responsivo YouTube/Vimeo |
+| `src/components/event/WeddingEventGallery.tsx` | Grid responsivo de imagens |
+
+---
+
+## 5. Editor Reorganizado (LandingPageEditor.tsx)
+
+Tabs reestruturadas:
+
+- **Tema** -- Selector de tema pre-definido + cor personalizada
+- **Conteudo** -- Hero message, verso/poema, mensagem personalizada, dress code
+- **Multimidia** -- Selector de capa (galeria pre-definida + URL custom), video URL, galeria de imagens (URLs)
+- **Local** -- Switch "Mesmo local" + campos condicionais. Renomear "Hora da Festa" para "Hora do Copo d'Agua". Se `same_venue = true`, esconder campos de recepcao e mostrar apenas horario da cerimonia
+- **Opcoes** -- Switches existentes + novos (mostrar verso, galeria, video)
+- **Convites por Papel** -- Mantido
+
+Interface `LandingPageData` sera expandida com todos os novos campos.
+
+---
+
+## 6. Dashboard (WeddingDashboard.tsx)
+
+O hero do dashboard passara a usar a `cover_image_url` guardada na landing page, com fallback para a imagem estatica `wedding-hero.jpg`.
+
+---
+
+## 7. Pagina Publica (WeddingEvent.tsx)
+
+Nova ordem das seccoes com logica condicional:
+
+1. **Hero** -- Com tema aplicado (cores, fonte, imagem de capa)
+2. **Verso/Poema** -- Texto estilizado com aspas decorativas (se `show_verse` e `verse_text`)
+3. **Convite por Papel** (se URL params)
+4. **Countdown**
+5. **Video** (se `show_video` e `video_url`)
+6. **Detalhes do Evento** -- Logica `same_venue`: se true, so mostra cerimonia; se false, mostra cerimonia + "Copo d'Agua" com horario e morada separados
+7. **Galeria** (se `show_gallery` e `gallery_urls`)
+8. **Mapa** (cerimonia + segundo mapa se local diferente)
+9. **Mensagem Personalizada**
+10. **RSVP**
+11. **Footer**
+
+---
+
+## 8. RSVP Simplificado (WeddingEventRSVP.tsx)
+
+- Placeholder: "Primeiro e ultimo nome"
+- Descricao: "Insira o seu primeiro e ultimo nome"
+
+---
+
+## 9. Terminologia Corrigida
+
+- "Festa" --> "Copo d'Agua" em todo o editor e pagina publica
+- Logica especifica: para o casamento Karina & Anthony (same_venue = true), mostrar apenas horario da cerimonia
+
+---
+
+## Resumo de Ficheiros
+
+**Criar:**
+- `src/config/weddingThemes.ts`
+- `src/config/coverImages.ts`
+- `src/components/event/ThemePresetSelector.tsx`
+- `src/components/event/CoverImageSelector.tsx`
+- `src/components/event/WeddingEventVerse.tsx`
+- `src/components/event/WeddingEventVideo.tsx`
+- `src/components/event/WeddingEventGallery.tsx`
+
+**Modificar:**
+- `src/components/event/LandingPageEditor.tsx` -- Reorganizar tabs, novos campos, terminologia
+- `src/pages/WeddingEvent.tsx` -- Nova ordem, temas, novos componentes, logica same_venue
+- `src/components/event/WeddingEventRSVP.tsx` -- Simplificar para primeiro e ultimo nome
+- `src/components/event/WeddingEventMap.tsx` -- Suportar segundo local
+- `src/components/WeddingDashboard.tsx` -- Usar cover_image_url no hero
