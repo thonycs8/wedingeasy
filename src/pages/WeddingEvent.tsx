@@ -112,7 +112,7 @@ export default function WeddingEvent() {
       {/* Role-specific invite */}
       {role && guest && (
         <>
-          <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} />
+          <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} eventCode={eventCode} />
           <Separator className="max-w-xs mx-auto" />
         </>
       )}
