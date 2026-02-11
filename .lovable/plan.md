@@ -1,92 +1,114 @@
-
-
-# Fase 3: Migrar APIs/Hooks para wedding_id e Componentizar
+# Modulo Landing Page de Convite de Casamento
 
 ## Resumo
 
-Todos os hooks e APIs actuais filtram por `user_id`, mas o backend (RLS, RPCs, indices) ja esta preparado para `wedding_id`. Os 4 componentes principais (GuestManager 1593 linhas, BudgetManager 1165 linhas, TimelineManager 625 linhas, CeremonyRoles ~890 linhas) fazem chamadas directas ao Supabase. Este plano conecta tudo ao sistema optimizado, reduzindo queries e custos server-side.
+Criar uma landing page publica para cada casamento, acessivel via link unico (ex: `wedingeasy.lovable.app/evento/WEPLAN-ABC123`), onde os convidados podem ver detalhes do evento e confirmar presenca. O modulo inclui tambem convites personalizados por papel de cerimonia (padrinho, madrinha, etc).
 
 ## O que muda para o utilizador
 
-Visualmente nada muda. A interface continua identica. Mas internamente:
-- Menos queries ao servidor (1 RPC agregado no dashboard em vez de 4+ queries separadas)
-- Paginacao server-side em vez de carregar tudo de uma vez
-- Cache inteligente (5 min staleTime, optimistic updates)
-- Preparado para escalar sem aumentar custos
+Os noivos ganham uma pagina exclusiva do seu casamento que podem partilhar com convidados. Os convidados abrem o link e veem: countdown, local, mapa, e podem confirmar presenca. Convidados com papeis especiais (padrinho, madrinha) recebem um convite personalizado com destaque para a sua funcao.
 
 ---
 
-## Etapa 1 -- Migrar API layer de user_id para wedding_id
+## Etapa 1 -- Tabela de configuracao da landing page
 
-Actualizar os 4 ficheiros de API:
+Criar tabela `wedding_landing_pages` para guardar as personalizacoes:
 
-- **guests.api.ts**: Todas as funcoes passam a aceitar `weddingId` e filtrar por `.eq('wedding_id', weddingId)`. Create passa a incluir `wedding_id`.
-- **budget.api.ts**: Idem para categories, expenses e options. Remover `fetchStats` (ja existe RPC `get_wedding_dashboard_metrics`).
-- **timeline.api.ts**: Idem para tasks. Remover `fetchStats`.
-- **notifications.api.ts**: Idem para notifications. Remover `fetchStats`.
 
----
+| Coluna          | Tipo    | Descricao                               |
+| --------------- | ------- | --------------------------------------- |
+| id              | uuid    | PK                                      |
+| wedding_id      | uuid    | FK para wedding_data                    |
+| is_published    | boolean | Se a pagina esta ativa                  |
+| hero_message    | text    | Mensagem principal (ex: "Vamos casar!") |
+| venue_name      | text    | Nome do local                           |
+| venue_address   | text    | Morada completa                         |
+| venue_lat       | numeric | Latitude para mapa                      |
+| venue_lng       | numeric | Longitude para mapa                     |
+| ceremony_time   | time    | Hora da cerimonia                       |
+| party_time      | time    | Hora da festa                           |
+| dress_code      | text    | Codigo de vestimenta                    |
+| custom_message  | text    | Mensagem personalizada                  |
+| show_countdown  | boolean | Mostrar timer                           |
+| show_map        | boolean | Mostrar mapa                            |
+| show_rsvp       | boolean | Permitir confirmacao                    |
+| theme_color     | text    | Cor principal                           |
+| cover_image_url | text    | Imagem de capa                          |
 
-## Etapa 2 -- Migrar hooks de user_id para wedding_id
 
-Actualizar os 4 hooks React Query para receber `weddingId` em vez de `userId`:
+RLS: Admins do casamento podem gerir. Leitura publica quando `is_published = true`.
 
-- **useGuests.ts**: Query key muda para `['guests', weddingId]`. Remove `calculateStats` (dashboard usa RPC).
-- **useBudget.ts**: Idem. Query keys: `['budget-categories', weddingId]`, `['budget-expenses', weddingId]`.
-- **useTimeline.ts**: Idem. Remove `statsQuery` local.
-- **useNotifications.ts**: Idem. Remove `statsQuery` local.
-
-O hook `useDashboardMetrics` ja existe e usa o RPC agregado -- sera o unico ponto de stats.
-
----
-
-## Etapa 3 -- Refatorar GuestManager (1593 linhas)
-
-O `GuestManagerRefactored` ja existe com 458 linhas e sub-componentes em `src/components/features/guests/`. Falta:
-1. Migrar de `useGuests(user?.id)` para `useGuests(weddingId)` (apos Etapa 2)
-2. Substituir o import no `WeddingDashboard.tsx` de `GuestManager` para `GuestManagerRefactored`
-3. Remover o ficheiro antigo `GuestManager.tsx` (1593 linhas)
-
----
-
-## Etapa 4 -- Refatorar BudgetManager (1165 linhas -> ~5 ficheiros)
-
-Criar `src/components/features/budget/`:
-
-| Ficheiro | Responsabilidade |
-|---|---|
-| BudgetOverview.tsx | Resumo total vs gasto, barra de progresso |
-| BudgetCategoryList.tsx | Lista de categorias com add/edit/delete |
-| BudgetExpenseList.tsx | Despesas por categoria com paginacao |
-| BudgetOptionList.tsx | Opcoes de fornecedores |
-| BudgetManagerRefactored.tsx | Orquestrador (~200 linhas) usando hooks migrados |
-
-O `WeddingDashboard.tsx` passa a importar `BudgetManagerRefactored`. O antigo `BudgetManager.tsx` e removido.
+Adicionar `wedding_landing` como nova feature_key na tabela `app_features`, habilitada apenas para planos Avancado e Pro.
 
 ---
 
-## Etapa 5 -- Refatorar TimelineManager (625 linhas -> ~4 ficheiros)
+## Etapa 2 -- Rota publica e componente da landing page
 
-Criar `src/components/features/timeline/`:
+Criar rota `/evento/:eventCode` no App.tsx -- sem autenticacao necessaria.
 
-| Ficheiro | Responsabilidade |
-|---|---|
-| TimelineList.tsx | Lista filtrada de tarefas |
-| TimelineForm.tsx | Formulario de adicionar/editar tarefa |
-| TimelineProgress.tsx | Barra de progresso global |
-| TimelineManagerRefactored.tsx | Orquestrador usando useTimeline(weddingId) |
+Componente `WeddingEventPage.tsx` com as seguintes seccoes:
+
+1. **Hero** -- Nomes do casal, data, mensagem personalizada, imagem de capa
+2. **Countdown** -- Timer ate a data do casamento (dias, horas, minutos, segundos)
+3. **Detalhes** -- Local, hora da cerimonia, hora da festa, dress code
+4. **Mapa** -- Embed Google Maps com a localizacao (usando iframe, sem API key)
+5. **RSVP** -- Formulario simples: nome do convidado + confirmar/nao confirmar
+6. **Mensagem** -- Texto livre dos noivos
+
+O componente busca dados com 1 unica query:
+
+- `wedding_data` JOIN `wedding_landing_pages` filtrado por `event_code`
+
+A confirmacao de presenca faz 1 update:
+
+- `guests.confirmed = true` WHERE `name ILIKE` e `wedding_id`
 
 ---
 
-## Etapa 6 -- Refatorar CeremonyRoles (~890 linhas -> ~3 ficheiros)
+## Etapa 3 -- Convite personalizado por papel de cerimonia
 
-Criar `src/components/features/ceremony/`:
+Quando o link inclui um parametro de papel (ex: `/evento/WEPLAN-ABC?role=padrinho&guest=joao-silva`):
 
-| Ficheiro | Responsabilidade |
-|---|---|
-| CeremonyRoleList.tsx | Lista agrupada por lado (noivo/noiva) |
-| CeremonyRoleForm.tsx | Formulario de atribuicao de papel |
-| CeremonyRolesRefactored.tsx | Orquestrador |
+- A landing page mostra uma seccao especial no topo: "Joao, voce foi convidado para ser Padrinho neste casamento!"
+- Design diferenciado com badge do papel
+- O convidado pode aceitar/recusar o papel diretamente
+
+Papeis suportados (ja existem no DB): Padrinho, Madrinha, Dama de Honor, Pajem, Florista, Portador das Aliancas, Celebrante, Convidado de Honra.
+
+---
+
+## Etapa 4 -- Editor da landing page no dashboard
+
+Novo tab ou seccao dentro do dashboard: "Pagina do Evento"
+
+Componente `LandingPageEditor.tsx` com:
+
+- Preview em tempo real (lado a lado no desktop)
+- Campos de configuracao (venue, horarios, mensagens, imagens)
+- Toggle para publicar/despublicar
+- Link copiavel para partilhar
+- Botao para enviar convite por email (reutiliza edge function existente)
+- Gerador de links personalizados por papel de cerimonia
+
+Protegido pelo FeatureGate com feature_key `wedding_landing`.
+
+---
+
+## Etapa 5 -- Integracao com feature gating
+
+Adicionar na tabela `app_features`:
+
+- feature_key: `wedding_landing`
+- display_name: "Pagina do Evento"
+- category: "Evento"
+
+Adicionar na tabela `plan_features`:
+
+- Basico: desabilitado
+- Avancado: habilitado
+- Pro: habilitado
+
+Actualizar o tipo `FeatureKey` no hook `useFeatureGating.ts`.
 
 ---
 
@@ -94,50 +116,56 @@ Criar `src/components/features/ceremony/`:
 
 ### Impacto no servidor
 
-```text
-ANTES (por tab aberta):
-  Dashboard: 4-6 queries separadas (guests, budget, timeline, notifications)
-  GuestManager: select * from guests where user_id = X (carrega TUDO)
-  BudgetManager: 3 queries (categories + expenses + options) com select *
-  TimelineManager: 2 queries (tasks + stats calculados no cliente)
-  Total por sessao: ~12-15 queries
+A landing page publica e extremamente leve:
 
-DEPOIS:
-  Dashboard: 1 RPC get_wedding_dashboard_metrics (ja existe)
-  GuestManager: 1 RPC paginado get_guests_paginated (ja existe)
-  BudgetManager: 1 RPC paginado get_budget_paginated + 1 query categories
-  TimelineManager: 1 query com wedding_id (indexado)
-  Total por sessao: ~4-5 queries
-  Cache: 5 min staleTime = 0 queries se navegar entre tabs
+- 1 SELECT para carregar dados do casamento + landing page config
+- 1 UPDATE para confirmar presenca (quando o convidado submete RSVP)
+- Sem autenticacao = sem overhead de sessao
+- Cache no React Query com staleTime alto (a pagina raramente muda)
+
+### RLS para acesso publico
+
+A tabela `wedding_landing_pages` precisa de uma policy SELECT para `anon`:
+
+```
+CREATE POLICY "Public can view published landing pages"
+ON wedding_landing_pages FOR SELECT
+USING (is_published = true);
 ```
 
-### Hooks paginados ja existentes (prontos a usar)
+Para o RSVP publico, criar uma funcao RPC `public_rsvp` com SECURITY DEFINER que:
 
-- `useGuestsPaginated` -- chama RPC `get_guests_paginated`
-- `useGuestMutations` -- mutations com invalidacao de cache correto
-- `useBudgetExpensesPaginated` -- chama RPC `get_budget_paginated`
-- `useBudgetMutations` -- mutations para categories e expenses
-- `useDashboardMetrics` -- chama RPC `get_wedding_dashboard_metrics`
+1. Recebe event_code + guest_name
+2. Valida que a landing page esta publicada e show_rsvp = true
+3. Actualiza `guests.confirmed` para o convidado correspondente
+4. Nao expoe dados sensiveis
+
+### Ficheiros novos
+
+- `src/pages/WeddingEvent.tsx` -- pagina publica do evento
+- `src/components/WeddingEventPage.tsx` -- componente principal da landing
+- `src/components/WeddingEventCountdown.tsx` -- countdown timer
+- `src/components/WeddingEventRSVP.tsx` -- formulario RSVP
+- `src/components/WeddingEventMap.tsx` -- mapa do local
+- `src/components/LandingPageEditor.tsx` -- editor no dashboard
+
+### Ficheiros modificados
+
+- `src/App.tsx` -- adicionar rota `/evento/:eventCode`
+- `src/components/WeddingDashboard.tsx` -- adicionar tab "Pagina do Evento"
+- `src/hooks/useFeatureGating.ts` -- adicionar `wedding_landing` ao tipo FeatureKey
+
+### Seguranca
+
+- A landing page publica so mostra dados que os noivos escolheram partilhar
+- O RSVP publico usa RPC com SECURITY DEFINER para evitar bypass de RLS
+- Nenhum dado sensivel (emails, telefones, notas) e exposto na pagina publica
+- O event_code (16 chars hex) serve como "senha" -- dificil de adivinhar
 
 ### Ordem de execucao
 
-1. **Etapas 1+2** (APIs + hooks) -- base para tudo, sem mudanca visual
-2. **Etapa 3** (GuestManager) -- apenas trocar import, refactored ja existe
-3. **Etapa 4** (BudgetManager) -- maior esforco de componentizacao
-4. **Etapa 5** (TimelineManager)
-5. **Etapa 6** (CeremonyRoles)
-
-Cada etapa mantem o app 100% funcional. A interface nao muda.
-
-### Ficheiros afectados
-
-- 4 APIs: `guests.api.ts`, `budget.api.ts`, `timeline.api.ts`, `notifications.api.ts`
-- 4 hooks: `useGuests.ts`, `useBudget.ts`, `useTimeline.ts`, `useNotifications.ts`
-- 1 query-client: `query-client.ts` (limpar legacy keys)
-- ~15 novos sub-componentes em `src/components/features/`
-- 1 ficheiro dashboard: `WeddingDashboard.tsx` (trocar imports)
-- 4 ficheiros antigos removidos apos migracao
-
-### Componentes shared ja prontos
-
-`LoadingState`, `LoadingSkeleton`, `LoadingCard`, `LoadingTable`, `EmptyState`, `EmptyGuests`, `EmptyTimeline`, `EmptyBudget`, `EmptyNotifications`, `ErrorState`, `ConfirmDialog`, `DeleteConfirmDialog` -- todos em `src/components/shared/`.
+1. Etapa 1 -- Tabela + feature gating (base)
+2. Etapa 2 -- Landing page publica (valor imediato)
+3. Etapa 3 -- Convites por papel (diferenciador)
+4. Etapa 4 -- Editor no dashboard (experiencia completa)
+5. Etapa 5 -- Integracao com planos (monetizacao)
