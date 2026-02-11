@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getPublicBaseUrl } from "@/utils/getPublicBaseUrl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,7 +103,7 @@ export const CeremonyRolesRefactored = () => {
     if (!eventCode || !person.special_role) return "";
     const slug = person.name.toLowerCase().replace(/\s+/g, "-");
     const role = encodeURIComponent(person.special_role.toLowerCase());
-    return `${window.location.origin}/evento/${eventCode}?role=${role}&guest=${encodeURIComponent(slug)}`;
+    return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role}&guest=${encodeURIComponent(slug)}`;
   };
 
   const getCoupleInviteLink = (person1: CeremonyRole, person2: CeremonyRole) => {
@@ -111,7 +112,7 @@ export const CeremonyRolesRefactored = () => {
     const slug2 = person2.name.toLowerCase().replace(/\s+/g, "-");
     const role1 = encodeURIComponent((person1.special_role || "").toLowerCase());
     const role2 = encodeURIComponent((person2.special_role || "").toLowerCase());
-    return `${window.location.origin}/evento/${eventCode}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
+    return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
   };
 
   const copyInviteLink = (person: CeremonyRole) => {
