@@ -456,10 +456,15 @@ function RoleLinkGenerator({
                 <p className="text-sm font-medium text-foreground truncate">
                   {entry.isCouple && <Heart className="w-3 h-3 inline mr-1 text-primary" />}
                   {entry.label}
-                  {entry.side && (
-                    <span className="text-muted-foreground text-xs ml-2">({entry.side})</span>
-                  )}
                 </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Badge variant="outline" className="text-xs">{entry.role}</Badge>
+                  {entry.side && (
+                    <span className="text-xs text-muted-foreground">
+                      Lado {entry.side === 'noivo' ? 'do Noivo' : 'da Noiva'}
+                    </span>
+                  )}
+                </div>
                 <code className="text-xs text-muted-foreground break-all">{entry.link}</code>
               </div>
               <Button size="sm" variant="outline" onClick={() => copyLink(entry.link)}>
