@@ -1,346 +1,143 @@
 
-# 🚀 Plano de Refatoração Avançado - WeddingEasy MVP
 
-## 📊 Análise do Estado Atual
+# Fase 3: Migrar APIs/Hooks para wedding_id e Componentizar
 
-### Métricas de Complexidade Identificadas
-| Componente | Linhas | Responsabilidades | Prioridade |
-|------------|--------|-------------------|------------|
-| GuestManager.tsx | 1505 | 8+ (CRUD, filtros, bulk ops, export, forms) | 🔴 Crítico |
-| BudgetManager.tsx | 1165 | 7+ (categorias, expenses, options, charts) | 🔴 Crítico |
-| CeremonyRoles.tsx | 887 | 5+ (roles, bulk, export) | 🟡 Alto |
-| TimelineManager.tsx | 625 | 5+ (tasks, suggestions, progress) | 🟡 Alto |
-| GuestListManager.tsx | 560 | 4+ (tabela, inline edit, bulk) | 🟢 Moderado |
+## Resumo
 
-### Problemas Arquiteturais Identificados
+Todos os hooks e APIs actuais filtram por `user_id`, mas o backend (RLS, RPCs, indices) ja esta preparado para `wedding_id`. Os 4 componentes principais (GuestManager 1593 linhas, BudgetManager 1165 linhas, TimelineManager 625 linhas, CeremonyRoles ~890 linhas) fazem chamadas directas ao Supabase. Este plano conecta tudo ao sistema optimizado, reduzindo queries e custos server-side.
 
-1. **React Query instalado mas NÃO UTILIZADO** - O QueryClient está configurado no App.tsx mas NENHUM componente usa `useQuery` ou `useMutation`
+## O que muda para o utilizador
 
-2. **Estado local duplicado** - Cada componente tem seu próprio `useState` para dados similares (guests, loading, etc.)
-
-3. **Lógica de negócio acoplada à UI** - Funções como `loadGuests`, `bulkUpdateSelected` estão diretamente nos componentes
-
-4. **Ausência de tipos centralizados** - Interface `Guest` definida em 3 locais diferentes (GuestManager, GuestListManager, CeremonyRoles)
-
-5. **Sem camada de serviços** - Chamadas diretas ao Supabase espalhadas em cada componente
+Visualmente nada muda. A interface continua identica. Mas internamente:
+- Menos queries ao servidor (1 RPC agregado no dashboard em vez de 4+ queries separadas)
+- Paginacao server-side em vez de carregar tudo de uma vez
+- Cache inteligente (5 min staleTime, optimistic updates)
+- Preparado para escalar sem aumentar custos
 
 ---
 
-## 🏗️ Arquitetura Proposta
+## Etapa 1 -- Migrar API layer de user_id para wedding_id
+
+Actualizar os 4 ficheiros de API:
+
+- **guests.api.ts**: Todas as funcoes passam a aceitar `weddingId` e filtrar por `.eq('wedding_id', weddingId)`. Create passa a incluir `wedding_id`.
+- **budget.api.ts**: Idem para categories, expenses e options. Remover `fetchStats` (ja existe RPC `get_wedding_dashboard_metrics`).
+- **timeline.api.ts**: Idem para tasks. Remover `fetchStats`.
+- **notifications.api.ts**: Idem para notifications. Remover `fetchStats`.
+
+---
+
+## Etapa 2 -- Migrar hooks de user_id para wedding_id
+
+Actualizar os 4 hooks React Query para receber `weddingId` em vez de `userId`:
+
+- **useGuests.ts**: Query key muda para `['guests', weddingId]`. Remove `calculateStats` (dashboard usa RPC).
+- **useBudget.ts**: Idem. Query keys: `['budget-categories', weddingId]`, `['budget-expenses', weddingId]`.
+- **useTimeline.ts**: Idem. Remove `statsQuery` local.
+- **useNotifications.ts**: Idem. Remove `statsQuery` local.
+
+O hook `useDashboardMetrics` ja existe e usa o RPC agregado -- sera o unico ponto de stats.
+
+---
+
+## Etapa 3 -- Refatorar GuestManager (1593 linhas)
+
+O `GuestManagerRefactored` ja existe com 458 linhas e sub-componentes em `src/components/features/guests/`. Falta:
+1. Migrar de `useGuests(user?.id)` para `useGuests(weddingId)` (apos Etapa 2)
+2. Substituir o import no `WeddingDashboard.tsx` de `GuestManager` para `GuestManagerRefactored`
+3. Remover o ficheiro antigo `GuestManager.tsx` (1593 linhas)
+
+---
+
+## Etapa 4 -- Refatorar BudgetManager (1165 linhas -> ~5 ficheiros)
+
+Criar `src/components/features/budget/`:
+
+| Ficheiro | Responsabilidade |
+|---|---|
+| BudgetOverview.tsx | Resumo total vs gasto, barra de progresso |
+| BudgetCategoryList.tsx | Lista de categorias com add/edit/delete |
+| BudgetExpenseList.tsx | Despesas por categoria com paginacao |
+| BudgetOptionList.tsx | Opcoes de fornecedores |
+| BudgetManagerRefactored.tsx | Orquestrador (~200 linhas) usando hooks migrados |
+
+O `WeddingDashboard.tsx` passa a importar `BudgetManagerRefactored`. O antigo `BudgetManager.tsx` e removido.
+
+---
+
+## Etapa 5 -- Refatorar TimelineManager (625 linhas -> ~4 ficheiros)
+
+Criar `src/components/features/timeline/`:
+
+| Ficheiro | Responsabilidade |
+|---|---|
+| TimelineList.tsx | Lista filtrada de tarefas |
+| TimelineForm.tsx | Formulario de adicionar/editar tarefa |
+| TimelineProgress.tsx | Barra de progresso global |
+| TimelineManagerRefactored.tsx | Orquestrador usando useTimeline(weddingId) |
+
+---
+
+## Etapa 6 -- Refatorar CeremonyRoles (~890 linhas -> ~3 ficheiros)
+
+Criar `src/components/features/ceremony/`:
+
+| Ficheiro | Responsabilidade |
+|---|---|
+| CeremonyRoleList.tsx | Lista agrupada por lado (noivo/noiva) |
+| CeremonyRoleForm.tsx | Formulario de atribuicao de papel |
+| CeremonyRolesRefactored.tsx | Orquestrador |
+
+---
+
+## Detalhes tecnicos
+
+### Impacto no servidor
 
 ```text
-src/
-├── api/                         # Camada de API/Services
-│   ├── guests.api.ts           # CRUD Supabase para guests
-│   ├── timeline.api.ts         # CRUD Supabase para timeline
-│   ├── budget.api.ts           # CRUD Supabase para budget
-│   ├── ceremony.api.ts         # CRUD Supabase para ceremony
-│   └── notifications.api.ts    # CRUD Supabase para notifications
-│
-├── hooks/
-│   ├── queries/                 # React Query hooks
-│   │   ├── useGuests.ts        # Query + Mutations para guests
-│   │   ├── useTimeline.ts      # Query + Mutations para timeline
-│   │   ├── useBudget.ts        # Query + Mutations para budget
-│   │   ├── useCeremony.ts      # Query + Mutations para ceremony
-│   │   └── useNotifications.ts # Query + Mutations para notifications
-│   ├── useAuth.tsx             # (existente)
-│   └── use-mobile.tsx          # (existente)
-│
-├── types/
-│   ├── guest.types.ts          # Guest, GuestFilters, GuestStats
-│   ├── timeline.types.ts       # TimelineTask, TaskCategory
-│   ├── budget.types.ts         # BudgetCategory, Expense, Option
-│   ├── ceremony.types.ts       # CeremonyRole
-│   └── common.types.ts         # Tipos compartilhados
-│
-├── components/
-│   ├── features/
-│   │   ├── guests/
-│   │   │   ├── GuestManager.tsx      # Container principal (refatorado)
-│   │   │   ├── GuestFilters.tsx      # Filtros e busca
-│   │   │   ├── GuestTable.tsx        # Tabela de convidados
-│   │   │   ├── GuestForm.tsx         # Formulário add/edit
-│   │   │   ├── GuestStats.tsx        # Estatísticas
-│   │   │   ├── GuestBulkActions.tsx  # Ações em massa
-│   │   │   └── GuestImport.tsx       # Importação CSV
-│   │   │
-│   │   ├── timeline/
-│   │   │   ├── TimelineManager.tsx   # Container principal
-│   │   │   ├── TimelineList.tsx      # Lista de tarefas
-│   │   │   ├── TimelineItem.tsx      # Item individual
-│   │   │   ├── TimelineForm.tsx      # Formulário
-│   │   │   ├── TimelineProgress.tsx  # Barra de progresso
-│   │   │   └── TimelineSuggestions.tsx # Sugestões inteligentes
-│   │   │
-│   │   ├── budget/
-│   │   │   ├── BudgetManager.tsx     # Container principal
-│   │   │   ├── BudgetOverview.tsx    # Visão geral
-│   │   │   ├── BudgetCategories.tsx  # Gestão de categorias
-│   │   │   ├── BudgetExpenses.tsx    # Lista de despesas
-│   │   │   ├── BudgetOptions.tsx     # Opções de fornecedores
-│   │   │   └── BudgetCharts.tsx      # (existente)
-│   │   │
-│   │   ├── ceremony/
-│   │   │   ├── CeremonyRoles.tsx     # Container principal
-│   │   │   ├── CeremonyRoleList.tsx  # Lista de papéis
-│   │   │   ├── CeremonyRoleForm.tsx  # Formulário
-│   │   │   └── CeremonyBySide.tsx    # Agrupamento por lado
-│   │   │
-│   │   └── notifications/
-│   │       ├── NotificationCenter.tsx # Container
-│   │       ├── NotificationList.tsx   # Lista
-│   │       └── NotificationItem.tsx   # Item individual
-│   │
-│   ├── shared/
-│   │   ├── LoadingState.tsx         # Estado de loading reutilizável
-│   │   ├── EmptyState.tsx           # Estado vazio reutilizável
-│   │   ├── ErrorState.tsx           # Estado de erro reutilizável
-│   │   ├── ConfirmDialog.tsx        # Diálogo de confirmação
-│   │   ├── BulkDeleteDialog.tsx     # Diálogo de exclusão em massa
-│   │   └── ExportButton.tsx         # Botão de exportação PDF
-│   │
-│   └── ui/                          # (shadcn - sem alterações)
-│
-├── lib/
-│   ├── utils.ts                     # (existente)
-│   ├── query-client.ts              # Configuração otimizada do QueryClient
-│   └── constants.ts                 # Constantes globais
-│
-└── contexts/
-    ├── SettingsContext.tsx          # (existente)
-    └── WeddingContext.tsx           # (existente)
+ANTES (por tab aberta):
+  Dashboard: 4-6 queries separadas (guests, budget, timeline, notifications)
+  GuestManager: select * from guests where user_id = X (carrega TUDO)
+  BudgetManager: 3 queries (categories + expenses + options) com select *
+  TimelineManager: 2 queries (tasks + stats calculados no cliente)
+  Total por sessao: ~12-15 queries
+
+DEPOIS:
+  Dashboard: 1 RPC get_wedding_dashboard_metrics (ja existe)
+  GuestManager: 1 RPC paginado get_guests_paginated (ja existe)
+  BudgetManager: 1 RPC paginado get_budget_paginated + 1 query categories
+  TimelineManager: 1 query com wedding_id (indexado)
+  Total por sessao: ~4-5 queries
+  Cache: 5 min staleTime = 0 queries se navegar entre tabs
 ```
 
----
+### Hooks paginados ja existentes (prontos a usar)
 
-## 📋 Fases de Implementação
+- `useGuestsPaginated` -- chama RPC `get_guests_paginated`
+- `useGuestMutations` -- mutations com invalidacao de cache correto
+- `useBudgetExpensesPaginated` -- chama RPC `get_budget_paginated`
+- `useBudgetMutations` -- mutations para categories e expenses
+- `useDashboardMetrics` -- chama RPC `get_wedding_dashboard_metrics`
 
-### **Fase 1: Fundação (Quick Wins)**
-**Duração estimada: 2-3 mensagens**
+### Ordem de execucao
 
-#### 1.1 Configuração do QueryClient Otimizado
-- Criar `src/lib/query-client.ts` com configurações de cache e retry
-- Atualizar `App.tsx` para usar a configuração otimizada
+1. **Etapas 1+2** (APIs + hooks) -- base para tudo, sem mudanca visual
+2. **Etapa 3** (GuestManager) -- apenas trocar import, refactored ja existe
+3. **Etapa 4** (BudgetManager) -- maior esforco de componentizacao
+4. **Etapa 5** (TimelineManager)
+5. **Etapa 6** (CeremonyRoles)
 
-```typescript
-// src/lib/query-client.ts
-import { QueryClient } from '@tanstack/react-query';
+Cada etapa mantem o app 100% funcional. A interface nao muda.
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      gcTime: 1000 * 60 * 30,   // 30 minutos (cacheTime renomeado)
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
-```
+### Ficheiros afectados
 
-#### 1.2 Tipos Centralizados
-- Criar `src/types/guest.types.ts`, `timeline.types.ts`, etc.
-- Remover definições duplicadas dos componentes
+- 4 APIs: `guests.api.ts`, `budget.api.ts`, `timeline.api.ts`, `notifications.api.ts`
+- 4 hooks: `useGuests.ts`, `useBudget.ts`, `useTimeline.ts`, `useNotifications.ts`
+- 1 query-client: `query-client.ts` (limpar legacy keys)
+- ~15 novos sub-componentes em `src/components/features/`
+- 1 ficheiro dashboard: `WeddingDashboard.tsx` (trocar imports)
+- 4 ficheiros antigos removidos apos migracao
 
-#### 1.3 Camada de API
-- Criar `src/api/guests.api.ts` com todas as funções de acesso ao Supabase
-- Padrão: funções puras que retornam dados ou lançam erros
+### Componentes shared ja prontos
 
----
-
-### **Fase 2: React Query Hooks**
-**Duração estimada: 3-4 mensagens**
-
-#### 2.1 Hook useGuests
-
-```typescript
-// src/hooks/queries/useGuests.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { guestsApi } from '@/api/guests.api';
-import type { Guest, GuestFilters } from '@/types/guest.types';
-
-export const useGuests = (userId: string | undefined) => {
-  const queryClient = useQueryClient();
-
-  const guestsQuery = useQuery({
-    queryKey: ['guests', userId],
-    queryFn: () => guestsApi.fetchAll(userId!),
-    enabled: !!userId,
-  });
-
-  const addGuestMutation = useMutation({
-    mutationFn: guestsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests', userId] });
-    },
-  });
-
-  const updateGuestMutation = useMutation({
-    mutationFn: guestsApi.update,
-    onMutate: async (updatedGuest) => {
-      // Optimistic update
-      await queryClient.cancelQueries({ queryKey: ['guests', userId] });
-      const previousGuests = queryClient.getQueryData(['guests', userId]);
-      queryClient.setQueryData(['guests', userId], (old: Guest[]) =>
-        old.map(g => g.id === updatedGuest.id ? { ...g, ...updatedGuest } : g)
-      );
-      return { previousGuests };
-    },
-    onError: (err, variables, context) => {
-      queryClient.setQueryData(['guests', userId], context?.previousGuests);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests', userId] });
-    },
-  });
-
-  const bulkUpdateMutation = useMutation({
-    mutationFn: guestsApi.bulkUpdate,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests', userId] });
-    },
-  });
-
-  const deleteGuestMutation = useMutation({
-    mutationFn: guestsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests', userId] });
-    },
-  });
-
-  return {
-    guests: guestsQuery.data ?? [],
-    isLoading: guestsQuery.isLoading,
-    isError: guestsQuery.isError,
-    error: guestsQuery.error,
-    addGuest: addGuestMutation,
-    updateGuest: updateGuestMutation,
-    bulkUpdate: bulkUpdateMutation,
-    deleteGuest: deleteGuestMutation,
-  };
-};
-```
-
-#### 2.2 Hooks para Timeline, Budget, Ceremony, Notifications
-- Mesma estrutura do useGuests
-- Cada hook encapsula toda a lógica de dados da feature
-
----
-
-### **Fase 3: Componentização**
-**Duração estimada: 4-5 mensagens**
-
-#### 3.1 Componentes Shared
-- `LoadingState.tsx` - Skeleton/Spinner reutilizável
-- `EmptyState.tsx` - Estado vazio com ícone e mensagem
-- `ErrorState.tsx` - Estado de erro com retry
-- `ConfirmDialog.tsx` - AlertDialog padronizado
-- `BulkDeleteDialog.tsx` - Diálogo de exclusão em massa
-
-#### 3.2 Refatoração do GuestManager
-- Extrair `GuestFilters.tsx` (busca, categoria, status, lado)
-- Extrair `GuestStats.tsx` (estatísticas por lado/faixa etária)
-- Extrair `GuestBulkActions.tsx` (seleção, update, delete em massa)
-- Extrair `GuestForm.tsx` (formulário de add/edit)
-- Container principal usa o hook `useGuests`
-
-#### 3.3 Refatoração dos outros componentes
-- Seguir o mesmo padrão de extração
-- Cada container usa seu respectivo hook
-
----
-
-### **Fase 4: Performance e UX**
-**Duração estimada: 2-3 mensagens**
-
-#### 4.1 Virtualização de Listas
-- Instalar `react-window` ou `@tanstack/react-virtual`
-- Aplicar em GuestTable para listas 500+ convidados
-
-#### 4.2 Estados Consistentes
-- Loading skeletons em todos os componentes
-- Error boundaries por feature
-- Toast feedback padronizado
-
-#### 4.3 Mobile First
-- Revisar layouts responsivos
-- Testar todas as features em viewport móvel
-
----
-
-## 🔧 Detalhes Técnicos
-
-### Padrão de Nomenclatura
-| Tipo | Convenção | Exemplo |
-|------|-----------|---------|
-| Componentes | PascalCase | `GuestFilters.tsx` |
-| Hooks | camelCase + use | `useGuests.ts` |
-| API | camelCase + .api | `guests.api.ts` |
-| Types | camelCase + .types | `guest.types.ts` |
-| Constantes | UPPER_SNAKE_CASE | `DEFAULT_ROLES` |
-
-### Padrão de Query Keys
-```typescript
-// Consistência nas query keys
-['guests', userId]           // Lista de convidados
-['guests', userId, guestId]  // Convidado específico
-['timeline', userId]         // Lista de tarefas
-['budget', userId]           // Dados de orçamento
-['ceremony', userId]         // Papéis de cerimônia
-['notifications', userId]    // Notificações
-```
-
-### Padrão de Error Handling
-```typescript
-// Em cada mutation
-onError: (error) => {
-  console.error('Mutation error:', error);
-  toast.error('Erro ao realizar operação');
-},
-onSuccess: () => {
-  toast.success('Operação realizada com sucesso!');
-},
-```
-
----
-
-## 📊 Benefícios Esperados
-
-### Performance
-- **Cache automático** via React Query (menos chamadas à API)
-- **Optimistic updates** para UX instantânea
-- **Virtualização** para listas grandes (10x mais rápido)
-
-### Manutenibilidade
-- **Componentes 80% menores** (de 1500 para ~200-300 linhas)
-- **Tipos centralizados** (uma única fonte de verdade)
-- **Lógica de dados isolada** (hooks testáveis)
-
-### Escalabilidade
-- **Adicionar features** sem tocar em componentes existentes
-- **Reutilizar hooks** em novos contextos
-- **Substituir Supabase** alterando apenas a camada de API
-
-### Developer Experience
-- **Autocomplete** melhorado com tipos centralizados
-- **Debugging** facilitado com React Query DevTools
-- **Testes** mais simples com hooks isolados
-
----
-
-## 🎯 Ordem de Execução Recomendada
-
-1. **Fase 1.1** - QueryClient otimizado
-2. **Fase 1.2** - Tipos centralizados (guest.types.ts)
-3. **Fase 1.3** - API layer (guests.api.ts)
-4. **Fase 2.1** - Hook useGuests
-5. **Fase 3.1** - Componentes shared
-6. **Fase 3.2** - Refatorar GuestManager
-7. Repetir para Timeline, Budget, Ceremony, Notifications
-8. **Fase 4** - Performance e Mobile
-
-Cada fase pode ser implementada de forma incremental, mantendo o app funcional durante todo o processo.
+`LoadingState`, `LoadingSkeleton`, `LoadingCard`, `LoadingTable`, `EmptyState`, `EmptyGuests`, `EmptyTimeline`, `EmptyBudget`, `EmptyNotifications`, `ErrorState`, `ConfirmDialog`, `DeleteConfirmDialog` -- todos em `src/components/shared/`.
