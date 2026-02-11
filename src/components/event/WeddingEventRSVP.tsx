@@ -77,12 +77,12 @@ export function WeddingEventRSVP({ eventCode, themeColor, initialGuestName }: RS
     <section className="py-12 px-4">
       <h2 className="text-2xl font-serif text-center text-foreground mb-2">Confirme a sua Presença</h2>
       <p className="text-center text-muted-foreground mb-8 text-sm">
-        Insira o seu nome completo tal como consta no convite
+        Insira o seu primeiro e último nome
       </p>
       <Card className="max-w-md mx-auto border-border shadow-lg">
         <CardContent className="pt-6 space-y-4">
           <Input
-            placeholder="O seu nome completo"
+            placeholder="Primeiro e último nome"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             disabled={status === "loading"}

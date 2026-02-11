@@ -19,6 +19,9 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, ExternalLink, Save, Globe, Eye, EyeOff, Link2, Users, Heart } from "lucide-react";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ThemePresetSelector } from "@/components/event/ThemePresetSelector";
+import { CoverImageSelector } from "@/components/event/CoverImageSelector";
+import { getThemeById } from "@/config/weddingThemes";
 
 interface LandingPageData {
   id?: string;
@@ -38,6 +41,18 @@ interface LandingPageData {
   show_rsvp: boolean;
   theme_color: string;
   cover_image_url: string;
+  // New fields
+  same_venue: boolean;
+  reception_venue_name: string;
+  reception_venue_address: string;
+  theme_preset: string | null;
+  video_url: string;
+  gallery_urls: string[];
+  show_gallery: boolean;
+  show_video: boolean;
+  verse_text: string;
+  show_verse: boolean;
+  font_family: string | null;
 }
 
 const DEFAULT_DATA: Omit<LandingPageData, "wedding_id"> = {
@@ -56,6 +71,17 @@ const DEFAULT_DATA: Omit<LandingPageData, "wedding_id"> = {
   show_rsvp: true,
   theme_color: "#e11d48",
   cover_image_url: "",
+  same_venue: true,
+  reception_venue_name: "",
+  reception_venue_address: "",
+  theme_preset: null,
+  video_url: "",
+  gallery_urls: [],
+  show_gallery: true,
+  show_video: true,
+  verse_text: "",
+  show_verse: true,
+  font_family: null,
 };
 
 export function LandingPageEditor() {
@@ -65,27 +91,23 @@ export function LandingPageEditor() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<LandingPageData | null>(null);
   const [eventCode, setEventCode] = useState<string>("");
+  const [galleryInput, setGalleryInput] = useState("");
 
-  // Fetch existing landing page config + event code
   const { data: existing, isLoading } = useQuery({
     queryKey: ["landing-page", weddingId],
     queryFn: async () => {
       if (!weddingId) return null;
-
       const { data: wedding } = await supabase
         .from("wedding_data")
         .select("event_code")
         .eq("id", weddingId)
         .single();
-
       if (wedding) setEventCode(wedding.event_code);
-
       const { data } = await supabase
         .from("wedding_landing_pages")
         .select("*")
         .eq("wedding_id", weddingId)
         .maybeSingle();
-
       return data;
     },
     enabled: !!weddingId,
@@ -111,6 +133,17 @@ export function LandingPageEditor() {
         show_rsvp: existing.show_rsvp,
         theme_color: existing.theme_color || "#e11d48",
         cover_image_url: existing.cover_image_url || "",
+        same_venue: existing.same_venue ?? true,
+        reception_venue_name: existing.reception_venue_name || "",
+        reception_venue_address: existing.reception_venue_address || "",
+        theme_preset: existing.theme_preset || null,
+        video_url: existing.video_url || "",
+        gallery_urls: existing.gallery_urls || [],
+        show_gallery: existing.show_gallery ?? true,
+        show_video: existing.show_video ?? true,
+        verse_text: existing.verse_text || "",
+        show_verse: existing.show_verse ?? true,
+        font_family: existing.font_family || null,
       });
     } else if (weddingId) {
       setForm({ ...DEFAULT_DATA, wedding_id: weddingId });
@@ -120,7 +153,6 @@ export function LandingPageEditor() {
   const saveMutation = useMutation({
     mutationFn: async (data: LandingPageData) => {
       if (!weddingId || !user) throw new Error("No wedding");
-
       const payload = {
         wedding_id: weddingId,
         is_published: data.is_published,
@@ -138,8 +170,18 @@ export function LandingPageEditor() {
         show_rsvp: data.show_rsvp,
         theme_color: data.theme_color,
         cover_image_url: data.cover_image_url || null,
+        same_venue: data.same_venue,
+        reception_venue_name: data.reception_venue_name || null,
+        reception_venue_address: data.reception_venue_address || null,
+        theme_preset: data.theme_preset,
+        video_url: data.video_url || null,
+        gallery_urls: data.gallery_urls,
+        show_gallery: data.show_gallery,
+        show_video: data.show_video,
+        verse_text: data.verse_text || null,
+        show_verse: data.show_verse,
+        font_family: data.font_family,
       };
-
       if (data.id) {
         const { error } = await supabase
           .from("wedding_landing_pages")
@@ -173,38 +215,48 @@ export function LandingPageEditor() {
     saveMutation.mutate(updated);
   };
 
-  const getPublicUrl = () => {
-    return `${getPublicBaseUrl()}/evento/${eventCode}`;
-  };
+  const getPublicUrl = () => `${getPublicBaseUrl()}/evento/${eventCode}`;
 
   const copyLink = (url: string) => {
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado!" });
   };
 
-
   if (isLoading || !form) return <LoadingState />;
 
   const update = (field: keyof LandingPageData, value: any) =>
-    setForm((prev) => prev ? { ...prev, [field]: value } : prev);
+    setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+
+  const handleThemeSelect = (themeId: string | null) => {
+    update("theme_preset", themeId);
+    const theme = getThemeById(themeId);
+    if (theme) {
+      update("theme_color", theme.primaryColor);
+      update("font_family", theme.fontFamily);
+    }
+  };
+
+  const addGalleryUrl = () => {
+    if (!galleryInput.trim()) return;
+    update("gallery_urls", [...form.gallery_urls, galleryInput.trim()]);
+    setGalleryInput("");
+  };
+
+  const removeGalleryUrl = (index: number) => {
+    update("gallery_urls", form.gallery_urls.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header with publish status */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Página do Evento</h2>
-          <p className="text-muted-foreground text-sm">
-            Configure a landing page pública do seu casamento
-          </p>
+          <p className="text-muted-foreground text-sm">Configure a landing page pública do seu casamento</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={form.is_published ? "default" : "secondary"}>
-            {form.is_published ? (
-              <><Globe className="w-3 h-3 mr-1" /> Publicada</>
-            ) : (
-              <><EyeOff className="w-3 h-3 mr-1" /> Rascunho</>
-            )}
+            {form.is_published ? <><Globe className="w-3 h-3 mr-1" /> Publicada</> : <><EyeOff className="w-3 h-3 mr-1" /> Rascunho</>}
           </Badge>
           <Button variant="outline" size="sm" onClick={togglePublish}>
             {form.is_published ? <><EyeOff className="w-4 h-4 mr-2" /> Despublicar</> : <><Eye className="w-4 h-4 mr-2" /> Publicar</>}
@@ -235,13 +287,36 @@ export function LandingPageEditor() {
         </Card>
       )}
 
-      <Tabs defaultValue="content">
-        <TabsList>
+      <Tabs defaultValue="theme">
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="theme">Tema</TabsTrigger>
           <TabsTrigger value="content">Conteúdo</TabsTrigger>
+          <TabsTrigger value="media">Multimédia</TabsTrigger>
           <TabsTrigger value="venue">Local</TabsTrigger>
           <TabsTrigger value="options">Opções</TabsTrigger>
           <TabsTrigger value="roles">Convites por Papel</TabsTrigger>
         </TabsList>
+
+        {/* Theme Tab */}
+        <TabsContent value="theme" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Tema Pre-definido</CardTitle>
+              <CardDescription>Escolha um tema visual para a página do evento</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ThemePresetSelector selected={form.theme_preset} onSelect={handleThemeSelect} />
+              <Separator />
+              <div>
+                <Label>Cor Personalizada do Tema</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <input type="color" value={form.theme_color} onChange={(e) => update("theme_color", e.target.value)} className="w-10 h-10 rounded cursor-pointer border border-border" />
+                  <Input value={form.theme_color} onChange={(e) => update("theme_color", e.target.value)} className="w-32" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-4">
@@ -255,6 +330,10 @@ export function LandingPageEditor() {
                 <Input value={form.hero_message} onChange={(e) => update("hero_message", e.target.value)} placeholder="Vamos casar!" />
               </div>
               <div>
+                <Label>Verso / Poema</Label>
+                <Textarea value={form.verse_text} onChange={(e) => update("verse_text", e.target.value)} placeholder="Um verso especial para o vosso dia..." rows={3} />
+              </div>
+              <div>
                 <Label>Mensagem Personalizada</Label>
                 <Textarea value={form.custom_message} onChange={(e) => update("custom_message", e.target.value)} placeholder="Uma mensagem especial para os convidados..." rows={4} />
               </div>
@@ -262,17 +341,60 @@ export function LandingPageEditor() {
                 <Label>Dress Code</Label>
                 <Input value={form.dress_code} onChange={(e) => update("dress_code", e.target.value)} placeholder="Ex: Traje formal, Casual elegante..." />
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Media Tab */}
+        <TabsContent value="media" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Imagem de Capa</CardTitle>
+              <CardDescription>Escolha uma imagem para o hero da página</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CoverImageSelector value={form.cover_image_url} onChange={(url) => update("cover_image_url", url)} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Vídeo</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div>
-                <Label>URL da Imagem de Capa</Label>
-                <Input value={form.cover_image_url} onChange={(e) => update("cover_image_url", e.target.value)} placeholder="https://..." />
+                <Label>URL do Vídeo (YouTube ou Vimeo)</Label>
+                <Input value={form.video_url} onChange={(e) => update("video_url", e.target.value)} placeholder="https://youtube.com/watch?v=..." />
               </div>
-              <div>
-                <Label>Cor do Tema</Label>
-                <div className="flex items-center gap-3">
-                  <input type="color" value={form.theme_color} onChange={(e) => update("theme_color", e.target.value)} className="w-10 h-10 rounded cursor-pointer border border-border" />
-                  <Input value={form.theme_color} onChange={(e) => update("theme_color", e.target.value)} className="w-32" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Galeria de Imagens</CardTitle>
+              <CardDescription>Adicione URLs de imagens para a galeria</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                <Input value={galleryInput} onChange={(e) => setGalleryInput(e.target.value)} placeholder="https://..." className="flex-1" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addGalleryUrl())} />
+                <Button variant="outline" onClick={addGalleryUrl}>Adicionar</Button>
+              </div>
+              {form.gallery_urls.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {form.gallery_urls.map((url, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
+                      <img src={url} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryUrl(i)}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -285,7 +407,7 @@ export function LandingPageEditor() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Nome do Local</Label>
+                <Label>Nome do Local (Cerimónia)</Label>
                 <Input value={form.venue_name} onChange={(e) => update("venue_name", e.target.value)} placeholder="Ex: Quinta da Regaleira" />
               </div>
               <div>
@@ -302,17 +424,37 @@ export function LandingPageEditor() {
                   <Input type="number" step="any" value={form.venue_lng ?? ""} onChange={(e) => update("venue_lng", e.target.value ? Number(e.target.value) : null)} />
                 </div>
               </div>
+
               <Separator />
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Hora da Cerimónia</Label>
-                  <Input type="time" value={form.ceremony_time} onChange={(e) => update("ceremony_time", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Hora da Festa</Label>
-                  <Input type="time" value={form.party_time} onChange={(e) => update("party_time", e.target.value)} />
-                </div>
+
+              <div>
+                <Label>Hora da Cerimónia</Label>
+                <Input type="time" value={form.ceremony_time} onChange={(e) => update("ceremony_time", e.target.value)} />
               </div>
+
+              <div className="flex items-center justify-between">
+                <Label>Cerimónia e Copo d'Água no mesmo local</Label>
+                <Switch checked={form.same_venue} onCheckedChange={(v) => update("same_venue", v)} />
+              </div>
+
+              {!form.same_venue && (
+                <>
+                  <Separator />
+                  <p className="text-sm font-medium text-foreground">Copo d'Água</p>
+                  <div>
+                    <Label>Hora do Copo d'Água</Label>
+                    <Input type="time" value={form.party_time} onChange={(e) => update("party_time", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Nome do Local</Label>
+                    <Input value={form.reception_venue_name} onChange={(e) => update("reception_venue_name", e.target.value)} placeholder="Ex: Hotel Palace" />
+                  </div>
+                  <div>
+                    <Label>Morada</Label>
+                    <Input value={form.reception_venue_address} onChange={(e) => update("reception_venue_address", e.target.value)} placeholder="Rua..." />
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -337,6 +479,18 @@ export function LandingPageEditor() {
                 <Label>Permitir RSVP (Confirmação de Presença)</Label>
                 <Switch checked={form.show_rsvp} onCheckedChange={(v) => update("show_rsvp", v)} />
               </div>
+              <div className="flex items-center justify-between">
+                <Label>Mostrar Verso/Poema</Label>
+                <Switch checked={form.show_verse} onCheckedChange={(v) => update("show_verse", v)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Mostrar Vídeo</Label>
+                <Switch checked={form.show_video} onCheckedChange={(v) => update("show_video", v)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Mostrar Galeria</Label>
+                <Switch checked={form.show_gallery} onCheckedChange={(v) => update("show_gallery", v)} />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -348,17 +502,10 @@ export function LandingPageEditor() {
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="w-5 h-5" /> Links de Convite por Papel
               </CardTitle>
-              <CardDescription>
-                Gere links personalizados para convidados com papéis especiais na cerimónia
-              </CardDescription>
+              <CardDescription>Gere links personalizados para convidados com papéis especiais na cerimónia</CardDescription>
             </CardHeader>
             <CardContent>
-              <RoleLinkGenerator
-                weddingId={weddingId}
-                eventCode={eventCode}
-                getPublicUrl={getPublicUrl}
-                copyLink={copyLink}
-              />
+              <RoleLinkGenerator weddingId={weddingId} eventCode={eventCode} getPublicUrl={getPublicUrl} copyLink={copyLink} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -379,7 +526,6 @@ function RoleLinkGenerator({
   copyLink: (url: string) => void;
 }) {
   const { guests, isLoading } = useGuests(weddingId);
-
   const guestsWithRoles = guests.filter((g) => g.special_role);
 
   const getRoleLink = (role: string, guestName: string) => {
@@ -395,7 +541,6 @@ function RoleLinkGenerator({
     return `${getPublicUrl()}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
   };
 
-  // Build entries: singles + couples (grouped by couple_pair_id)
   type LinkEntry = { id: string; label: string; link: string; role: string; side?: string | null; isCouple: boolean };
   const entries: LinkEntry[] = [];
   const processedPairIds = new Set<string>();
@@ -422,7 +567,6 @@ function RoleLinkGenerator({
     }
   }
 
-  // Group by role
   const grouped = entries.reduce<Record<string, LinkEntry[]>>((acc, e) => {
     const key = e.role;
     if (!acc[key]) acc[key] = [];

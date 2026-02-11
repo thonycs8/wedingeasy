@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FeatureGate } from "@/components/shared/FeatureGate";
 import { LandingPageEditor } from "@/components/event/LandingPageEditor";
+import { useQuery } from "@tanstack/react-query";
 const WeddingDashboard = () => {
   const {
     t
@@ -56,6 +57,21 @@ const WeddingDashboard = () => {
   const [userName, setUserName] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
   const isMobile = useIsMobile();
+
+  // Fetch cover image from landing page
+  const { data: coverImageUrl } = useQuery({
+    queryKey: ["wedding-cover-image", weddingData?.id],
+    queryFn: async () => {
+      if (!weddingData?.id) return null;
+      const { data } = await supabase
+        .from("wedding_landing_pages")
+        .select("cover_image_url")
+        .eq("wedding_id", weddingData.id)
+        .maybeSingle();
+      return data?.cover_image_url || null;
+    },
+    enabled: !!weddingData?.id,
+  });
   const loadCoupleNames = async () => {
     if (!user) return;
 
@@ -266,7 +282,7 @@ const WeddingDashboard = () => {
 
       {/* Hero Section */}
       <div className="relative h-48 md:h-64 overflow-hidden">
-        <img src={heroImage} alt="Wedding Planning" className="w-full h-full object-cover" />
+        <img src={coverImageUrl || heroImage} alt="Wedding Planning" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-accent/60" />
         <div className="absolute inset-0 flex items-center justify-center text-center px-4">
           <div className="animate-fade-in-up">
