@@ -1030,19 +1030,30 @@ export type Database = {
           created_at: string
           custom_message: string | null
           dress_code: string | null
+          font_family: string | null
+          gallery_urls: string[]
           hero_message: string | null
           id: string
           is_published: boolean
           party_time: string | null
+          reception_venue_address: string | null
+          reception_venue_name: string | null
+          same_venue: boolean
           show_countdown: boolean
+          show_gallery: boolean
           show_map: boolean
           show_rsvp: boolean
+          show_verse: boolean
+          show_video: boolean
           theme_color: string | null
+          theme_preset: string | null
           updated_at: string
           venue_address: string | null
           venue_lat: number | null
           venue_lng: number | null
           venue_name: string | null
+          verse_text: string | null
+          video_url: string | null
           wedding_id: string
         }
         Insert: {
@@ -1051,19 +1062,30 @@ export type Database = {
           created_at?: string
           custom_message?: string | null
           dress_code?: string | null
+          font_family?: string | null
+          gallery_urls?: string[]
           hero_message?: string | null
           id?: string
           is_published?: boolean
           party_time?: string | null
+          reception_venue_address?: string | null
+          reception_venue_name?: string | null
+          same_venue?: boolean
           show_countdown?: boolean
+          show_gallery?: boolean
           show_map?: boolean
           show_rsvp?: boolean
+          show_verse?: boolean
+          show_video?: boolean
           theme_color?: string | null
+          theme_preset?: string | null
           updated_at?: string
           venue_address?: string | null
           venue_lat?: number | null
           venue_lng?: number | null
           venue_name?: string | null
+          verse_text?: string | null
+          video_url?: string | null
           wedding_id: string
         }
         Update: {
@@ -1072,19 +1094,30 @@ export type Database = {
           created_at?: string
           custom_message?: string | null
           dress_code?: string | null
+          font_family?: string | null
+          gallery_urls?: string[]
           hero_message?: string | null
           id?: string
           is_published?: boolean
           party_time?: string | null
+          reception_venue_address?: string | null
+          reception_venue_name?: string | null
+          same_venue?: boolean
           show_countdown?: boolean
+          show_gallery?: boolean
           show_map?: boolean
           show_rsvp?: boolean
+          show_verse?: boolean
+          show_video?: boolean
           theme_color?: string | null
+          theme_preset?: string | null
           updated_at?: string
           venue_address?: string | null
           venue_lat?: number | null
           venue_lng?: number | null
           venue_name?: string | null
+          verse_text?: string | null
+          video_url?: string | null
           wedding_id?: string
         }
         Relationships: [
