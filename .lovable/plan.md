@@ -1,41 +1,60 @@
 
-# Convites por Papel -- Links automaticos a partir da Cerimonia
+# Casais na Cerimonia + Links de Convite nos Cards
 
 ## Resumo
 
-Substituir o gerador manual de links (input de nome + select de papel) por uma lista automatica baseada nos convidados que ja tem `special_role` na tab Cerimonia. Padrinhos solteiros recebem link individual, sem necessidade de emparelhamento. Sem alteracoes no banco de dados.
+Duas melhorias na tab Cerimonia:
+1. Permitir relacionar dois convidados como casal (ex: Padrinho + Madrinha que sao parceiros) usando um campo `couple_pair_id` na tabela `guests`
+2. Mostrar o link de convite personalizado directamente no card de cada pessoa na tab Cerimonia
 
 ## O que muda para o utilizador
 
-- A tab "Convites por Papel" no editor da landing page mostra automaticamente todos os convidados com papel de cerimonia cadastrado
-- Cada pessoa tem um link pronto para copiar
-- Padrinhos solteiros, madrinhas solteiras, celebrantes, etc. -- todos recebem link individual
-- Nao e preciso digitar nomes manualmente
+- No card de cada pessoa com papel de cerimonia, aparece um botao para copiar o link de convite (icone de link)
+- Quando selecciona exactamente 2 pessoas com os checkboxes, aparece um botao "Emparelhar como Casal" na barra de accoes
+- Casais emparelhados mostram um icone visual de ligacao e o nome do parceiro(a)
+- Botao para desemparelhar tambem disponivel
 
 ---
 
-## Alteracoes
+## Etapa 1 -- Migracao DB
 
-### 1. Refazer RoleLinkGenerator no LandingPageEditor.tsx
+Adicionar coluna `couple_pair_id` (uuid, nullable) a tabela `guests`:
 
-Substituir o componente `RoleLinkGenerator` actual (que usa inputs manuais) por um que:
+```sql
+ALTER TABLE guests ADD COLUMN couple_pair_id uuid DEFAULT NULL;
+```
 
-1. Recebe a lista de `guests` do hook `useGuests(weddingId)` (ja disponivel no contexto)
-2. Filtra apenas os que tem `special_role` preenchido (mesma logica do CeremonyRolesRefactored)
-3. Agrupa por papel (Padrinho, Madrinha, etc.)
-4. Para cada pessoa, mostra:
-   - Nome + badge do papel + lado (Noivo/Noiva)
-   - Link gerado automaticamente: `/evento/CODE?role=padrinho&guest=joao-silva`
-   - Botao de copiar
-5. Se nao ha ninguem com papel, mostra mensagem: "Adicione pessoas na tab Cerimonia para gerar links"
+Sem RLS adicional -- herda as policies existentes.
 
-### 2. Actualizar WeddingEventRoleInvite para normalizar nomes
+---
 
-O componente ja funciona para individuais. Apenas garantir que o `displayName` reconstroi correctamente nomes com hifens (ja faz isto: `.replace(/-/g, " ")`).
+## Etapa 2 -- Botao de link no card (CeremonyRolesRefactored)
 
-### 3. Adicionar useGuests ao LandingPageEditor
+No `renderSide`, cada card de pessoa passa a incluir:
+- Botao com icone Link2 que copia o link de convite para o clipboard
+- O link e gerado com a mesma logica do `RoleLinkGenerator`: `/evento/{eventCode}?role={role}&guest={slug}`
+- Para gerar o link, o componente precisa de obter o `event_code` do casamento (query simples ao `wedding_data`)
+- Toast de confirmacao ao copiar
 
-Importar `useGuests` e `useWeddingId` no `LandingPageEditor` para ter acesso a lista de convidados com papeis.
+---
+
+## Etapa 3 -- Emparelhamento de casais
+
+Logica no `CeremonyRolesRefactored`:
+- Quando `selectedRoleIds.size === 2`, mostrar botao "Emparelhar como Casal" na barra de accoes (junto ao "Excluir selecionados")
+- Ao clicar, gera um UUID no cliente e actualiza ambos os guests com o mesmo `couple_pair_id` via `updateGuest`
+- No card, se a pessoa tem `couple_pair_id`, mostrar um pequeno Badge ou texto "Casal com: [nome do parceiro]"
+- Botao "Desemparelhar" no card (define `couple_pair_id = null` para ambos)
+- Restricao: Noivo/Noiva nao podem ser emparelhados (ja sao casal implicito)
+
+---
+
+## Etapa 4 -- Actualizar RoleLinkGenerator para casais
+
+No `LandingPageEditor.tsx`, casais emparelhados (mesmo `couple_pair_id`) aparecem juntos com um unico link partilhado usando parametros separados por virgula:
+`?role=padrinho,madrinha&guest=joao,maria`
+
+Pessoas sem par mantem link individual.
 
 ---
 
@@ -43,31 +62,15 @@ Importar `useGuests` e `useWeddingId` no `LandingPageEditor` para ter acesso a l
 
 ### Ficheiros modificados
 
-- `src/components/event/LandingPageEditor.tsx` -- refazer `RoleLinkGenerator` para usar dados reais de guests com special_role, adicionar imports de useGuests
+- `src/components/features/ceremony/CeremonyRolesRefactored.tsx` -- botao copiar link + emparelhamento de casais + indicador visual
+- `src/components/event/LandingPageEditor.tsx` -- RoleLinkGenerator agrupa casais com link unico
+- `src/components/event/WeddingEventRoleInvite.tsx` -- suportar multiplos nomes/papeis no convite publico
+- `src/pages/WeddingEvent.tsx` -- parsear parametros com virgula
 
-### Ficheiros sem alteracao
+### Migracao DB
 
-- Nenhuma migracao DB necessaria
-- `CeremonyRolesRefactored.tsx` -- sem alteracoes (ja funciona correctamente)
-- `WeddingEventRoleInvite.tsx` -- sem alteracoes (ja suporta individuais)
-- `WeddingEvent.tsx` -- sem alteracoes (ja parseia role + guest params)
+Uma coluna: `couple_pair_id uuid` na tabela `guests`
 
 ### Impacto no servidor
 
-Zero queries adicionais. O `useGuests(weddingId)` ja esta em cache com 5 min staleTime. O `LandingPageEditor` apenas filtra os dados em memoria.
-
-### Logica de geracao de link
-
-```text
-Para cada guest com special_role:
-  slug = guest.name.toLowerCase().replace(/\s+/g, "-")
-  role = guest.special_role.toLowerCase()
-  link = /evento/{eventCode}?role={role}&guest={slug}
-```
-
-Exemplos:
-- Joao Silva (Padrinho, Noivo) -> `?role=padrinho&guest=joao-silva`
-- Maria Santos (Madrinha, Noiva) -> `?role=madrinha&guest=maria-santos`
-- Pedro Costa (Celebrante, Noivo) -> `?role=celebrante&guest=pedro-costa`
-
-Todos individuais. Sem complexidade de casais. Cada pessoa = 1 link.
+Uma query adicional leve no CeremonyRolesRefactored para obter o `event_code` (cached). O emparelhamento reutiliza o `updateGuest` existente.
