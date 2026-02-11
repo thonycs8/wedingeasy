@@ -8,6 +8,7 @@ import { WeddingProvider } from "@/contexts/WeddingContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/query-client";
 import "@/i18n";
+import { PlatformUrlInitializer } from "@/components/shared/PlatformUrlInitializer";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -29,6 +30,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <PlatformUrlInitializer />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
