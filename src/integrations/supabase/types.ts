@@ -246,6 +246,7 @@ export type Database = {
           age_band: string | null
           category: string
           confirmed: boolean | null
+          couple_pair_id: string | null
           created_at: string
           dietary_restrictions: string | null
           email: string | null
@@ -267,6 +268,7 @@ export type Database = {
           age_band?: string | null
           category: string
           confirmed?: boolean | null
+          couple_pair_id?: string | null
           created_at?: string
           dietary_restrictions?: string | null
           email?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           age_band?: string | null
           category?: string
           confirmed?: boolean | null
+          couple_pair_id?: string | null
           created_at?: string
           dietary_restrictions?: string | null
           email?: string | null

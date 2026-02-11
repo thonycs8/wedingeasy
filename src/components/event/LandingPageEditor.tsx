@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, ExternalLink, Save, Globe, Eye, EyeOff, Link2, Users } from "lucide-react";
+import { Copy, ExternalLink, Save, Globe, Eye, EyeOff, Link2, Users, Heart } from "lucide-react";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
 
@@ -387,17 +387,52 @@ function RoleLinkGenerator({
     return `${getPublicUrl()}?role=${encodeURIComponent(role.toLowerCase())}&guest=${encodeURIComponent(slug)}`;
   };
 
+  const getCoupleLink = (g1: typeof guestsWithRoles[0], g2: typeof guestsWithRoles[0]) => {
+    const slug1 = g1.name.toLowerCase().replace(/\s+/g, "-");
+    const slug2 = g2.name.toLowerCase().replace(/\s+/g, "-");
+    const role1 = encodeURIComponent((g1.special_role || "").toLowerCase());
+    const role2 = encodeURIComponent((g2.special_role || "").toLowerCase());
+    return `${getPublicUrl()}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
+  };
+
+  // Build entries: singles + couples (grouped by couple_pair_id)
+  type LinkEntry = { id: string; label: string; link: string; role: string; side?: string | null; isCouple: boolean };
+  const entries: LinkEntry[] = [];
+  const processedPairIds = new Set<string>();
+
+  for (const g of guestsWithRoles) {
+    if (g.couple_pair_id) {
+      if (processedPairIds.has(g.couple_pair_id)) continue;
+      processedPairIds.add(g.couple_pair_id);
+      const partner = guestsWithRoles.find(x => x.couple_pair_id === g.couple_pair_id && x.id !== g.id);
+      if (partner) {
+        entries.push({
+          id: g.couple_pair_id,
+          label: `${g.name} & ${partner.name}`,
+          link: getCoupleLink(g, partner),
+          role: `${g.special_role} & ${partner.special_role}`,
+          side: g.side,
+          isCouple: true,
+        });
+      } else {
+        entries.push({ id: g.id, label: g.name, link: getRoleLink(g.special_role!, g.name), role: g.special_role!, side: g.side, isCouple: false });
+      }
+    } else {
+      entries.push({ id: g.id, label: g.name, link: getRoleLink(g.special_role!, g.name), role: g.special_role!, side: g.side, isCouple: false });
+    }
+  }
+
   // Group by role
-  const grouped = guestsWithRoles.reduce<Record<string, typeof guestsWithRoles>>((acc, g) => {
-    const role = g.special_role!;
-    if (!acc[role]) acc[role] = [];
-    acc[role].push(g);
+  const grouped = entries.reduce<Record<string, LinkEntry[]>>((acc, e) => {
+    const key = e.role;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(e);
     return acc;
   }, {});
 
   if (isLoading) return <LoadingState />;
 
-  if (guestsWithRoles.length === 0) {
+  if (entries.length === 0) {
     return (
       <EmptyState
         icon={Users}
@@ -415,25 +450,23 @@ function RoleLinkGenerator({
             <Badge variant="outline">{role}</Badge>
             <span className="text-muted-foreground text-xs">({members.length})</span>
           </h4>
-          {members.map((guest) => {
-            const link = getRoleLink(guest.special_role!, guest.name);
-            return (
-              <div key={guest.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {guest.name}
-                    {guest.side && (
-                      <span className="text-muted-foreground text-xs ml-2">({guest.side})</span>
-                    )}
-                  </p>
-                  <code className="text-xs text-muted-foreground break-all">{link}</code>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => copyLink(link)}>
-                  <Copy className="w-4 h-4" />
-                </Button>
+          {members.map((entry) => (
+            <div key={entry.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {entry.isCouple && <Heart className="w-3 h-3 inline mr-1 text-primary" />}
+                  {entry.label}
+                  {entry.side && (
+                    <span className="text-muted-foreground text-xs ml-2">({entry.side})</span>
+                  )}
+                </p>
+                <code className="text-xs text-muted-foreground break-all">{entry.link}</code>
               </div>
-            );
-          })}
+              <Button size="sm" variant="outline" onClick={() => copyLink(entry.link)}>
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       ))}
     </div>
