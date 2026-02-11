@@ -8,9 +8,10 @@ import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
 import { AdminEventsManager } from "@/components/admin/AdminEventsManager";
 import { AdminAdminsManager } from "@/components/admin/AdminAdminsManager";
 import { AdminModulesManager } from "@/components/admin/AdminModulesManager";
+import { AdminDomainsManager } from "@/components/admin/AdminDomainsManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, LayoutDashboard, Users, Calendar, Shield, Puzzle, Handshake, ShoppingBag } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Users, Calendar, Shield, Puzzle, Handshake, ShoppingBag, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPanel() {
@@ -80,6 +81,7 @@ export default function AdminPanel() {
     { value: "modules", label: "Módulos", icon: Puzzle },
     { value: "partners", label: "Parceiros", icon: Handshake },
     { value: "services", label: "Serviços", icon: ShoppingBag },
+    { value: "domains", label: "Domínios", icon: Globe },
   ];
 
   return (
@@ -144,6 +146,10 @@ export default function AdminPanel() {
 
           <TabsContent value="services">
             <ServicesManager />
+          </TabsContent>
+
+          <TabsContent value="domains">
+            <AdminDomainsManager />
           </TabsContent>
         </Tabs>
       </div>
