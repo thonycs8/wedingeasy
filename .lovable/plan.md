@@ -1,171 +1,73 @@
-# Modulo Landing Page de Convite de Casamento
+
+# Convites por Papel -- Links automaticos a partir da Cerimonia
 
 ## Resumo
 
-Criar uma landing page publica para cada casamento, acessivel via link unico (ex: `wedingeasy.lovable.app/evento/WEPLAN-ABC123`), onde os convidados podem ver detalhes do evento e confirmar presenca. O modulo inclui tambem convites personalizados por papel de cerimonia (padrinho, madrinha, etc).
+Substituir o gerador manual de links (input de nome + select de papel) por uma lista automatica baseada nos convidados que ja tem `special_role` na tab Cerimonia. Padrinhos solteiros recebem link individual, sem necessidade de emparelhamento. Sem alteracoes no banco de dados.
 
 ## O que muda para o utilizador
 
-Os noivos ganham uma pagina exclusiva do seu casamento que podem partilhar com convidados. Os convidados abrem o link e veem: countdown, local, mapa, e podem confirmar presenca. Convidados com papeis especiais (padrinho, madrinha) recebem um convite personalizado com destaque para a sua funcao.
+- A tab "Convites por Papel" no editor da landing page mostra automaticamente todos os convidados com papel de cerimonia cadastrado
+- Cada pessoa tem um link pronto para copiar
+- Padrinhos solteiros, madrinhas solteiras, celebrantes, etc. -- todos recebem link individual
+- Nao e preciso digitar nomes manualmente
 
 ---
 
-## Etapa 1 -- Tabela de configuracao da landing page
+## Alteracoes
 
-Criar tabela `wedding_landing_pages` para guardar as personalizacoes:
+### 1. Refazer RoleLinkGenerator no LandingPageEditor.tsx
 
+Substituir o componente `RoleLinkGenerator` actual (que usa inputs manuais) por um que:
 
-| Coluna          | Tipo    | Descricao                               |
-| --------------- | ------- | --------------------------------------- |
-| id              | uuid    | PK                                      |
-| wedding_id      | uuid    | FK para wedding_data                    |
-| is_published    | boolean | Se a pagina esta ativa                  |
-| hero_message    | text    | Mensagem principal (ex: "Vamos casar!") |
-| venue_name      | text    | Nome do local                           |
-| venue_address   | text    | Morada completa                         |
-| venue_lat       | numeric | Latitude para mapa                      |
-| venue_lng       | numeric | Longitude para mapa                     |
-| ceremony_time   | time    | Hora da cerimonia                       |
-| party_time      | time    | Hora da festa                           |
-| dress_code      | text    | Codigo de vestimenta                    |
-| custom_message  | text    | Mensagem personalizada                  |
-| show_countdown  | boolean | Mostrar timer                           |
-| show_map        | boolean | Mostrar mapa                            |
-| show_rsvp       | boolean | Permitir confirmacao                    |
-| theme_color     | text    | Cor principal                           |
-| cover_image_url | text    | Imagem de capa                          |
+1. Recebe a lista de `guests` do hook `useGuests(weddingId)` (ja disponivel no contexto)
+2. Filtra apenas os que tem `special_role` preenchido (mesma logica do CeremonyRolesRefactored)
+3. Agrupa por papel (Padrinho, Madrinha, etc.)
+4. Para cada pessoa, mostra:
+   - Nome + badge do papel + lado (Noivo/Noiva)
+   - Link gerado automaticamente: `/evento/CODE?role=padrinho&guest=joao-silva`
+   - Botao de copiar
+5. Se nao ha ninguem com papel, mostra mensagem: "Adicione pessoas na tab Cerimonia para gerar links"
 
+### 2. Actualizar WeddingEventRoleInvite para normalizar nomes
 
-RLS: Admins do casamento podem gerir. Leitura publica quando `is_published = true`.
+O componente ja funciona para individuais. Apenas garantir que o `displayName` reconstroi correctamente nomes com hifens (ja faz isto: `.replace(/-/g, " ")`).
 
-Adicionar `wedding_landing` como nova feature_key na tabela `app_features`, habilitada apenas para planos Avancado e Pro.
+### 3. Adicionar useGuests ao LandingPageEditor
 
----
-
-## Etapa 2 -- Rota publica e componente da landing page
-
-Criar rota `/evento/:eventCode` no App.tsx -- sem autenticacao necessaria.
-
-Componente `WeddingEventPage.tsx` com as seguintes seccoes:
-
-1. **Hero** -- Nomes do casal, data, mensagem personalizada, imagem de capa
-2. **Countdown** -- Timer ate a data do casamento (dias, horas, minutos, segundos)
-3. **Detalhes** -- Local, hora da cerimonia, hora da festa, dress code
-4. **Mapa** -- Embed Google Maps com a localizacao (usando iframe, sem API key)
-5. **RSVP** -- Formulario simples: nome do convidado + confirmar/nao confirmar
-6. **Mensagem** -- Texto livre dos noivos
-
-O componente busca dados com 1 unica query:
-
-- `wedding_data` JOIN `wedding_landing_pages` filtrado por `event_code`
-
-A confirmacao de presenca faz 1 update:
-
-- `guests.confirmed = true` WHERE `name ILIKE` e `wedding_id`
-
----
-
-## Etapa 3 -- Convite personalizado por papel de cerimonia
-
-Quando o link inclui um parametro de papel (ex: `/evento/WEPLAN-ABC?role=padrinho&guest=joao-silva`):
-
-- A landing page mostra uma seccao especial no topo: "Joao, voce foi convidado para ser Padrinho neste casamento!"
-- Design diferenciado com badge do papel
-- O convidado pode aceitar/recusar o papel diretamente
-
-Papeis suportados (ja existem no DB): Padrinho, Madrinha, Dama de Honor, Pajem, Florista, Portador das Aliancas, Celebrante, Convidado de Honra.
-
----
-
-## Etapa 4 -- Editor da landing page no dashboard
-
-Novo tab ou seccao dentro do dashboard: "Pagina do Evento"
-
-Componente `LandingPageEditor.tsx` com:
-
-- Preview em tempo real (lado a lado no desktop)
-- Campos de configuracao (venue, horarios, mensagens, imagens)
-- Toggle para publicar/despublicar
-- Link copiavel para partilhar
-- Botao para enviar convite por email (reutiliza edge function existente)
-- Gerador de links personalizados por papel de cerimonia
-
-Protegido pelo FeatureGate com feature_key `wedding_landing`.
-
----
-
-## Etapa 5 -- Integracao com feature gating
-
-Adicionar na tabela `app_features`:
-
-- feature_key: `wedding_landing`
-- display_name: "Pagina do Evento"
-- category: "Evento"
-
-Adicionar na tabela `plan_features`:
-
-- Basico: desabilitado
-- Avancado: habilitado
-- Pro: habilitado
-
-Actualizar o tipo `FeatureKey` no hook `useFeatureGating.ts`.
+Importar `useGuests` e `useWeddingId` no `LandingPageEditor` para ter acesso a lista de convidados com papeis.
 
 ---
 
 ## Detalhes tecnicos
 
-### Impacto no servidor
-
-A landing page publica e extremamente leve:
-
-- 1 SELECT para carregar dados do casamento + landing page config
-- 1 UPDATE para confirmar presenca (quando o convidado submete RSVP)
-- Sem autenticacao = sem overhead de sessao
-- Cache no React Query com staleTime alto (a pagina raramente muda)
-
-### RLS para acesso publico
-
-A tabela `wedding_landing_pages` precisa de uma policy SELECT para `anon`:
-
-```
-CREATE POLICY "Public can view published landing pages"
-ON wedding_landing_pages FOR SELECT
-USING (is_published = true);
-```
-
-Para o RSVP publico, criar uma funcao RPC `public_rsvp` com SECURITY DEFINER que:
-
-1. Recebe event_code + guest_name
-2. Valida que a landing page esta publicada e show_rsvp = true
-3. Actualiza `guests.confirmed` para o convidado correspondente
-4. Nao expoe dados sensiveis
-
-### Ficheiros novos
-
-- `src/pages/WeddingEvent.tsx` -- pagina publica do evento
-- `src/components/WeddingEventPage.tsx` -- componente principal da landing
-- `src/components/WeddingEventCountdown.tsx` -- countdown timer
-- `src/components/WeddingEventRSVP.tsx` -- formulario RSVP
-- `src/components/WeddingEventMap.tsx` -- mapa do local
-- `src/components/LandingPageEditor.tsx` -- editor no dashboard
-
 ### Ficheiros modificados
 
-- `src/App.tsx` -- adicionar rota `/evento/:eventCode`
-- `src/components/WeddingDashboard.tsx` -- adicionar tab "Pagina do Evento"
-- `src/hooks/useFeatureGating.ts` -- adicionar `wedding_landing` ao tipo FeatureKey
+- `src/components/event/LandingPageEditor.tsx` -- refazer `RoleLinkGenerator` para usar dados reais de guests com special_role, adicionar imports de useGuests
 
-### Seguranca
+### Ficheiros sem alteracao
 
-- A landing page publica so mostra dados que os noivos escolheram partilhar
-- O RSVP publico usa RPC com SECURITY DEFINER para evitar bypass de RLS
-- Nenhum dado sensivel (emails, telefones, notas) e exposto na pagina publica
-- O event_code (16 chars hex) serve como "senha" -- dificil de adivinhar
+- Nenhuma migracao DB necessaria
+- `CeremonyRolesRefactored.tsx` -- sem alteracoes (ja funciona correctamente)
+- `WeddingEventRoleInvite.tsx` -- sem alteracoes (ja suporta individuais)
+- `WeddingEvent.tsx` -- sem alteracoes (ja parseia role + guest params)
 
-### Ordem de execucao
+### Impacto no servidor
 
-1. Etapa 1 -- Tabela + feature gating (base)
-2. Etapa 2 -- Landing page publica (valor imediato)
-3. Etapa 3 -- Convites por papel (diferenciador)
-4. Etapa 4 -- Editor no dashboard (experiencia completa)
-5. Etapa 5 -- Integracao com planos (monetizacao)
+Zero queries adicionais. O `useGuests(weddingId)` ja esta em cache com 5 min staleTime. O `LandingPageEditor` apenas filtra os dados em memoria.
+
+### Logica de geracao de link
+
+```text
+Para cada guest com special_role:
+  slug = guest.name.toLowerCase().replace(/\s+/g, "-")
+  role = guest.special_role.toLowerCase()
+  link = /evento/{eventCode}?role={role}&guest={slug}
+```
+
+Exemplos:
+- Joao Silva (Padrinho, Noivo) -> `?role=padrinho&guest=joao-silva`
+- Maria Santos (Madrinha, Noiva) -> `?role=madrinha&guest=maria-santos`
+- Pedro Costa (Celebrante, Noivo) -> `?role=celebrante&guest=pedro-costa`
+
+Todos individuais. Sem complexidade de casais. Cada pessoa = 1 link.
