@@ -18,7 +18,8 @@ export type FeatureKey =
   | 'notifications_system'
   | 'wedding_choices'
   | 'realtime_sync'
-  | 'pdf_export';
+  | 'pdf_export'
+  | 'wedding_landing';
 
 interface FeatureGatingResult {
   isAllowed: boolean;
