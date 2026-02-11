@@ -53,6 +53,7 @@ export const GuestManagerRefactored = () => {
   const { weddingId } = useWeddingId();
 
   // React Query hook
+  // React Query hook - usa weddingId em vez de userId
   const {
     guests: dbGuests,
     isLoading,
@@ -61,7 +62,7 @@ export const GuestManagerRefactored = () => {
     bulkUpdate,
     deleteGuest,
     bulkDelete
-  } = useGuests(user?.id);
+  } = useGuests(weddingId);
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState('');

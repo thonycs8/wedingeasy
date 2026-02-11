@@ -3,34 +3,34 @@ import { budgetApi } from '@/api/budget.api';
 import { queryKeys } from '@/lib/query-client';
 import { useToast } from '@/hooks/use-toast';
 import type { 
-  BudgetCategory, 
   BudgetCategoryCreate, 
   BudgetCategoryUpdate,
-  BudgetExpense,
   BudgetExpenseCreate,
   BudgetExpenseUpdate,
-  BudgetOption,
   BudgetOptionCreate,
   BudgetOptionUpdate
 } from '@/types/budget.types';
 
 /**
  * Hook para gestão de categorias de budget
+ * Migrado para usar weddingId em vez de userId
  */
-export function useBudgetCategories(userId: string | undefined) {
+export function useBudgetCategories(weddingId: string | null | undefined) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const id = weddingId || '';
 
   const categoriesQuery = useQuery({
-    queryKey: queryKeys.budget.categories(userId || ''),
-    queryFn: () => budgetApi.fetchCategories(userId!),
-    enabled: !!userId,
+    queryKey: queryKeys.byWedding.budget.categories(id),
+    queryFn: () => budgetApi.fetchCategories(id),
+    enabled: !!weddingId,
   });
 
   const addCategoryMutation = useMutation({
     mutationFn: (category: BudgetCategoryCreate) => budgetApi.createCategory(category),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({ title: 'Categoria adicionada', description: 'A categoria foi criada com sucesso.' });
     },
     onError: (error) => {
@@ -42,7 +42,8 @@ export function useBudgetCategories(userId: string | undefined) {
   const updateCategoryMutation = useMutation({
     mutationFn: (update: BudgetCategoryUpdate) => budgetApi.updateCategory(update),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
     },
     onError: (error) => {
       console.error('Erro ao atualizar categoria:', error);
@@ -53,7 +54,8 @@ export function useBudgetCategories(userId: string | undefined) {
   const deleteCategoryMutation = useMutation({
     mutationFn: (categoryId: string) => budgetApi.deleteCategory(categoryId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({ title: 'Categoria removida', description: 'A categoria foi removida com sucesso.' });
     },
     onError: (error) => {
@@ -75,22 +77,25 @@ export function useBudgetCategories(userId: string | undefined) {
 
 /**
  * Hook para gestão de despesas
+ * Migrado para usar weddingId em vez de userId
  */
-export function useBudgetExpenses(userId: string | undefined) {
+export function useBudgetExpenses(weddingId: string | null | undefined) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const id = weddingId || '';
 
   const expensesQuery = useQuery({
-    queryKey: queryKeys.budget.expenses(userId || ''),
-    queryFn: () => budgetApi.fetchExpenses(userId!),
-    enabled: !!userId,
+    queryKey: queryKeys.byWedding.budget.expenses(id),
+    queryFn: () => budgetApi.fetchExpenses(id),
+    enabled: !!weddingId,
   });
 
   const addExpenseMutation = useMutation({
     mutationFn: (expense: BudgetExpenseCreate) => budgetApi.createExpense(expense),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.expenses(userId || '') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.expenses(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({ title: 'Despesa adicionada', description: 'A despesa foi registrada com sucesso.' });
     },
     onError: (error) => {
@@ -102,8 +107,9 @@ export function useBudgetExpenses(userId: string | undefined) {
   const updateExpenseMutation = useMutation({
     mutationFn: (update: BudgetExpenseUpdate) => budgetApi.updateExpense(update),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.expenses(userId || '') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.expenses(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
     },
     onError: (error) => {
       console.error('Erro ao atualizar despesa:', error);
@@ -114,8 +120,9 @@ export function useBudgetExpenses(userId: string | undefined) {
   const deleteExpenseMutation = useMutation({
     mutationFn: (expenseId: string) => budgetApi.deleteExpense(expenseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.expenses(userId || '') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.categories(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.expenses(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.categories(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({ title: 'Despesa removida', description: 'A despesa foi removida com sucesso.' });
     },
     onError: (error) => {
@@ -137,21 +144,23 @@ export function useBudgetExpenses(userId: string | undefined) {
 
 /**
  * Hook para gestão de opções/fornecedores
+ * Migrado para usar weddingId em vez de userId
  */
-export function useBudgetOptions(userId: string | undefined) {
+export function useBudgetOptions(weddingId: string | null | undefined) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const id = weddingId || '';
 
   const optionsQuery = useQuery({
-    queryKey: queryKeys.budget.options(userId || ''),
-    queryFn: () => budgetApi.fetchOptions(userId!),
-    enabled: !!userId,
+    queryKey: queryKeys.byWedding.budget.options(id),
+    queryFn: () => budgetApi.fetchOptions(id),
+    enabled: !!weddingId,
   });
 
   const addOptionMutation = useMutation({
     mutationFn: (option: BudgetOptionCreate) => budgetApi.createOption(option),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.options(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.options(id) });
       toast({ title: 'Opção adicionada', description: 'A opção foi registrada com sucesso.' });
     },
     onError: (error) => {
@@ -163,7 +172,7 @@ export function useBudgetOptions(userId: string | undefined) {
   const updateOptionMutation = useMutation({
     mutationFn: (update: BudgetOptionUpdate) => budgetApi.updateOption(update),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.options(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.options(id) });
     },
     onError: (error) => {
       console.error('Erro ao atualizar opção:', error);
@@ -174,7 +183,7 @@ export function useBudgetOptions(userId: string | undefined) {
   const deleteOptionMutation = useMutation({
     mutationFn: (optionId: string) => budgetApi.deleteOption(optionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.options(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.options(id) });
       toast({ title: 'Opção removida', description: 'A opção foi removida com sucesso.' });
     },
     onError: (error) => {
@@ -187,7 +196,7 @@ export function useBudgetOptions(userId: string | undefined) {
     mutationFn: ({ optionId, isFavorite }: { optionId: string; isFavorite: boolean }) => 
       budgetApi.toggleFavorite(optionId, isFavorite),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.options(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.budget.options(id) });
     },
   });
 
@@ -201,15 +210,4 @@ export function useBudgetOptions(userId: string | undefined) {
     toggleFavorite: toggleFavoriteMutation,
     refetch: optionsQuery.refetch,
   };
-}
-
-/**
- * Hook agregado para estatísticas de budget
- */
-export function useBudgetStats(userId: string | undefined) {
-  return useQuery({
-    queryKey: [...queryKeys.budget.categories(userId || ''), 'stats'],
-    queryFn: () => budgetApi.fetchStats(userId!),
-    enabled: !!userId,
-  });
 }

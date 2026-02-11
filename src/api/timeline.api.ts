@@ -3,21 +3,21 @@ import type {
   TimelineTask, 
   TimelineTaskCreate, 
   TimelineTaskUpdate,
-  TimelineStats 
 } from '@/types/timeline.types';
 
 /**
  * API layer para operações de Timeline no Supabase
+ * Migrado para usar wedding_id em vez de user_id
  */
 export const timelineApi = {
   /**
-   * Busca todas as tasks de um usuário
+   * Busca todas as tasks de um wedding
    */
-  async fetchAll(userId: string): Promise<TimelineTask[]> {
+  async fetchAll(weddingId: string): Promise<TimelineTask[]> {
     const { data, error } = await supabase
       .from('timeline_tasks')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('due_date', { ascending: true });
 
     if (error) throw error;
@@ -110,41 +110,4 @@ export const timelineApi = {
 
     if (error) throw error;
   },
-
-  /**
-   * Busca estatísticas de timeline
-   */
-  async fetchStats(userId: string): Promise<TimelineStats> {
-    const { data, error } = await supabase
-      .from('timeline_tasks')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-
-    const tasks = (data || []) as TimelineTask[];
-    const today = new Date().toISOString().split('T')[0];
-    
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = tasks.filter(t => !t.completed).length;
-    const overdue = tasks.filter(t => !t.completed && t.due_date < today).length;
-
-    const byCategory: Record<string, number> = {};
-    const byPriority: Record<string, number> = { alta: 0, media: 0, baixa: 0 };
-
-    tasks.forEach(task => {
-      byCategory[task.category] = (byCategory[task.category] || 0) + 1;
-      byPriority[task.priority] = (byPriority[task.priority] || 0) + 1;
-    });
-
-    return {
-      total: tasks.length,
-      completed,
-      pending,
-      overdue,
-      byCategory,
-      byPriority: byPriority as Record<'alta' | 'media' | 'baixa', number>,
-      progressPercentage: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0
-    };
-  }
 };

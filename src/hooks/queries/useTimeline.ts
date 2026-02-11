@@ -2,34 +2,30 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { timelineApi } from '@/api/timeline.api';
 import { queryKeys } from '@/lib/query-client';
 import { useToast } from '@/hooks/use-toast';
-import type { TimelineTask, TimelineTaskCreate, TimelineTaskUpdate, TimelineStats } from '@/types/timeline.types';
+import type { TimelineTask, TimelineTaskCreate, TimelineTaskUpdate } from '@/types/timeline.types';
 
 /**
  * Hook para gestão de timeline/tarefas com React Query
+ * Migrado para usar weddingId em vez de userId
  */
-export function useTimeline(userId: string | undefined) {
+export function useTimeline(weddingId: string | null | undefined) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const id = weddingId || '';
 
   // Query principal
   const timelineQuery = useQuery({
-    queryKey: queryKeys.timeline(userId || ''),
-    queryFn: () => timelineApi.fetchAll(userId!),
-    enabled: !!userId,
-  });
-
-  // Query de estatísticas
-  const statsQuery = useQuery({
-    queryKey: [...queryKeys.timeline(userId || ''), 'stats'],
-    queryFn: () => timelineApi.fetchStats(userId!),
-    enabled: !!userId,
+    queryKey: queryKeys.byWedding.timeline(id),
+    queryFn: () => timelineApi.fetchAll(id),
+    enabled: !!weddingId,
   });
 
   // Mutation - criar task
   const addTaskMutation = useMutation({
     mutationFn: (task: TimelineTaskCreate) => timelineApi.create(task),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.timeline(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({
         title: 'Tarefa adicionada',
         description: 'A tarefa foi adicionada com sucesso.',
@@ -45,16 +41,16 @@ export function useTimeline(userId: string | undefined) {
     },
   });
 
-  // Mutation - atualizar task
+  // Mutation - atualizar task (optimistic update)
   const updateTaskMutation = useMutation({
     mutationFn: (update: TimelineTaskUpdate) => timelineApi.update(update),
     onMutate: async (updatedTask) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.timeline(userId || '') });
-      const previousTasks = queryClient.getQueryData<TimelineTask[]>(queryKeys.timeline(userId || ''));
+      await queryClient.cancelQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      const previousTasks = queryClient.getQueryData<TimelineTask[]>(queryKeys.byWedding.timeline(id));
       
       if (previousTasks) {
         queryClient.setQueryData<TimelineTask[]>(
-          queryKeys.timeline(userId || ''),
+          queryKeys.byWedding.timeline(id),
           previousTasks.map(t => 
             t.id === updatedTask.id ? { ...t, ...updatedTask } : t
           )
@@ -65,7 +61,7 @@ export function useTimeline(userId: string | undefined) {
     },
     onError: (error, _variables, context) => {
       if (context?.previousTasks) {
-        queryClient.setQueryData(queryKeys.timeline(userId || ''), context.previousTasks);
+        queryClient.setQueryData(queryKeys.byWedding.timeline(id), context.previousTasks);
       }
       console.error('Erro ao atualizar tarefa:', error);
       toast({
@@ -75,21 +71,22 @@ export function useTimeline(userId: string | undefined) {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.timeline(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
     },
   });
 
-  // Mutation - toggle complete
+  // Mutation - toggle complete (optimistic update)
   const toggleCompleteMutation = useMutation({
     mutationFn: ({ taskId, completed }: { taskId: string; completed: boolean }) => 
       timelineApi.toggleComplete(taskId, completed),
     onMutate: async ({ taskId, completed }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.timeline(userId || '') });
-      const previousTasks = queryClient.getQueryData<TimelineTask[]>(queryKeys.timeline(userId || ''));
+      await queryClient.cancelQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      const previousTasks = queryClient.getQueryData<TimelineTask[]>(queryKeys.byWedding.timeline(id));
       
       if (previousTasks) {
         queryClient.setQueryData<TimelineTask[]>(
-          queryKeys.timeline(userId || ''),
+          queryKeys.byWedding.timeline(id),
           previousTasks.map(t => 
             t.id === taskId ? { 
               ...t, 
@@ -104,12 +101,13 @@ export function useTimeline(userId: string | undefined) {
     },
     onError: (error, _variables, context) => {
       if (context?.previousTasks) {
-        queryClient.setQueryData(queryKeys.timeline(userId || ''), context.previousTasks);
+        queryClient.setQueryData(queryKeys.byWedding.timeline(id), context.previousTasks);
       }
       console.error('Erro ao atualizar tarefa:', error);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.timeline(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
     },
   });
 
@@ -117,7 +115,8 @@ export function useTimeline(userId: string | undefined) {
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId: string) => timelineApi.delete(taskId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.timeline(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({
         title: 'Tarefa removida',
         description: 'A tarefa foi removida com sucesso.',
@@ -137,7 +136,8 @@ export function useTimeline(userId: string | undefined) {
   const bulkDeleteMutation = useMutation({
     mutationFn: (taskIds: string[]) => timelineApi.bulkDelete(taskIds),
     onSuccess: (_, taskIds) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.timeline(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.byWedding.timeline(id) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', id] });
       toast({
         title: 'Tarefas removidas',
         description: `${taskIds.length} tarefa(s) removida(s) com sucesso.`,
@@ -156,7 +156,6 @@ export function useTimeline(userId: string | undefined) {
   return {
     // Data
     tasks: timelineQuery.data ?? [],
-    stats: statsQuery.data ?? null,
     
     // Loading states
     isLoading: timelineQuery.isLoading,
