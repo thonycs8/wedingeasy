@@ -29,6 +29,7 @@ import { UserProfile } from "@/components/UserProfile";
 import { WeddingDetailsEditor } from "@/components/WeddingDetailsEditor";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FeatureGate } from "@/components/shared/FeatureGate";
 const WeddingDashboard = () => {
   const {
     t
@@ -320,14 +321,42 @@ const WeddingDashboard = () => {
         {/* Content Area */}
         <div className="space-y-6">
           {activeTab === "overview" && <DashboardOverview onNavigateToTab={setActiveTab} />}
-          {activeTab === "budget" && <BudgetManager />}
-          {activeTab === "timeline" && <TimelineManager />}
-          {activeTab === "choices" && <WeddingChoices />}
-          {activeTab === "guests" && <GuestManager />}
-          {activeTab === "ceremony" && <CeremonyRoles />}
-          {activeTab === "services" && <ServicesMarketplace />}
+          {activeTab === "budget" && (
+            <FeatureGate featureKey="budget_management" featureName="Gestão de Orçamento">
+              <BudgetManager />
+            </FeatureGate>
+          )}
+          {activeTab === "timeline" && (
+            <FeatureGate featureKey="timeline_management" featureName="Cronograma">
+              <TimelineManager />
+            </FeatureGate>
+          )}
+          {activeTab === "choices" && (
+            <FeatureGate featureKey="wedding_choices" featureName="Decisões">
+              <WeddingChoices />
+            </FeatureGate>
+          )}
+          {activeTab === "guests" && (
+            <FeatureGate featureKey="guests_management" featureName="Gestão de Convidados">
+              <GuestManager />
+            </FeatureGate>
+          )}
+          {activeTab === "ceremony" && (
+            <FeatureGate featureKey="ceremony_roles" featureName="Papéis de Cerimónia">
+              <CeremonyRoles />
+            </FeatureGate>
+          )}
+          {activeTab === "services" && (
+            <FeatureGate featureKey="marketplace" featureName="Marketplace de Serviços">
+              <ServicesMarketplace />
+            </FeatureGate>
+          )}
           {/* {activeTab === "photos" && <PhotoGallery />} */}
-          {activeTab === "notifications" && <NotificationCenter />}
+          {activeTab === "notifications" && (
+            <FeatureGate featureKey="notifications_system" featureName="Notificações">
+              <NotificationCenter />
+            </FeatureGate>
+          )}
         </div>
       </div>
       
