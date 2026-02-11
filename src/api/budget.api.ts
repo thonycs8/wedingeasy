@@ -9,23 +9,23 @@ import type {
   BudgetOption,
   BudgetOptionCreate,
   BudgetOptionUpdate,
-  BudgetStats
 } from '@/types/budget.types';
 
 /**
  * API layer para operações de Budget no Supabase
+ * Migrado para usar wedding_id em vez de user_id
  */
 export const budgetApi = {
   // ==================== CATEGORIES ====================
   
   /**
-   * Busca todas as categorias de um usuário
+   * Busca todas as categorias de um wedding
    */
-  async fetchCategories(userId: string): Promise<BudgetCategory[]> {
+  async fetchCategories(weddingId: string): Promise<BudgetCategory[]> {
     const { data, error } = await supabase
       .from('budget_categories')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -76,13 +76,13 @@ export const budgetApi = {
   // ==================== EXPENSES ====================
 
   /**
-   * Busca todas as despesas de um usuário
+   * Busca todas as despesas de um wedding
    */
-  async fetchExpenses(userId: string): Promise<BudgetExpense[]> {
+  async fetchExpenses(weddingId: string): Promise<BudgetExpense[]> {
     const { data, error } = await supabase
       .from('budget_expenses')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('date', { ascending: false });
 
     if (error) throw error;
@@ -147,13 +147,13 @@ export const budgetApi = {
   // ==================== OPTIONS ====================
 
   /**
-   * Busca todas as opções de um usuário
+   * Busca todas as opções de um wedding
    */
-  async fetchOptions(userId: string): Promise<BudgetOption[]> {
+  async fetchOptions(weddingId: string): Promise<BudgetOption[]> {
     const { data, error } = await supabase
       .from('budget_options')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -229,46 +229,4 @@ export const budgetApi = {
     if (error) throw error;
     return data as BudgetOption;
   },
-
-  // ==================== STATS ====================
-
-  /**
-   * Calcula estatísticas de budget
-   */
-  async fetchStats(userId: string): Promise<BudgetStats> {
-    const [categories, expenses] = await Promise.all([
-      this.fetchCategories(userId),
-      this.fetchExpenses(userId)
-    ]);
-
-    const totalBudgeted = categories.reduce((sum, cat) => sum + (cat.budgeted_amount || 0), 0);
-    const totalSpent = expenses
-      .filter(e => e.status === 'pago')
-      .reduce((sum, exp) => sum + exp.amount, 0);
-    const totalPending = expenses
-      .filter(e => e.status === 'pendente')
-      .reduce((sum, exp) => sum + exp.amount, 0);
-
-    const byCategory = categories.map(category => {
-      const categoryExpenses = expenses.filter(e => e.category_id === category.id && e.status === 'pago');
-      const spent = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-      const budgeted = category.budgeted_amount || 0;
-      
-      return {
-        category,
-        spent,
-        budgeted,
-        percentage: budgeted > 0 ? Math.round((spent / budgeted) * 100) : 0
-      };
-    });
-
-    return {
-      totalBudgeted,
-      totalSpent,
-      totalPending,
-      remainingBudget: totalBudgeted - totalSpent,
-      spentPercentage: totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0,
-      byCategory
-    };
-  }
 };

@@ -3,17 +3,17 @@ import type { Guest, GuestCreate, GuestUpdate, GuestBulkUpdate } from '@/types/g
 
 /**
  * API layer para operações de Guests no Supabase
- * Funções puras que retornam dados ou lançam erros
+ * Migrado para usar wedding_id em vez de user_id
  */
 export const guestsApi = {
   /**
-   * Busca todos os guests de um usuário
+   * Busca todos os guests de um wedding
    */
-  async fetchAll(userId: string): Promise<Guest[]> {
+  async fetchAll(weddingId: string): Promise<Guest[]> {
     const { data, error } = await supabase
       .from('guests')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -104,11 +104,11 @@ export const guestsApi = {
   /**
    * Busca guests com papel especial (para cerimónia)
    */
-  async fetchWithSpecialRoles(userId: string): Promise<Guest[]> {
+  async fetchWithSpecialRoles(weddingId: string): Promise<Guest[]> {
     const { data, error } = await supabase
       .from('guests')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .not('special_role', 'is', null)
       .order('special_role', { ascending: true });
 
@@ -135,25 +135,4 @@ export const guestsApi = {
     if (error) throw error;
     return data as Guest;
   },
-
-  /**
-   * Busca contagem de guests por status de confirmação
-   */
-  async fetchConfirmationStats(userId: string): Promise<{ confirmed: number; pending: number; total: number }> {
-    const { data, error } = await supabase
-      .from('guests')
-      .select('confirmed')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-
-    const guests = data || [];
-    const confirmed = guests.filter(g => g.confirmed).length;
-    
-    return {
-      total: guests.length,
-      confirmed,
-      pending: guests.length - confirmed
-    };
-  }
 };

@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { BudgetManager } from "@/components/BudgetManager";
 import { TimelineManager } from "@/components/TimelineManager";
 import { WeddingChoices } from "@/components/WeddingChoices";
-import { GuestManager } from "@/components/GuestManager";
+import { GuestManagerRefactored as GuestManager } from "@/components/features/guests/GuestManagerRefactored";
 // import { PhotoGallery } from "@/components/PhotoGallery";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { DashboardOverview } from "@/components/DashboardOverview";

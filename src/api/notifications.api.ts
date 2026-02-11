@@ -3,21 +3,21 @@ import type {
   Notification, 
   NotificationCreate, 
   NotificationUpdate,
-  NotificationStats 
 } from '@/types/notification.types';
 
 /**
  * API layer para operações de Notifications no Supabase
+ * Migrado para usar wedding_id em vez de user_id
  */
 export const notificationsApi = {
   /**
-   * Busca todas as notificações de um usuário
+   * Busca todas as notificações de um wedding
    */
-  async fetchAll(userId: string): Promise<Notification[]> {
+  async fetchAll(weddingId: string): Promise<Notification[]> {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -25,13 +25,13 @@ export const notificationsApi = {
   },
 
   /**
-   * Busca notificações não lidas
+   * Busca notificações não lidas de um wedding
    */
-  async fetchUnread(userId: string): Promise<Notification[]> {
+  async fetchUnread(weddingId: string): Promise<Notification[]> {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .eq('read', false)
       .order('created_at', { ascending: false });
 
@@ -69,13 +69,13 @@ export const notificationsApi = {
   },
 
   /**
-   * Marca todas as notificações como lidas
+   * Marca todas as notificações como lidas para um wedding
    */
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(weddingId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .eq('read', false);
 
     if (error) throw error;
@@ -109,41 +109,15 @@ export const notificationsApi = {
   },
 
   /**
-   * Deleta todas as notificações lidas
+   * Deleta todas as notificações lidas de um wedding
    */
-  async deleteAllRead(userId: string): Promise<void> {
+  async deleteAllRead(weddingId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('user_id', userId)
+      .eq('wedding_id', weddingId)
       .eq('read', true);
 
     if (error) throw error;
   },
-
-  /**
-   * Busca estatísticas de notificações
-   */
-  async fetchStats(userId: string): Promise<NotificationStats> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-
-    const notifications = (data || []) as Notification[];
-    const unread = notifications.filter(n => !n.read).length;
-
-    const byType: Record<string, number> = {};
-    notifications.forEach(n => {
-      byType[n.type] = (byType[n.type] || 0) + 1;
-    });
-
-    return {
-      total: notifications.length,
-      unread,
-      byType
-    };
-  }
 };
