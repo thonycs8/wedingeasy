@@ -459,11 +459,6 @@ function RoleLinkGenerator({
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <Badge variant="outline" className="text-xs">{entry.role}</Badge>
-                  {entry.side && (
-                    <span className="text-xs text-muted-foreground">
-                      Lado {entry.side === 'noivo' ? 'do Noivo' : 'da Noiva'}
-                    </span>
-                  )}
                 </div>
                 <code className="text-xs text-muted-foreground break-all">{entry.link}</code>
               </div>
