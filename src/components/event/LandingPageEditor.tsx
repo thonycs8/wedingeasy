@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getPublicBaseUrl } from "@/utils/getPublicBaseUrl";
 import { useTranslation } from "react-i18next";
 import { useWeddingId } from "@/hooks/useWeddingId";
 import { useAuth } from "@/hooks/useAuth";
@@ -173,8 +174,7 @@ export function LandingPageEditor() {
   };
 
   const getPublicUrl = () => {
-    const base = window.location.origin;
-    return `${base}/evento/${eventCode}`;
+    return `${getPublicBaseUrl()}/evento/${eventCode}`;
   };
 
   const copyLink = (url: string) => {
