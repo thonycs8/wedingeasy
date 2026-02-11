@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useGuests } from "@/hooks/queries/useGuests";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Copy, ExternalLink, Save, Globe, Eye, EyeOff, Link2, Users } from "lucide-react";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface LandingPageData {
   id?: string;
@@ -180,10 +182,6 @@ export function LandingPageEditor() {
     toast({ title: "Link copiado!" });
   };
 
-  const getRoleLink = (role: string, guestName: string) => {
-    const slug = guestName.toLowerCase().replace(/\s+/g, "-");
-    return `${getPublicUrl()}?role=${encodeURIComponent(role.toLowerCase())}&guest=${encodeURIComponent(slug)}`;
-  };
 
   if (isLoading || !form) return <LoadingState />;
 
@@ -356,9 +354,9 @@ export function LandingPageEditor() {
             </CardHeader>
             <CardContent>
               <RoleLinkGenerator
+                weddingId={weddingId}
                 eventCode={eventCode}
                 getPublicUrl={getPublicUrl}
-                getRoleLink={getRoleLink}
                 copyLink={copyLink}
               />
             </CardContent>
@@ -370,58 +368,74 @@ export function LandingPageEditor() {
 }
 
 function RoleLinkGenerator({
+  weddingId,
   eventCode,
   getPublicUrl,
-  getRoleLink,
   copyLink,
 }: {
+  weddingId: string | null;
   eventCode: string;
   getPublicUrl: () => string;
-  getRoleLink: (role: string, guest: string) => string;
   copyLink: (url: string) => void;
 }) {
-  const [role, setRole] = useState("padrinho");
-  const [guestName, setGuestName] = useState("");
+  const { guests, isLoading } = useGuests(weddingId);
 
-  const roles = [
-    "Padrinho", "Madrinha", "Dama de Honor", "Pajem",
-    "Florista", "Portador das Alianças", "Celebrante", "Convidado de Honra",
-  ];
+  const guestsWithRoles = guests.filter((g) => g.special_role);
 
-  const generatedLink = guestName.trim() ? getRoleLink(role, guestName.trim()) : "";
+  const getRoleLink = (role: string, guestName: string) => {
+    const slug = guestName.toLowerCase().replace(/\s+/g, "-");
+    return `${getPublicUrl()}?role=${encodeURIComponent(role.toLowerCase())}&guest=${encodeURIComponent(slug)}`;
+  };
+
+  // Group by role
+  const grouped = guestsWithRoles.reduce<Record<string, typeof guestsWithRoles>>((acc, g) => {
+    const role = g.special_role!;
+    if (!acc[role]) acc[role] = [];
+    acc[role].push(g);
+    return acc;
+  }, {});
+
+  if (isLoading) return <LoadingState />;
+
+  if (guestsWithRoles.length === 0) {
+    return (
+      <EmptyState
+        icon={Users}
+        title="Sem papéis de cerimónia"
+        description="Adicione papéis aos convidados na tab Cerimónia para gerar links de convite automaticamente."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label>Papel</Label>
-          <select
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
-            {roles.map((r) => (
-              <option key={r} value={r.toLowerCase()}>{r}</option>
-            ))}
-          </select>
+      {Object.entries(grouped).map(([role, members]) => (
+        <div key={role} className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Badge variant="outline">{role}</Badge>
+            <span className="text-muted-foreground text-xs">({members.length})</span>
+          </h4>
+          {members.map((guest) => {
+            const link = getRoleLink(guest.special_role!, guest.name);
+            return (
+              <div key={guest.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {guest.name}
+                    {guest.side && (
+                      <span className="text-muted-foreground text-xs ml-2">({guest.side})</span>
+                    )}
+                  </p>
+                  <code className="text-xs text-muted-foreground break-all">{link}</code>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => copyLink(link)}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
-        <div>
-          <Label>Nome do Convidado</Label>
-          <Input
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Ex: João Silva"
-          />
-        </div>
-      </div>
-      {generatedLink && (
-        <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-          <code className="text-xs flex-1 break-all text-foreground">{generatedLink}</code>
-          <Button size="sm" variant="outline" onClick={() => copyLink(generatedLink)}>
-            <Copy className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+      ))}
     </div>
   );
 }
