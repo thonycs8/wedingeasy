@@ -548,8 +548,10 @@ function RoleLinkGenerator({
   };
 
   const getCoupleLink = (g1: typeof guestsWithRoles[0], g2: typeof guestsWithRoles[0]) => {
-    const role1 = normalizeSlug(g1.special_role || "").replace(/-/g, " ");
-    const role2 = normalizeSlug(g2.special_role || "").replace(/-/g, " ");
+    const roles1 = Array.isArray(g1.special_role) ? g1.special_role : [g1.special_role || ""];
+    const roles2 = Array.isArray(g2.special_role) ? g2.special_role : [g2.special_role || ""];
+    const role1 = roles1.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
+    const role2 = roles2.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guest1 = normalizeSlug(g1.name);
     const guest2 = normalizeSlug(g2.name);
     const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`);
@@ -561,24 +563,27 @@ function RoleLinkGenerator({
   const processedPairIds = new Set<string>();
 
   for (const g of guestsWithRoles) {
+    const roleDisplay = Array.isArray(g.special_role) ? g.special_role.join(', ') : (g.special_role || '');
+    const roleForLink = Array.isArray(g.special_role) ? g.special_role.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",") : normalizeSlug(g.special_role || "").replace(/-/g, " ");
     if (g.couple_pair_id) {
       if (processedPairIds.has(g.couple_pair_id)) continue;
       processedPairIds.add(g.couple_pair_id);
       const partner = guestsWithRoles.find(x => x.couple_pair_id === g.couple_pair_id && x.id !== g.id);
       if (partner) {
+        const partnerRoleDisplay = Array.isArray(partner.special_role) ? partner.special_role.join(', ') : (partner.special_role || '');
         entries.push({
           id: g.couple_pair_id,
           label: `${g.name} & ${partner.name}`,
           link: getCoupleLink(g, partner),
-          role: `${g.special_role} & ${partner.special_role}`,
+          role: `${roleDisplay} & ${partnerRoleDisplay}`,
           side: g.side,
           isCouple: true,
         });
       } else {
-        entries.push({ id: g.id, label: g.name, link: getRoleLink(g.special_role!, g.name), role: g.special_role!, side: g.side, isCouple: false });
+        entries.push({ id: g.id, label: g.name, link: getRoleLink(roleForLink, g.name), role: roleDisplay, side: g.side, isCouple: false });
       }
     } else {
-      entries.push({ id: g.id, label: g.name, link: getRoleLink(g.special_role!, g.name), role: g.special_role!, side: g.side, isCouple: false });
+      entries.push({ id: g.id, label: g.name, link: getRoleLink(roleForLink, g.name), role: roleDisplay, side: g.side, isCouple: false });
     }
   }
 

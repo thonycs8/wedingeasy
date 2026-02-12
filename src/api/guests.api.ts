@@ -119,7 +119,7 @@ export const guestsApi = {
   /**
    * Atualiza papel especial de um guest
    */
-  async updateSpecialRole(guestId: string, role: string | null, side?: string | null): Promise<Guest> {
+  async updateSpecialRole(guestId: string, role: string[] | null, side?: string | null): Promise<Guest> {
     const updates: Partial<Guest> = { special_role: role };
     if (side !== undefined) {
       updates.side = side as Guest['side'];

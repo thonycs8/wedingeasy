@@ -320,7 +320,7 @@ export type Database = {
           printed_invitation: boolean | null
           relationship: string | null
           side: string | null
-          special_role: string | null
+          special_role: string[] | null
           table_number: number | null
           updated_at: string
           user_id: string
@@ -342,7 +342,7 @@ export type Database = {
           printed_invitation?: boolean | null
           relationship?: string | null
           side?: string | null
-          special_role?: string | null
+          special_role?: string[] | null
           table_number?: number | null
           updated_at?: string
           user_id: string
@@ -364,7 +364,7 @@ export type Database = {
           printed_invitation?: boolean | null
           relationship?: string | null
           side?: string | null
-          special_role?: string | null
+          special_role?: string[] | null
           table_number?: number | null
           updated_at?: string
           user_id?: string

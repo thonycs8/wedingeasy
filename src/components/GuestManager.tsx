@@ -52,7 +52,7 @@ interface Guest {
   dietary_restrictions?: string;
   notes?: string;
   printed_invitation?: boolean;
-  special_role?: string;
+  special_role?: string[] | null;
   table_number?: number;
   relationship?: string;
   side?: 'noivo' | 'noiva' | null;
@@ -132,7 +132,7 @@ export const GuestManager = () => {
           category: 'honor_guests' as Guest['category'],
           confirmed: true,
           plus_one: false,
-          special_role: 'Noivo',
+          special_role: ['Noivo'],
           side: 'noivo',
           age_band: 'adult'
         });
@@ -145,7 +145,7 @@ export const GuestManager = () => {
           category: 'honor_guests' as Guest['category'],
           confirmed: true,
           plus_one: false,
-          special_role: 'Noiva',
+          special_role: ['Noiva'],
           side: 'noiva',
           age_band: 'adult'
         });
@@ -178,7 +178,7 @@ export const GuestManager = () => {
         dietary_restrictions: formData.dietary_restrictions || null,
         notes: formData.notes || null,
         printed_invitation: formData.printed_invitation,
-        special_role: formData.special_role || null,
+        special_role: formData.special_role ? [formData.special_role] : null,
         table_number: formData.table_number ? parseInt(formData.table_number) : null,
         relationship: formData.relationship || null,
         user_id: user.id,
@@ -350,7 +350,7 @@ export const GuestManager = () => {
       dietary_restrictions: guest.dietary_restrictions || '',
       notes: guest.notes || '',
       printed_invitation: guest.printed_invitation || false,
-      special_role: guest.special_role || '',
+      special_role: (Array.isArray(guest.special_role) ? guest.special_role[0] : guest.special_role) || '',
       table_number: guest.table_number?.toString() || '',
       relationship: guest.relationship || ''
     });
@@ -1359,14 +1359,15 @@ export const GuestManager = () => {
                                       <Badge variant="outline" className="text-xs shrink-0">
                                         {getAgeBandLabel(guest.age_band)}
                                       </Badge>
-                                      {guest.special_role && (
+                                      {guest.special_role && guest.special_role.length > 0 && guest.special_role.map(role => (
                                         <Badge
-                                          variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'}
+                                          key={role}
+                                          variant={role === 'Noivo' || role === 'Noiva' ? 'couple' : 'outline'}
                                           className="text-xs shrink-0"
                                         >
-                                          {getSpecialRoleLabel(guest.special_role)}
+                                          {getSpecialRoleLabel(role)}
                                         </Badge>
-                                      )}
+                                      ))}
                                       <div className="flex items-center gap-1 shrink-0">
                                         {guest.confirmed ? (
                                           <span className="text-success text-xs">Confirmado</span>
@@ -1543,14 +1544,15 @@ export const GuestManager = () => {
                             <div className="min-w-0 flex-1">
                               <h4 className="font-medium truncate">{guest.name}</h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                                {guest.special_role && (
+                                {guest.special_role && guest.special_role.length > 0 && guest.special_role.map(role => (
                                   <Badge 
-                                    variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'} 
+                                    key={role}
+                                    variant={role === 'Noivo' || role === 'Noiva' ? 'couple' : 'outline'} 
                                     className="text-xs shrink-0"
                                   >
-                                    {getSpecialRoleLabel(guest.special_role)}
+                                    {getSpecialRoleLabel(role)}
                                   </Badge>
-                                )}
+                                ))}
                                 {guest.confirmed ? (
                                   <span className="text-success">Confirmado</span>
                                 ) : (
