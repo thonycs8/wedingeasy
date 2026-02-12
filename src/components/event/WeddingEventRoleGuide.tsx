@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Crown,
   Star,
@@ -243,7 +245,33 @@ interface WeddingEventRoleGuideProps {
 }
 
 export function WeddingEventRoleGuide({ role, themeColor }: WeddingEventRoleGuideProps) {
-  const guide = getGuide(role);
+  const [guide, setGuide] = useState<RoleGuideData>(getGuide(role));
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchGuide = async () => {
+      const key = role.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      const { data } = await supabase
+        .from("role_guides")
+        .select("*")
+        .eq("role_key", key)
+        .maybeSingle();
+      if (data) {
+        setGuide({
+          title: data.title,
+          icon: ROLE_GUIDES[key]?.icon || GENERIC_GUIDE.icon,
+          intro: data.intro,
+          responsibilities: data.responsibilities || [],
+          dos: data.dos || [],
+          donts: data.donts || [],
+          faq: (data.faq as any[]) || [],
+        });
+      }
+      setLoaded(true);
+    };
+    fetchGuide();
+  }, [role]);
+
   const Icon = guide.icon;
 
   return (

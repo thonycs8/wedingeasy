@@ -15,6 +15,7 @@ import { FileText, Search, Eye, ExternalLink, RefreshCw, Users, Save, Pencil, Gl
 import { useToast } from "@/hooks/use-toast";
 import { getPublicBaseUrl } from "@/utils/getPublicBaseUrl";
 import { AdminRoleInvitesManager } from "./AdminRoleInvitesManager";
+import { AdminRoleGuidesManager } from "./AdminRoleGuidesManager";
 
 interface LandingPageRow {
   id: string;
@@ -204,6 +205,9 @@ export const AdminLandingPagesManager = () => {
         </TabsTrigger>
         <TabsTrigger value="role-invites" className="flex items-center gap-1.5">
           <Users className="w-4 h-4" /> Convites por Papel
+        </TabsTrigger>
+        <TabsTrigger value="role-guides" className="flex items-center gap-1.5">
+          <FileText className="w-4 h-4" /> Manuais
         </TabsTrigger>
       </TabsList>
 
@@ -639,6 +643,10 @@ export const AdminLandingPagesManager = () => {
 
       <TabsContent value="role-invites">
         <AdminRoleInvitesManager />
+      </TabsContent>
+
+      <TabsContent value="role-guides">
+        <AdminRoleGuidesManager />
       </TabsContent>
     </Tabs>
   );
