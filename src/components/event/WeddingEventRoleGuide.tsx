@@ -233,7 +233,7 @@ const GENERIC_GUIDE: RoleGuideData = {
 };
 
 function getGuide(role: string): RoleGuideData {
-  const key = role.toLowerCase().trim();
+  const key = role.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   return ROLE_GUIDES[key] || GENERIC_GUIDE;
 }
 
