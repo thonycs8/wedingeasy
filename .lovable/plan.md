@@ -1,123 +1,133 @@
 
-# Plano Consolidado -- Landing Page do Evento
 
-Este plano combina as tres aprovacoes anteriores num unico bloco de implementacao.
+# Manual Interativo por Papel na Pagina de Convite
 
----
+## Resumo
 
-## 1. Migracao de Base de Dados
+Adicionar uma seccao de "Manual" logo apos o convite por papel (e antes do botao "Aceitar"), com dicas, etiqueta e FAQ personalizados para cada funcao da cerimonia. O conteudo e estatico (sem base de dados), organizado num accordion interactivo com icones, seccoes de "Fazer" e "Nao Fazer", e perguntas frequentes.
 
-Adicionar colunas a `wedding_landing_pages`:
+## Papeis Cobertos
 
-| Coluna | Tipo | Default | Descricao |
-|--------|------|---------|-----------|
-| same_venue | boolean | true | Cerimonia e recepcao no mesmo local |
-| reception_venue_name | text | null | Nome do local do Copo d'Agua (se diferente) |
-| reception_venue_address | text | null | Morada do Copo d'Agua (se diferente) |
-| theme_preset | text | null | Tema pre-definido (romantic, rustic, etc.) |
-| video_url | text | null | URL de video YouTube/Vimeo |
-| gallery_urls | text[] | '{}' | Array de URLs de imagens |
-| show_gallery | boolean | true | Mostrar galeria |
-| show_video | boolean | true | Mostrar video |
-| verse_text | text | null | Texto do verso/poema |
-| show_verse | boolean | true | Mostrar verso apos hero |
-| font_family | text | null | Fonte do tema |
+Cada papel tera conteudo especifico:
 
----
+- **Padrinho / Madrinha** -- responsabilidades, presentes, discurso, apoio aos noivos
+- **Dama de Honor** -- apoio a noiva, dia do casamento, look coordenado
+- **Celebrante** -- preparacao da cerimonia, tom, ensaio
+- **Pajem / Florista** -- instrucoes simples para criancas e pais
+- **Convidado de Honra** -- etiqueta especial, lugar reservado
 
-## 2. Temas Pre-definidos
+## Layout Visual
 
-Criar `src/config/weddingThemes.ts` com 6 temas: Romantico, Rustico, Classico, Moderno, Jardim, Praia. Cada tema define primaryColor, secondaryColor, fontFamily, heroOverlay.
+```text
++------------------------------------------+
+|        [Convite por Papel]               |
+|        Querido Joao, Padrinho            |
+|                                          |
+|  ┌────────────────────────────────────┐  |
+|  │  📖 Manual do Padrinho             │  |
+|  │                                    │  |
+|  │  [v] As Suas Responsabilidades     │  |
+|  │      * Apoiar o noivo...           │  |
+|  │      * Guardar as aliancas...      │  |
+|  │                                    │  |
+|  │  [v] O Que Fazer                   │  |
+|  │      ✓ Chegar cedo ao ensaio       │  |
+|  │      ✓ Preparar um brinde          │  |
+|  │      ✓ Ajudar com convidados       │  |
+|  │                                    │  |
+|  │  [v] O Que Nao Fazer              │  |
+|  │      ✗ Chegar atrasado             │  |
+|  │      ✗ Discurso demasiado longo    │  |
+|  │      ✗ Esquecer as aliancas!       │  |
+|  │                                    │  |
+|  │  [v] Perguntas Frequentes          │  |
+|  │      > Preciso levar presente?     │  |
+|  │      > Como deve ser o discurso?   │  |
+|  └────────────────────────────────────┘  |
+|                                          |
+|        [ Aceitar Convite ]               |
++------------------------------------------+
+```
 
----
+## Abordagem Tecnica
 
-## 3. Galeria de Capas Pre-definidas
+### Novo componente: `WeddingEventRoleGuide.tsx`
 
-Criar `src/config/coverImages.ts` com 12-18 imagens Unsplash tematicas (amor, casamento) organizadas por estilo. Usadas tanto no editor como no hero do dashboard.
+Ficheiro dedicado com todo o conteudo e logica do manual. Recebe o papel como prop e renderiza o guia correspondente.
 
----
+**Estrutura interna:**
 
-## 4. Novos Componentes
+1. **ROLE_GUIDES** -- objecto estatico com conteudo por papel, cada um contendo:
+   - `title`: titulo do manual (ex: "Manual do Padrinho")
+   - `icon`: icone Lucide correspondente
+   - `intro`: breve descricao do papel
+   - `responsibilities`: lista de responsabilidades com icones
+   - `dos`: lista de "O Que Fazer" (com icone CheckCircle verde)
+   - `donts`: lista de "O Que Nao Fazer" (com icone XCircle vermelho)
+   - `faq`: array de pares pergunta/resposta
 
-| Componente | Descricao |
-|-----------|-----------|
-| `src/config/weddingThemes.ts` | Configuracao dos 6 temas |
-| `src/config/coverImages.ts` | Galeria de imagens pre-definidas |
-| `src/components/event/ThemePresetSelector.tsx` | Grid visual de seleccao de tema |
-| `src/components/event/CoverImageSelector.tsx` | Galeria visual de seleccao de capa |
-| `src/components/event/WeddingEventVerse.tsx` | Verso/poema estilizado apos o hero |
-| `src/components/event/WeddingEventVideo.tsx` | Embed responsivo YouTube/Vimeo |
-| `src/components/event/WeddingEventGallery.tsx` | Grid responsivo de imagens |
+2. **UI**: Usa `Accordion` do shadcn/ui para organizar as 4 seccoes (Responsabilidades, Fazer, Nao Fazer, FAQ). Cada seccao abre/fecha independentemente. A primeira seccao abre por defeito.
 
----
+3. **Fallback**: Para papeis sem guia especifico, mostra um guia generico de "Convidado Especial" com dicas de etiqueta gerais.
 
-## 5. Editor Reorganizado (LandingPageEditor.tsx)
+### Integracao no `WeddingEventRoleInvite.tsx`
 
-Tabs reestruturadas:
+- Importar `WeddingEventRoleGuide`
+- Renderizar entre os badges de papel e o botao "Aceitar Convite"
+- Passar o papel principal (`roles[0]`) como prop
+- Tambem mostrar na view de "Aceite" (apos a confirmacao) para referencia futura
 
-- **Tema** -- Selector de tema pre-definido + cor personalizada
-- **Conteudo** -- Hero message, verso/poema, mensagem personalizada, dress code
-- **Multimidia** -- Selector de capa (galeria pre-definida + URL custom), video URL, galeria de imagens (URLs)
-- **Local** -- Switch "Mesmo local" + campos condicionais. Renomear "Hora da Festa" para "Hora do Copo d'Agua". Se `same_venue = true`, esconder campos de recepcao e mostrar apenas horario da cerimonia
-- **Opcoes** -- Switches existentes + novos (mostrar verso, galeria, video)
-- **Convites por Papel** -- Mantido
-
-Interface `LandingPageData` sera expandida com todos os novos campos.
-
----
-
-## 6. Dashboard (WeddingDashboard.tsx)
-
-O hero do dashboard passara a usar a `cover_image_url` guardada na landing page, com fallback para a imagem estatica `wedding-hero.jpg`.
-
----
-
-## 7. Pagina Publica (WeddingEvent.tsx)
-
-Nova ordem das seccoes com logica condicional:
-
-1. **Hero** -- Com tema aplicado (cores, fonte, imagem de capa)
-2. **Verso/Poema** -- Texto estilizado com aspas decorativas (se `show_verse` e `verse_text`)
-3. **Convite por Papel** (se URL params)
-4. **Countdown**
-5. **Video** (se `show_video` e `video_url`)
-6. **Detalhes do Evento** -- Logica `same_venue`: se true, so mostra cerimonia; se false, mostra cerimonia + "Copo d'Agua" com horario e morada separados
-7. **Galeria** (se `show_gallery` e `gallery_urls`)
-8. **Mapa** (cerimonia + segundo mapa se local diferente)
-9. **Mensagem Personalizada**
-10. **RSVP**
-11. **Footer**
-
----
-
-## 8. RSVP Simplificado (WeddingEventRSVP.tsx)
-
-- Placeholder: "Primeiro e ultimo nome"
-- Descricao: "Insira o seu primeiro e ultimo nome"
-
----
-
-## 9. Terminologia Corrigida
-
-- "Festa" --> "Copo d'Agua" em todo o editor e pagina publica
-- Logica especifica: para o casamento Karina & Anthony (same_venue = true), mostrar apenas horario da cerimonia
-
----
-
-## Resumo de Ficheiros
+### Ficheiros
 
 **Criar:**
-- `src/config/weddingThemes.ts`
-- `src/config/coverImages.ts`
-- `src/components/event/ThemePresetSelector.tsx`
-- `src/components/event/CoverImageSelector.tsx`
-- `src/components/event/WeddingEventVerse.tsx`
-- `src/components/event/WeddingEventVideo.tsx`
-- `src/components/event/WeddingEventGallery.tsx`
+- `src/components/event/WeddingEventRoleGuide.tsx` -- componente do manual com conteudo estatico
 
 **Modificar:**
-- `src/components/event/LandingPageEditor.tsx` -- Reorganizar tabs, novos campos, terminologia
-- `src/pages/WeddingEvent.tsx` -- Nova ordem, temas, novos componentes, logica same_venue
-- `src/components/event/WeddingEventRSVP.tsx` -- Simplificar para primeiro e ultimo nome
-- `src/components/event/WeddingEventMap.tsx` -- Suportar segundo local
-- `src/components/WeddingDashboard.tsx` -- Usar cover_image_url no hero
+- `src/components/event/WeddingEventRoleInvite.tsx` -- importar e renderizar o guia
+
+### Conteudo dos Manuais
+
+**Padrinho:**
+- Responsabilidades: apoiar o noivo, guardar aliancas, testemunha, brinde
+- Fazer: chegar cedo, preparar discurso curto, ajudar convidados
+- Nao fazer: chegar atrasado, discurso longo, esquecer aliancas
+- FAQ: presente, roupa, discurso
+
+**Madrinha:**
+- Responsabilidades: apoiar a noiva, ajudar com o vestido, buque, emocoes
+- Fazer: estar disponivel, levar kit de emergencia, coordenar damas
+- Nao fazer: usar branco, chamar mais atencao que a noiva, atrasar
+- FAQ: cor do vestido, maquilhagem, despedida de solteira
+
+**Dama de Honor:**
+- Responsabilidades: apoiar a madrinha e noiva, caminhar no cortejo
+- Fazer: seguir dress code, ajudar na organizacao, sorrir
+- Nao fazer: usar branco, chegar atrasada, usar telemovel na cerimonia
+- FAQ: buque, sapatos, posicao no altar
+
+**Celebrante:**
+- Responsabilidades: conduzir a cerimonia, preparar texto, ensaio
+- Fazer: reunir com os noivos, ensaiar, manter tom adequado
+- Nao fazer: improvisar sem aprovacao, ultrapassar o tempo, piadas inadequadas
+- FAQ: duracao, microfone, votos personalizados
+
+**Pajem / Florista:**
+- Responsabilidades: caminhar no cortejo, levar almofada ou petalas
+- Fazer (para pais): ensaiar com a crianca, levar snacks, ter plano B
+- Nao fazer: forcar a crianca nervosa, esquecer ensaio
+- FAQ: roupa, idade ideal, e se chorar
+
+**Convidado de Honra / Generico:**
+- Dicas gerais de etiqueta, dress code, pontualidade, telemovel
+
+### Dependencias
+
+Nenhuma nova dependencia. Usa apenas:
+- `Accordion` do shadcn/ui (ja instalado)
+- Icones Lucide (ja instalado)
+- `Card` do shadcn/ui (ja instalado)
+
+### Sem alteracoes na base de dados
+
+Todo o conteudo e estatico no frontend. Nao requer migracoes SQL.
+
