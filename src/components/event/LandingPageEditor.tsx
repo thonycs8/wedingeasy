@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Copy, ExternalLink, Save, Globe, Eye, EyeOff, Link2, Users, Heart } from "lucide-react";
+import { encodeInviteToken } from "@/utils/inviteToken";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ThemePresetSelector } from "@/components/event/ThemePresetSelector";
@@ -540,16 +541,19 @@ function RoleLinkGenerator({
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
 
   const getRoleLink = (role: string, guestName: string) => {
-    const slug = normalizeSlug(guestName);
-    return `${getPublicUrl()}?role=${encodeURIComponent(normalizeSlug(role).replace(/-/g, " "))}&guest=${encodeURIComponent(slug)}`;
+    const roleSlug = normalizeSlug(role).replace(/-/g, " ");
+    const guestSlug = normalizeSlug(guestName);
+    const token = encodeInviteToken(roleSlug, guestSlug);
+    return `${getPublicUrl()}?invite=${token}`;
   };
 
   const getCoupleLink = (g1: typeof guestsWithRoles[0], g2: typeof guestsWithRoles[0]) => {
-    const slug1 = normalizeSlug(g1.name);
-    const slug2 = normalizeSlug(g2.name);
-    const role1 = encodeURIComponent(normalizeSlug(g1.special_role || "").replace(/-/g, " "));
-    const role2 = encodeURIComponent(normalizeSlug(g2.special_role || "").replace(/-/g, " "));
-    return `${getPublicUrl()}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
+    const role1 = normalizeSlug(g1.special_role || "").replace(/-/g, " ");
+    const role2 = normalizeSlug(g2.special_role || "").replace(/-/g, " ");
+    const guest1 = normalizeSlug(g1.name);
+    const guest2 = normalizeSlug(g2.name);
+    const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`);
+    return `${getPublicUrl()}?invite=${token}`;
   };
 
   type LinkEntry = { id: string; label: string; link: string; role: string; side?: string | null; isCouple: boolean };

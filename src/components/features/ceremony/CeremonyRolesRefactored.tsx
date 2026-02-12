@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingState } from "@/components/shared";
 import { exportCeremonyRolesPDF } from "@/utils/pdfExport";
 import { useToast } from "@/hooks/use-toast";
+import { encodeInviteToken } from "@/utils/inviteToken";
 
 const DEFAULT_ROLES = [
   "Padrinho", "Madrinha", "Pai do Noivo", "Mãe do Noivo", "Pai da Noiva", "Mãe da Noiva",
@@ -104,18 +105,20 @@ export const CeremonyRolesRefactored = () => {
 
   const getInviteLink = (person: CeremonyRole) => {
     if (!eventCode || !person.special_role) return "";
-    const slug = normalizeSlug(person.name);
-    const role = encodeURIComponent(normalizeSlug(person.special_role).replace(/-/g, " "));
-    return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role}&guest=${encodeURIComponent(slug)}`;
+    const roleSlug = normalizeSlug(person.special_role).replace(/-/g, " ");
+    const guestSlug = normalizeSlug(person.name);
+    const token = encodeInviteToken(roleSlug, guestSlug);
+    return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
   const getCoupleInviteLink = (person1: CeremonyRole, person2: CeremonyRole) => {
     if (!eventCode) return "";
-    const slug1 = normalizeSlug(person1.name);
-    const slug2 = normalizeSlug(person2.name);
-    const role1 = encodeURIComponent(normalizeSlug(person1.special_role || "").replace(/-/g, " "));
-    const role2 = encodeURIComponent(normalizeSlug(person2.special_role || "").replace(/-/g, " "));
-    return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
+    const role1 = normalizeSlug(person1.special_role || "").replace(/-/g, " ");
+    const role2 = normalizeSlug(person2.special_role || "").replace(/-/g, " ");
+    const guest1 = normalizeSlug(person1.name);
+    const guest2 = normalizeSlug(person2.name);
+    const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`);
+    return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
   const copyInviteLink = (person: CeremonyRole) => {
