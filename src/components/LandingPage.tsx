@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Heart, 
@@ -16,7 +16,12 @@ import {
   MapPin,
   Clock,
   Target,
-  Menu
+  Menu,
+  Globe,
+  Shield,
+  Palette,
+  Send,
+  Crown
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import heroImage from "@/assets/wedding-hero.jpg";
@@ -53,6 +58,26 @@ const LandingPage = () => {
       title: t('landing.features.calculator'),
       description: t('landing.features.calculatorDesc'),
     },
+    {
+      icon: Globe,
+      title: t('landing.features.eventPage'),
+      description: t('landing.features.eventPageDesc'),
+    },
+    {
+      icon: Crown,
+      title: t('landing.features.roleInvites'),
+      description: t('landing.features.roleInvitesDesc'),
+    },
+    {
+      icon: Send,
+      title: t('landing.features.collaborators'),
+      description: t('landing.features.collaboratorsDesc'),
+    },
+    {
+      icon: Palette,
+      title: t('landing.features.choices'),
+      description: t('landing.features.choicesDesc'),
+    },
   ];
 
   const testimonials = [
@@ -81,6 +106,8 @@ const LandingPage = () => {
     t('landing.benefits.stress'),
     t('landing.benefits.budget'),
     t('landing.benefits.organized'),
+    t('landing.benefits.eventPageBenefit'),
+    t('landing.benefits.rolesBenefit'),
   ];
 
   return (
@@ -93,38 +120,19 @@ const LandingPage = () => {
             <span className="text-xl font-bold text-primary">{t('landing.brand')}</span>
           </div>
           
-          {/* Desktop Menu */}
           {!isMobile && (
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/user-guide')}
-              >
-                Manual de Uso
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/faq')}
-              >
-                FAQ
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/auth')}
-              >
-                Entrar / Registar
-              </Button>
+              <Button variant="ghost" onClick={() => navigate('/user-guide')}>Manual de Uso</Button>
+              <Button variant="ghost" onClick={() => navigate('/faq')}>FAQ</Button>
+              <Button variant="outline" onClick={() => navigate('/auth')}>Entrar / Registar</Button>
               <LanguageCurrencySelector />
             </div>
           )}
 
-          {/* Mobile Menu */}
           {isMobile && (
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="w-6 h-6" />
-                </Button>
+                <Button variant="ghost" size="icon"><Menu className="w-6 h-6" /></Button>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
@@ -134,39 +142,10 @@ const LandingPage = () => {
                   </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 mt-8">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => {
-                      navigate('/user-guide');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="justify-start"
-                  >
-                    Manual de Uso
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => {
-                      navigate('/faq');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="justify-start"
-                  >
-                    FAQ
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      navigate('/auth');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="justify-start"
-                  >
-                    Entrar / Registar
-                  </Button>
-                  <div className="pt-4 border-t">
-                    <LanguageCurrencySelector />
-                  </div>
+                  <Button variant="ghost" onClick={() => { navigate('/user-guide'); setMobileMenuOpen(false); }} className="justify-start">Manual de Uso</Button>
+                  <Button variant="ghost" onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="justify-start">FAQ</Button>
+                  <Button variant="outline" onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} className="justify-start">Entrar / Registar</Button>
+                  <div className="pt-4 border-t"><LanguageCurrencySelector /></div>
                 </div>
               </SheetContent>
             </Sheet>
@@ -177,11 +156,7 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage} 
-            alt="Wedding Planning" 
-            className="w-full h-full object-cover"
-          />
+          <img src={heroImage} alt="Wedding Planning" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-accent/70" />
         </div>
         
@@ -243,7 +218,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Features Section */}
       <section className="py-20 bg-card">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -255,15 +230,15 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="card-romantic animate-scale-in text-center" style={{animationDelay: `${index * 0.1}s`}}>
+              <Card key={index} className="card-romantic animate-scale-in text-center" style={{animationDelay: `${index * 0.05}s`}}>
                 <CardContent className="p-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="w-8 h-8 text-primary" />
+                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="w-7 h-7 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -296,10 +271,7 @@ const LandingPage = () => {
                 </div>
                 <h3 className="text-2xl font-bold mb-4">{t('landing.calculator.title')}</h3>
                 <p className="text-muted-foreground mb-6">{t('landing.calculator.desc')}</p>
-                <Button 
-                  className="btn-gradient w-full"
-                  onClick={() => setShowSignup(true)}
-                >
+                <Button className="btn-gradient w-full" onClick={() => setShowSignup(true)}>
                   {t('landing.calculator.cta')}
                 </Button>
               </div>
@@ -365,7 +337,6 @@ const LandingPage = () => {
       </section>
 
       <Footer />
-
       <SignupModal open={showSignup} onOpenChange={setShowSignup} />
     </div>
   );

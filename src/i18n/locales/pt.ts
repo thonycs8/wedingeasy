@@ -129,6 +129,14 @@ export const ptTranslations = {
     "landing.features.timelineDesc": "Timeline personalizada para não esquecer nada",
     "landing.features.calculator": "Calculadora Avançada",
     "landing.features.calculatorDesc": "Preços reais baseados na região e estilo do casamento",
+    "landing.features.eventPage": "Página do Evento",
+    "landing.features.eventPageDesc": "Landing page pública com countdown, mapa, RSVP e galeria",
+    "landing.features.roleInvites": "Convites Personalizados",
+    "landing.features.roleInvitesDesc": "Convites únicos para padrinhos, madrinhas e outros papéis especiais",
+    "landing.features.collaborators": "Colaboração em Equipa",
+    "landing.features.collaboratorsDesc": "Convide noivos, celebrantes e organizadores para planear juntos",
+    "landing.features.choices": "Escolhas do Casamento",
+    "landing.features.choicesDesc": "Organize decisões sobre cores, menu, música e fornecedores",
 
     "landing.benefits.title": "Tudo o Que Precisa Para o Casamento Perfeito",
     "landing.benefits.subtitle": "Ferramentas profissionais para planejar cada detalhe",
@@ -136,6 +144,8 @@ export const ptTranslations = {
     "landing.benefits.stress": "Elimine o stress com planeamento automático",
     "landing.benefits.budget": "Orçamento baseado em dados reais do mercado português",
     "landing.benefits.organized": "Mantenha tudo organizado numa plataforma",
+    "landing.benefits.eventPageBenefit": "Página pública do evento com RSVP e countdown automáticos",
+    "landing.benefits.rolesBenefit": "Convites personalizados com manual interativo para cada papel",
 
     "landing.problem.title": "Finalmente, Um Planeador Feito Para Portugal",
     "landing.calculator.title": "Calculadora Inteligente",
