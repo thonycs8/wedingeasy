@@ -103,12 +103,22 @@ export const CeremonyRolesRefactored = () => {
   const normalizeSlug = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
 
-  const getInviteLink = (person: CeremonyRole) => {
+  const getInviteLink = (person: CeremonyRole, specificRoles?: string[]) => {
     if (!eventCode || !person.special_role?.length) return "";
-    const rolesStr = person.special_role.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
+    const rolesToUse = specificRoles || person.special_role;
+    const rolesStr = rolesToUse.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guestSlug = normalizeSlug(person.name);
     const token = encodeInviteToken(rolesStr, guestSlug);
     return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
+  };
+
+  const hasCelebranteAndOtherRoles = (person: CeremonyRole) => {
+    if (!person.special_role || person.special_role.length < 2) return false;
+    return person.special_role.some(r => r.toLowerCase() === 'celebrante');
+  };
+
+  const getNonCelebranteRoles = (person: CeremonyRole) => {
+    return (person.special_role || []).filter(r => r.toLowerCase() !== 'celebrante');
   };
 
   const getCoupleInviteLink = (person1: CeremonyRole, person2: CeremonyRole) => {
@@ -121,15 +131,21 @@ export const CeremonyRolesRefactored = () => {
     return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
-  const copyInviteLink = (person: CeremonyRole) => {
-    // Check if person is in a couple
-    const partner = person.couple_pair_id
+  const copyInviteLink = (person: CeremonyRole, specificRoles?: string[]) => {
+    // Check if person is in a couple (only for non-celebrante links)
+    const isCelebranteOnly = specificRoles?.length === 1 && specificRoles[0].toLowerCase() === 'celebrante';
+    const partner = !isCelebranteOnly && person.couple_pair_id
       ? roles.find(r => r.couple_pair_id === person.couple_pair_id && r.id !== person.id)
       : null;
-    const link = partner ? getCoupleInviteLink(person, partner) : getInviteLink(person);
+    const link = partner ? getCoupleInviteLink(person, partner) : getInviteLink(person, specificRoles);
     if (link) {
       navigator.clipboard.writeText(link);
-      toast({ title: "Link copiado!", description: partner ? `Link de casal (${person.name} & ${partner.name})` : `Link de ${person.name}` });
+      const desc = isCelebranteOnly
+        ? `Link de Celebrante para ${person.name}`
+        : partner
+          ? `Link de casal (${person.name} & ${partner.name})`
+          : `Link de ${person.name}`;
+      toast({ title: "Link copiado!", description: desc });
     }
   };
 
@@ -276,9 +292,20 @@ export const CeremonyRolesRefactored = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 justify-end flex-wrap">
-                        <Button size="sm" variant="outline" onClick={() => copyInviteLink(person)} title="Copiar link de convite">
-                          <Link2 className="h-4 w-4" />
-                        </Button>
+                        {hasCelebranteAndOtherRoles(person) ? (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => copyInviteLink(person, ['Celebrante'])} title="Copiar link de Celebrante">
+                              <Link2 className="h-4 w-4 mr-1" /><span className="text-xs">Celebrante</span>
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => copyInviteLink(person, getNonCelebranteRoles(person))} title="Copiar link dos outros papéis">
+                              <Link2 className="h-4 w-4 mr-1" /><span className="text-xs">{getNonCelebranteRoles(person).join(', ')}</span>
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => copyInviteLink(person)} title="Copiar link de convite">
+                            <Link2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         {person.couple_pair_id && (
                           <Button size="sm" variant="outline" onClick={() => handleUnpair(person)} title="Desemparelhar">
                             <Unlink className="h-4 w-4" />
