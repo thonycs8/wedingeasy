@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +12,25 @@ import { WeddingEventGallery } from "@/components/event/WeddingEventGallery";
 import { Heart, Clock, Shirt } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getThemeById } from "@/config/weddingThemes";
+import { decodeInviteToken } from "@/utils/inviteToken";
 
 export default function WeddingEvent() {
   const { eventCode } = useParams<{ eventCode: string }>();
   const [searchParams] = useSearchParams();
-  const role = searchParams.get("role");
-  const guest = searchParams.get("guest");
+
+  // Support both new ?invite=TOKEN and legacy ?role=&guest= formats
+  const { role, guest } = useMemo(() => {
+    const inviteToken = searchParams.get("invite");
+    if (inviteToken) {
+      const decoded = decodeInviteToken(inviteToken);
+      if (decoded) return decoded;
+    }
+    // Legacy fallback
+    return {
+      role: searchParams.get("role"),
+      guest: searchParams.get("guest"),
+    };
+  }, [searchParams]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["wedding-event", eventCode],
