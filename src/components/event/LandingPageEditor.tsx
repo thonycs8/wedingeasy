@@ -53,6 +53,7 @@ interface LandingPageData {
   verse_text: string;
   show_verse: boolean;
   font_family: string | null;
+  intro_text: string;
 }
 
 const DEFAULT_DATA: Omit<LandingPageData, "wedding_id"> = {
@@ -82,6 +83,7 @@ const DEFAULT_DATA: Omit<LandingPageData, "wedding_id"> = {
   verse_text: "",
   show_verse: true,
   font_family: null,
+  intro_text: "",
 };
 
 export function LandingPageEditor() {
@@ -144,6 +146,7 @@ export function LandingPageEditor() {
         verse_text: existing.verse_text || "",
         show_verse: existing.show_verse ?? true,
         font_family: existing.font_family || null,
+        intro_text: (existing as any).intro_text || "",
       });
     } else if (weddingId) {
       setForm({ ...DEFAULT_DATA, wedding_id: weddingId });
@@ -181,6 +184,7 @@ export function LandingPageEditor() {
         verse_text: data.verse_text || null,
         show_verse: data.show_verse,
         font_family: data.font_family,
+        intro_text: data.intro_text || null,
       };
       if (data.id) {
         const { error } = await supabase
@@ -326,7 +330,11 @@ export function LandingPageEditor() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Mensagem Principal (Hero)</Label>
+                <Label>Texto de Introdução (após o hero)</Label>
+                <Textarea value={form.intro_text} onChange={(e) => update("intro_text", e.target.value)} placeholder="Um pequeno texto de boas-vindas ou introdução ao vosso evento..." rows={3} />
+                <p className="text-xs text-muted-foreground mt-1">Aparece logo após a imagem principal, antes do verso.</p>
+              </div>
+              <div>
                 <Input value={form.hero_message} onChange={(e) => update("hero_message", e.target.value)} placeholder="Vamos casar!" />
               </div>
               <div>
