@@ -1216,6 +1216,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user_data: {
+        Args: { _target_user_id: string }
+        Returns: undefined
+      }
+      admin_delete_wedding_cascade: {
+        Args: { _wedding_id: string }
+        Returns: undefined
+      }
       generate_event_code: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
       get_budget_paginated: {
