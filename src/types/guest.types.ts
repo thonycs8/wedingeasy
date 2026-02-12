@@ -16,7 +16,7 @@ export interface Guest {
   table_number: number | null;
   dietary_restrictions: string | null;
   notes: string | null;
-  special_role: string | null;
+  special_role: string[] | null;
   relationship: string | null;
   printed_invitation: boolean;
   couple_pair_id: string | null;
@@ -39,7 +39,7 @@ export interface GuestCreate {
   table_number?: number | null;
   dietary_restrictions?: string | null;
   notes?: string | null;
-  special_role?: string | null;
+  special_role?: string[] | null;
   relationship?: string | null;
   printed_invitation?: boolean;
 }

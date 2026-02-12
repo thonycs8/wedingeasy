@@ -12,7 +12,7 @@ interface Guest {
   category: string;
   confirmed: boolean;
   plus_one: boolean;
-  special_role?: string | null;
+  special_role?: string[] | null;
   age_band?: string | null;
   printed_invitation?: boolean;
   side?: string | null;
@@ -60,14 +60,15 @@ export function GuestCard({
             <Badge variant="outline" className="text-xs shrink-0">
               {getAgeBandLabel(guest.age_band)}
             </Badge>
-            {guest.special_role && (
+            {guest.special_role && guest.special_role.length > 0 && guest.special_role.map(role => (
               <Badge
-                variant={guest.special_role === 'Noivo' || guest.special_role === 'Noiva' ? 'couple' : 'outline'}
+                key={role}
+                variant={role === 'Noivo' || role === 'Noiva' ? 'couple' : 'outline'}
                 className="text-xs shrink-0"
               >
-                {getSpecialRoleLabel(guest.special_role)}
+                {getSpecialRoleLabel(role)}
               </Badge>
-            )}
+            ))}
             <div className="flex items-center gap-1 shrink-0">
               {guest.confirmed ? (
                 <span className="text-success text-xs">Confirmado</span>

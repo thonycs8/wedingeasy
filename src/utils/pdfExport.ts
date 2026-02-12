@@ -55,7 +55,7 @@ interface Guest {
   plus_one: boolean;
   dietary_restrictions?: string;
   table_number?: number;
-  special_role?: string;
+  special_role?: string | string[];
   side?: 'noivo' | 'noiva' | null;
   age_band?: '0_4' | '5_10' | '11_plus' | 'adult' | null;
 }

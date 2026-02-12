@@ -37,7 +37,7 @@ interface LocalGuest {
   dietary_restrictions?: string | null;
   notes?: string | null;
   printed_invitation?: boolean;
-  special_role?: string | null;
+  special_role?: string[] | null;
   table_number?: number | null;
   relationship?: string | null;
   side?: string | null;
@@ -84,7 +84,7 @@ export const GuestManagerRefactored = () => {
         category: 'honor_guests',
         confirmed: true,
         plus_one: false,
-        special_role: 'Noivo',
+        special_role: ['Noivo'],
         side: 'noivo',
         age_band: 'adult'
       });
@@ -97,7 +97,7 @@ export const GuestManagerRefactored = () => {
         category: 'honor_guests',
         confirmed: true,
         plus_one: false,
-        special_role: 'Noiva',
+        special_role: ['Noiva'],
         side: 'noiva',
         age_band: 'adult'
       });
@@ -207,7 +207,7 @@ export const GuestManagerRefactored = () => {
       dietary_restrictions: formData.dietary_restrictions || null,
       notes: formData.notes || null,
       printed_invitation: formData.printed_invitation,
-      special_role: formData.special_role || null,
+      special_role: formData.special_role ? [formData.special_role] : null,
       table_number: formData.table_number ? parseInt(formData.table_number) : null,
       relationship: formData.relationship || null,
       user_id: user.id,
@@ -447,7 +447,7 @@ export const GuestManagerRefactored = () => {
             setShowAddModal(open);
             if (!open) setEditingGuest(null);
           }}
-          editingGuest={editingGuest}
+          editingGuest={editingGuest ? { ...editingGuest, special_role: editingGuest.special_role?.[0] || null } as any : null}
           onSubmit={handleFormSubmit}
           isLoading={addGuest.isPending || updateGuest.isPending}
         />

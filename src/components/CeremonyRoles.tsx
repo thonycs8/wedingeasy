@@ -21,7 +21,7 @@ interface CeremonyRole {
   name: string;
   email?: string;
   phone?: string;
-  special_role: string;
+  special_role: string[] | null;
   confirmed: boolean;
   side?: 'noivo' | 'noiva' | null;
 }
@@ -158,7 +158,7 @@ export const CeremonyRoles = () => {
             name: newPerson.name,
             email: newPerson.email || null,
             phone: newPerson.phone || null,
-            special_role: newPerson.special_role,
+            special_role: [newPerson.special_role],
             category: "ceremony",
             confirmed: false,
             side: finalSide,
@@ -270,7 +270,7 @@ export const CeremonyRoles = () => {
     }
 
     // Determine the side automatically if the role has a default side
-    const defaultSide = getRoleDefaultSide(editingPerson.special_role);
+    const defaultSide = getRoleDefaultSide(editingPerson.special_role?.[0] || '');
     const finalSide = defaultSide || editingPerson.side;
 
     if (!finalSide) {
@@ -286,7 +286,7 @@ export const CeremonyRoles = () => {
       const { error } = await supabase
         .from("guests")
         .update({
-          name: editingPerson.name,
+        name: editingPerson.name,
           email: editingPerson.email || null,
           phone: editingPerson.phone || null,
           special_role: editingPerson.special_role,
@@ -321,7 +321,7 @@ export const CeremonyRoles = () => {
 
   const groupBySide = (sideRoles: CeremonyRole[]) => {
     return allRoles.reduce((acc, role) => {
-      acc[role] = sideRoles.filter((r) => r.special_role === role);
+      acc[role] = sideRoles.filter((r) => r.special_role?.includes(role));
       return acc;
     }, {} as Record<string, CeremonyRole[]>);
   };
@@ -329,7 +329,7 @@ export const CeremonyRoles = () => {
   const groomGrouped = groupBySide(groomRoles);
   const brideGrouped = groupBySide(brideRoles);
 
-  const isPersonDeletable = (person: CeremonyRole) => !['Noivo', 'Noiva'].includes(person.special_role);
+  const isPersonDeletable = (person: CeremonyRole) => !person.special_role?.some(r => ['Noivo', 'Noiva'].includes(r));
 
   const togglePersonSelection = (personId: string, checked: boolean) => {
     setSelectedRoleIds((prev) => {
@@ -465,7 +465,7 @@ export const CeremonyRoles = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => exportCeremonyRolesPDF(roles, {
+                onClick={() => exportCeremonyRolesPDF(roles as any, {
                   coupleName: weddingData?.couple.name,
                   partnerName: weddingData?.couple.partnerName,
                   weddingDate: weddingData?.wedding.date
@@ -814,9 +814,9 @@ export const CeremonyRoles = () => {
               <div>
                 <Label htmlFor="edit-role">Papel *</Label>
                 <Select
-                  value={editingPerson.special_role}
+                  value={editingPerson.special_role?.[0] || ''}
                   onValueChange={(value) =>
-                    setEditingPerson({ ...editingPerson, special_role: value })
+                    setEditingPerson({ ...editingPerson, special_role: [value] })
                   }
                 >
                   <SelectTrigger>
@@ -831,7 +831,7 @@ export const CeremonyRoles = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {!getRoleDefaultSide(editingPerson.special_role) && (
+              {!getRoleDefaultSide(editingPerson.special_role?.[0] || '') && (
                 <div>
                   <Label htmlFor="edit-side">Lado *</Label>
                   <Select
@@ -850,10 +850,10 @@ export const CeremonyRoles = () => {
                   </Select>
                 </div>
               )}
-              {getRoleDefaultSide(editingPerson.special_role) && (
+              {getRoleDefaultSide(editingPerson.special_role?.[0] || '') && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">
-                    <strong>Lado:</strong> {getRoleDefaultSide(editingPerson.special_role) === 'noivo' ? 'Noivo' : 'Noiva'} (automático)
+                    <strong>Lado:</strong> {getRoleDefaultSide(editingPerson.special_role?.[0] || '') === 'noivo' ? 'Noivo' : 'Noiva'} (automático)
                   </p>
                 </div>
               )}

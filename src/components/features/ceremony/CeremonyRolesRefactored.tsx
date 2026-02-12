@@ -39,7 +39,7 @@ interface CeremonyRole {
   name: string;
   email?: string | null;
   phone?: string | null;
-  special_role: string | null;
+  special_role: string[] | null;
   confirmed: boolean;
   side?: string | null;
   couple_pair_id?: string | null;
@@ -68,7 +68,7 @@ export const CeremonyRolesRefactored = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  const roles = (guests as CeremonyRole[]).filter(g => g.special_role);
+  const roles = (guests as CeremonyRole[]).filter(g => g.special_role && g.special_role.length > 0);
 
   const [customRoles, setCustomRoles] = useState<string[]>(() => {
     const stored = localStorage.getItem(`custom_roles_${user?.id}`);
@@ -91,30 +91,30 @@ export const CeremonyRolesRefactored = () => {
 
   const groupBySide = (sideRoles: CeremonyRole[]) => {
     return allRoles.reduce((acc, role) => {
-      acc[role] = sideRoles.filter(r => r.special_role === role);
+      acc[role] = sideRoles.filter(r => r.special_role?.includes(role));
       return acc;
     }, {} as Record<string, CeremonyRole[]>);
   };
 
   const groomGrouped = groupBySide(groomRoles);
   const brideGrouped = groupBySide(brideRoles);
-  const isPersonDeletable = (person: CeremonyRole) => !['Noivo', 'Noiva'].includes(person.special_role || '');
+  const isPersonDeletable = (person: CeremonyRole) => !person.special_role?.some(r => ['Noivo', 'Noiva'].includes(r));
 
   const normalizeSlug = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
 
   const getInviteLink = (person: CeremonyRole) => {
-    if (!eventCode || !person.special_role) return "";
-    const roleSlug = normalizeSlug(person.special_role).replace(/-/g, " ");
+    if (!eventCode || !person.special_role?.length) return "";
+    const rolesStr = person.special_role.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guestSlug = normalizeSlug(person.name);
-    const token = encodeInviteToken(roleSlug, guestSlug);
+    const token = encodeInviteToken(rolesStr, guestSlug);
     return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
   const getCoupleInviteLink = (person1: CeremonyRole, person2: CeremonyRole) => {
     if (!eventCode) return "";
-    const role1 = normalizeSlug(person1.special_role || "").replace(/-/g, " ");
-    const role2 = normalizeSlug(person2.special_role || "").replace(/-/g, " ");
+    const role1 = (person1.special_role || []).map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
+    const role2 = (person2.special_role || []).map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guest1 = normalizeSlug(person1.name);
     const guest2 = normalizeSlug(person2.name);
     const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`);
@@ -171,7 +171,7 @@ export const CeremonyRolesRefactored = () => {
       await addGuest.mutateAsync({
         user_id: user.id, wedding_id: weddingId, name: newPerson.name,
         email: newPerson.email || null, phone: newPerson.phone || null,
-        special_role: newPerson.special_role, category: "ceremony",
+        special_role: [newPerson.special_role], category: "ceremony",
         confirmed: false, side: finalSide as string,
       } as any);
       setNewPerson({ name: "", email: "", phone: "", special_role: "", side: "" });
@@ -190,7 +190,8 @@ export const CeremonyRolesRefactored = () => {
 
   const handleUpdatePerson = async () => {
     if (!editingPerson) return;
-    const defaultSide = getRoleDefaultSide(editingPerson.special_role || '');
+    const primaryRole = editingPerson.special_role?.[0] || '';
+    const defaultSide = getRoleDefaultSide(primaryRole);
     const finalSide = defaultSide || editingPerson.side;
     if (!finalSide) return;
 
@@ -256,6 +257,13 @@ export const CeremonyRolesRefactored = () => {
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium truncate">{person.name}</p>
                             {person.confirmed && <Badge variant="default" className="gap-1 shrink-0"><Check className="h-3 w-3" /><span className="hidden sm:inline">Confirmado</span></Badge>}
+                            {person.special_role && person.special_role.length > 1 && (
+                              <div className="flex flex-wrap gap-1">
+                                {person.special_role.map(r => (
+                                  <Badge key={r} variant="secondary" className="text-xs">{r}</Badge>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           {person.email && <p className="text-sm text-muted-foreground truncate">{person.email}</p>}
                           {person.phone && <p className="text-sm text-muted-foreground truncate">{person.phone}</p>}
@@ -412,12 +420,12 @@ export const CeremonyRolesRefactored = () => {
               <div><Label>Nome *</Label><Input value={editingPerson.name} onChange={(e) => setEditingPerson({ ...editingPerson, name: e.target.value })} /></div>
               <div>
                 <Label>Papel *</Label>
-                <Select value={editingPerson.special_role || ''} onValueChange={(v) => setEditingPerson({ ...editingPerson, special_role: v })}>
+                <Select value={editingPerson.special_role?.[0] || ''} onValueChange={(v) => setEditingPerson({ ...editingPerson, special_role: [v] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{allRoles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              {!getRoleDefaultSide(editingPerson.special_role || '') && (
+              {!getRoleDefaultSide(editingPerson.special_role?.[0] || '') && (
                 <div>
                   <Label>Lado *</Label>
                   <Select value={editingPerson.side || ''} onValueChange={(v: 'noivo' | 'noiva') => setEditingPerson({ ...editingPerson, side: v })}>
@@ -426,9 +434,9 @@ export const CeremonyRolesRefactored = () => {
                   </Select>
                 </div>
               )}
-              {getRoleDefaultSide(editingPerson.special_role || '') && (
+              {getRoleDefaultSide(editingPerson.special_role?.[0] || '') && (
                 <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground"><strong>Lado:</strong> {getRoleDefaultSide(editingPerson.special_role || '') === 'noivo' ? 'Noivo' : 'Noiva'} (automático)</p>
+                  <p className="text-sm text-muted-foreground"><strong>Lado:</strong> {getRoleDefaultSide(editingPerson.special_role?.[0] || '') === 'noivo' ? 'Noivo' : 'Noiva'} (automático)</p>
                 </div>
               )}
               <div><Label>Email</Label><Input type="email" value={editingPerson.email || ''} onChange={(e) => setEditingPerson({ ...editingPerson, email: e.target.value })} /></div>
