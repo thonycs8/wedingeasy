@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, Crown, Star, Check, PartyPopper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { WeddingEventRoleGuide } from "./WeddingEventRoleGuide";
 
 interface RoleInviteProps {
   guestName: string;
@@ -113,9 +114,13 @@ function AcceptedView({ names, roleLabels, isCouple, themeColor }: AcceptedViewP
           ))}
         </div>
 
-        <p className="text-muted-foreground text-sm animate-fade-in" style={{ animationDelay: "0.6s" }}>
+        <p className="text-muted-foreground text-sm mb-6 animate-fade-in" style={{ animationDelay: "0.6s" }}>
           A sua presença e função estão confirmadas. Estamos ansiosos!
         </p>
+
+        <div className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
+          <WeddingEventRoleGuide role={roleLabels[0]} themeColor={themeColor} />
+        </div>
       </div>
     </div>
   );
@@ -219,7 +224,12 @@ export function WeddingEventRoleInvite({ guestName, role, themeColor, eventCode 
         ))}
       </div>
 
-      <p className="text-muted-foreground text-sm mb-8">neste casamento especial</p>
+      <p className="text-muted-foreground text-sm mb-6">neste casamento especial</p>
+
+      {/* Role Guide */}
+      <div className="mb-8">
+        <WeddingEventRoleGuide role={roles[0]} themeColor={themeColor} />
+      </div>
 
       {/* Accept button */}
       <Button
