@@ -10,7 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
-import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X, Trash2 } from "lucide-react";
+import { User, Mail, Phone, Loader2, Heart, LogOut as LeaveIcon, Plus, X, Trash2, CreditCard, Receipt, ExternalLink } from "lucide-react";
+import { formatCurrency } from "@/i18n";
+import { useSettings } from "@/contexts/SettingsContext";
 
 // Validation schemas
 const nameSchema = z.string().trim().min(1, 'Nome não pode estar vazio').max(100, 'Nome muito longo');
@@ -51,6 +53,7 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currency } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -62,12 +65,96 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
   const [eventCode, setEventCode] = useState("");
   const [joiningEvent, setJoiningEvent] = useState(false);
 
+  // Billing state
+  const [billingName, setBillingName] = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [billingAddress, setBillingAddress] = useState({ street: "", city: "", postal_code: "", country: "PT" });
+  const [savingBilling, setSavingBilling] = useState(false);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [portalLoading, setPortalLoading] = useState(false);
+
   useEffect(() => {
     if (open && user) {
       loadProfile();
       loadEvents();
+      loadBilling();
+      loadPayments();
     }
   }, [open, user]);
+
+  const loadBilling = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('billing_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setBillingName(data.billing_name || '');
+        setBillingEmail(data.billing_email || '');
+        setTaxId(data.tax_id || '');
+        const addr = (data.billing_address as any) || {};
+        setBillingAddress({ street: addr.street || '', city: addr.city || '', postal_code: addr.postal_code || '', country: addr.country || 'PT' });
+      }
+    } catch (e) {
+      console.error('Error loading billing:', e);
+    }
+  };
+
+  const saveBilling = async () => {
+    if (!user) return;
+    setSavingBilling(true);
+    try {
+      const { error } = await supabase.from('billing_profiles').upsert({
+        user_id: user.id,
+        billing_name: billingName.trim() || null,
+        billing_email: billingEmail.trim() || null,
+        tax_id: taxId.trim() || null,
+        billing_address: billingAddress,
+      }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+      toast({ title: 'Dados de faturação salvos' });
+    } catch (e) {
+      console.error('Error saving billing:', e);
+      toast({ title: 'Erro', description: 'Erro ao salvar dados de faturação', variant: 'destructive' });
+    } finally {
+      setSavingBilling(false);
+    }
+  };
+
+  const loadPayments = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('payment_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setPayments(data || []);
+    } catch (e) {
+      console.error('Error loading payments:', e);
+    }
+  };
+
+  const openCustomerPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-billing');
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch (e) {
+      console.error('Portal error:', e);
+      toast({ title: 'Erro', description: 'Não foi possível abrir o portal de pagamento', variant: 'destructive' });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   const loadProfile = async () => {
     if (!user) return;
@@ -481,6 +568,93 @@ export const UserProfile = ({ open, onOpenChange }: UserProfileProps) => {
                       'Salvar Perfil'
                     )}
                   </Button>
+                </div>
+
+                <Separator />
+
+                {/* Billing Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Dados de Faturação
+                  </h3>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Nome de Faturação</Label>
+                      <Input value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Nome completo ou empresa" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email de Faturação</Label>
+                      <Input type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="faturacao@email.com" />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>NIF / VAT</Label>
+                      <Input value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="123456789" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>País</Label>
+                      <Input value={billingAddress.country} onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))} placeholder="PT" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Morada</Label>
+                    <Input value={billingAddress.street} onChange={(e) => setBillingAddress(prev => ({ ...prev, street: e.target.value }))} placeholder="Rua, número" />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Cidade</Label>
+                      <Input value={billingAddress.city} onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))} placeholder="Lisboa" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Código Postal</Label>
+                      <Input value={billingAddress.postal_code} onChange={(e) => setBillingAddress(prev => ({ ...prev, postal_code: e.target.value }))} placeholder="1000-001" />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={saveBilling} disabled={savingBilling} className="flex-1">
+                      {savingBilling ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                      Salvar Faturação
+                    </Button>
+                    <Button variant="outline" onClick={openCustomerPortal} disabled={portalLoading}>
+                      {portalLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ExternalLink className="w-4 h-4 mr-1" />}
+                      Gerir Pagamentos
+                    </Button>
+                  </div>
+
+                  {/* Payment History */}
+                  {payments.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Receipt className="w-4 h-4" />
+                        Histórico de Pagamentos
+                      </h4>
+                      <div className="space-y-1">
+                        {payments.map((p) => (
+                          <div key={p.id} className="flex justify-between items-center text-sm p-2 rounded border">
+                            <div>
+                              <span className="font-medium">{p.description || p.payment_type}</span>
+                              <span className="text-muted-foreground ml-2">
+                                {new Date(p.created_at).toLocaleDateString('pt-PT')}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{formatCurrency(p.amount, currency)}</span>
+                              <Badge variant={p.status === 'succeeded' ? 'default' : 'secondary'} className="text-[10px]">
+                                {p.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
