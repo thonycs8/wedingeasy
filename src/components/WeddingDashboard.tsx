@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FeatureGate } from "@/components/shared/FeatureGate";
 import { LandingPageEditor } from "@/components/event/LandingPageEditor";
+import { WeddingDomainRequest } from "@/components/event/WeddingDomainRequest";
 import { useQuery } from "@tanstack/react-query";
 const WeddingDashboard = () => {
   const {
@@ -217,6 +218,11 @@ const WeddingDashboard = () => {
     label: "Evento",
     fullLabel: "Página do Evento"
   }, {
+    value: "domain",
+    icon: Globe,
+    label: "Domínio",
+    fullLabel: "Domínio Personalizado"
+  }, {
     value: "notifications",
     icon: Settings,
     label: "Configurações",
@@ -377,6 +383,11 @@ const WeddingDashboard = () => {
           {activeTab === "landing" && (
             <FeatureGate featureKey="wedding_landing" featureName="Página do Evento">
               <LandingPageEditor />
+            </FeatureGate>
+          )}
+          {activeTab === "domain" && (
+            <FeatureGate featureKey="wedding_landing" featureName="Domínio Personalizado">
+              <WeddingDomainRequest />
             </FeatureGate>
           )}
           {activeTab === "notifications" && (
