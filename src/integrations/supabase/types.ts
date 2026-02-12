@@ -584,6 +584,10 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          status: string
+          status_changed_at: string | null
+          status_changed_by: string | null
+          status_reason: string | null
           updated_at: string
           user_id: string
         }
@@ -594,6 +598,10 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          status_reason?: string | null
           updated_at?: string
           user_id: string
         }
@@ -604,6 +612,10 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          status_reason?: string | null
           updated_at?: string
           user_id?: string
         }
