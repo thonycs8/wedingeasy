@@ -19,7 +19,7 @@ export default function WeddingEvent() {
   const [searchParams] = useSearchParams();
 
   // Support both new ?invite=TOKEN and legacy ?role=&guest= formats
-  const { role, guest } = useMemo(() => {
+  const { role, guest, side } = useMemo(() => {
     const inviteToken = searchParams.get("invite");
     if (inviteToken) {
       const decoded = decodeInviteToken(inviteToken);
@@ -29,6 +29,7 @@ export default function WeddingEvent() {
     return {
       role: searchParams.get("role"),
       guest: searchParams.get("guest"),
+      side: undefined as string | undefined,
     };
   }, [searchParams]);
 
@@ -138,7 +139,7 @@ export default function WeddingEvent() {
       {/* Role invite */}
       {role && guest && (
         <>
-          <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} eventCode={eventCode} />
+          <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} eventCode={eventCode} side={side} groomName={wedding.couple_name || ''} brideName={wedding.partner_name || ''} />
           <Separator className="max-w-xs mx-auto" />
         </>
       )}

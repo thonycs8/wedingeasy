@@ -108,7 +108,7 @@ export const CeremonyRolesRefactored = () => {
     const rolesToUse = specificRoles || person.special_role;
     const rolesStr = rolesToUse.map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guestSlug = normalizeSlug(person.name);
-    const token = encodeInviteToken(rolesStr, guestSlug);
+    const token = encodeInviteToken(rolesStr, guestSlug, person.side || undefined);
     return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
@@ -127,7 +127,8 @@ export const CeremonyRolesRefactored = () => {
     const role2 = (person2.special_role || []).map(r => normalizeSlug(r).replace(/-/g, " ")).join(",");
     const guest1 = normalizeSlug(person1.name);
     const guest2 = normalizeSlug(person2.name);
-    const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`);
+    const side = person1.side || person2.side || undefined;
+    const token = encodeInviteToken(`${role1},${role2}`, `${guest1},${guest2}`, side);
     return `${getPublicBaseUrl()}/evento/${eventCode}?invite=${token}`;
   };
 
