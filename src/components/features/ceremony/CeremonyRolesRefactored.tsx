@@ -99,19 +99,22 @@ export const CeremonyRolesRefactored = () => {
   const brideGrouped = groupBySide(brideRoles);
   const isPersonDeletable = (person: CeremonyRole) => !['Noivo', 'Noiva'].includes(person.special_role || '');
 
+  const normalizeSlug = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
+
   const getInviteLink = (person: CeremonyRole) => {
     if (!eventCode || !person.special_role) return "";
-    const slug = person.name.toLowerCase().replace(/\s+/g, "-");
-    const role = encodeURIComponent(person.special_role.toLowerCase());
+    const slug = normalizeSlug(person.name);
+    const role = encodeURIComponent(normalizeSlug(person.special_role).replace(/-/g, " "));
     return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role}&guest=${encodeURIComponent(slug)}`;
   };
 
   const getCoupleInviteLink = (person1: CeremonyRole, person2: CeremonyRole) => {
     if (!eventCode) return "";
-    const slug1 = person1.name.toLowerCase().replace(/\s+/g, "-");
-    const slug2 = person2.name.toLowerCase().replace(/\s+/g, "-");
-    const role1 = encodeURIComponent((person1.special_role || "").toLowerCase());
-    const role2 = encodeURIComponent((person2.special_role || "").toLowerCase());
+    const slug1 = normalizeSlug(person1.name);
+    const slug2 = normalizeSlug(person2.name);
+    const role1 = encodeURIComponent(normalizeSlug(person1.special_role || "").replace(/-/g, " "));
+    const role2 = encodeURIComponent(normalizeSlug(person2.special_role || "").replace(/-/g, " "));
     return `${getPublicBaseUrl()}/evento/${eventCode}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
   };
 

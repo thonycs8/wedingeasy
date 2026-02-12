@@ -536,16 +536,19 @@ function RoleLinkGenerator({
   const { guests, isLoading } = useGuests(weddingId);
   const guestsWithRoles = guests.filter((g) => g.special_role);
 
+  const normalizeSlug = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
+
   const getRoleLink = (role: string, guestName: string) => {
-    const slug = guestName.toLowerCase().replace(/\s+/g, "-");
-    return `${getPublicUrl()}?role=${encodeURIComponent(role.toLowerCase())}&guest=${encodeURIComponent(slug)}`;
+    const slug = normalizeSlug(guestName);
+    return `${getPublicUrl()}?role=${encodeURIComponent(normalizeSlug(role).replace(/-/g, " "))}&guest=${encodeURIComponent(slug)}`;
   };
 
   const getCoupleLink = (g1: typeof guestsWithRoles[0], g2: typeof guestsWithRoles[0]) => {
-    const slug1 = g1.name.toLowerCase().replace(/\s+/g, "-");
-    const slug2 = g2.name.toLowerCase().replace(/\s+/g, "-");
-    const role1 = encodeURIComponent((g1.special_role || "").toLowerCase());
-    const role2 = encodeURIComponent((g2.special_role || "").toLowerCase());
+    const slug1 = normalizeSlug(g1.name);
+    const slug2 = normalizeSlug(g2.name);
+    const role1 = encodeURIComponent(normalizeSlug(g1.special_role || "").replace(/-/g, " "));
+    const role2 = encodeURIComponent(normalizeSlug(g2.special_role || "").replace(/-/g, " "));
     return `${getPublicUrl()}?role=${role1},${role2}&guest=${encodeURIComponent(slug1)},${encodeURIComponent(slug2)}`;
   };
 
