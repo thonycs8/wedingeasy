@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { FileText, Search, Eye, ExternalLink, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Search, Eye, ExternalLink, RefreshCw, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicBaseUrl } from "@/utils/getPublicBaseUrl";
+import { AdminRoleInvitesManager } from "./AdminRoleInvitesManager";
 
 interface LandingPageRow {
   id: string;
@@ -126,7 +128,18 @@ export const AdminLandingPagesManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="pages" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="pages" className="flex items-center gap-1.5">
+          <FileText className="w-4 h-4" /> Landing Pages
+        </TabsTrigger>
+        <TabsTrigger value="role-invites" className="flex items-center gap-1.5">
+          <Users className="w-4 h-4" /> Convites por Papel
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="pages">
+      <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
@@ -379,5 +392,11 @@ export const AdminLandingPagesManager = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </TabsContent>
+
+      <TabsContent value="role-invites">
+        <AdminRoleInvitesManager />
+      </TabsContent>
+    </Tabs>
   );
 };
