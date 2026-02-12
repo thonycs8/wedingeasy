@@ -1,21 +1,18 @@
 /**
- * Encode role + guest into an opaque base64 token for invite URLs.
- * Keeps the URL clean without exposing role/guest names.
+ * Encode role + guest into a compact opaque token for invite URLs.
+ * Format: base64("role|guest") — minimal overhead.
  */
 
 export function encodeInviteToken(role: string, guest: string): string {
-  const payload = JSON.stringify({ r: role, g: guest });
-  return btoa(unescape(encodeURIComponent(payload)));
+  return btoa(`${role}|${guest}`);
 }
 
 export function decodeInviteToken(token: string): { role: string; guest: string } | null {
   try {
-    const json = decodeURIComponent(escape(atob(token)));
-    const parsed = JSON.parse(json);
-    if (parsed.r && parsed.g) {
-      return { role: parsed.r, guest: parsed.g };
-    }
-    return null;
+    const decoded = atob(token);
+    const sep = decoded.indexOf("|");
+    if (sep === -1) return null;
+    return { role: decoded.slice(0, sep), guest: decoded.slice(sep + 1) };
   } catch {
     return null;
   }
