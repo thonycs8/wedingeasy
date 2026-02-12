@@ -621,6 +621,45 @@ export type Database = {
         }
         Relationships: []
       }
+      role_guides: {
+        Row: {
+          donts: string[]
+          dos: string[]
+          faq: Json
+          id: string
+          intro: string
+          responsibilities: string[]
+          role_key: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          donts?: string[]
+          dos?: string[]
+          faq?: Json
+          id?: string
+          intro?: string
+          responsibilities?: string[]
+          role_key: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          donts?: string[]
+          dos?: string[]
+          faq?: Json
+          id?: string
+          intro?: string
+          responsibilities?: string[]
+          role_key?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       service_bookings: {
         Row: {
           booking_date: string
@@ -1158,6 +1197,62 @@ export type Database = {
             foreignKeyName: "wedding_landing_pages_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: true
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wedding_role_invite_config: {
+        Row: {
+          accept_button_text: string | null
+          accept_message: string | null
+          family_message: string | null
+          icon_name: string | null
+          id: string
+          invite_message: string | null
+          label: string | null
+          role_key: string
+          show_accept_button: boolean | null
+          show_celebration: boolean | null
+          theme_color_override: string | null
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          accept_button_text?: string | null
+          accept_message?: string | null
+          family_message?: string | null
+          icon_name?: string | null
+          id?: string
+          invite_message?: string | null
+          label?: string | null
+          role_key: string
+          show_accept_button?: boolean | null
+          show_celebration?: boolean | null
+          theme_color_override?: string | null
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          accept_button_text?: string | null
+          accept_message?: string | null
+          family_message?: string | null
+          icon_name?: string | null
+          id?: string
+          invite_message?: string | null
+          label?: string | null
+          role_key?: string
+          show_accept_button?: boolean | null
+          show_celebration?: boolean | null
+          theme_color_override?: string | null
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_role_invite_config_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
             referencedRelation: "wedding_data"
             referencedColumns: ["id"]
           },
