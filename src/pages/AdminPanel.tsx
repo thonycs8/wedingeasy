@@ -11,9 +11,10 @@ import { AdminModulesManager } from "@/components/admin/AdminModulesManager";
 import { AdminDomainsManager } from "@/components/admin/AdminDomainsManager";
 import { AdminLandingPagesManager } from "@/components/admin/AdminLandingPagesManager";
 import { AdminEventSupport } from "@/components/admin/AdminEventSupport";
+import { AdminBillingManager } from "@/components/admin/AdminBillingManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, LayoutDashboard, Users, Calendar, Shield, Puzzle, Handshake, ShoppingBag, Globe, FileText, HeadsetIcon } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Users, Calendar, Shield, Puzzle, Handshake, ShoppingBag, Globe, FileText, HeadsetIcon, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPanel() {
@@ -86,6 +87,7 @@ export default function AdminPanel() {
     { value: "domains", label: "Domínios", icon: Globe },
     { value: "landing-pages", label: "Landing Pages", icon: FileText },
     { value: "event-support", label: "Suporte Evento", icon: HeadsetIcon },
+    { value: "billing", label: "Faturação", icon: Receipt },
   ];
 
   return (
@@ -162,6 +164,10 @@ export default function AdminPanel() {
 
           <TabsContent value="event-support">
             <AdminEventSupport />
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <AdminBillingManager />
           </TabsContent>
         </Tabs>
       </div>

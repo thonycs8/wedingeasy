@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -23,11 +22,14 @@ import {
   MapPin,
   DollarSign,
   Heart,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from "lucide-react";
 import { formatCurrency } from "@/i18n";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useWeddingData } from "@/contexts/WeddingContext";
+import { PlanSelectionStep } from "@/components/questionnaire/PlanSelectionStep";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeddingQuestionnaireModalProps {
   open: boolean;
@@ -49,6 +51,10 @@ interface WeddingData {
   season: 'spring' | 'summer' | 'autumn' | 'winter';
   priorities: string[];
   budget: number;
+  selectedPlanId: string | null;
+  billingType: 'monthly' | 'one_time';
+  desiredDomain: string;
+  wantsDomain: boolean;
 }
 
 // Base pricing data for Portugal market
@@ -115,6 +121,7 @@ export const WeddingQuestionnaireModal = ({
   const [setupMode, setSetupMode] = useState<'create' | 'join'>(mode);
   const [joinCode, setJoinCode] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [weddingData, setWeddingData] = useState<WeddingData>({
     date: '',
     guestCount: 80,
@@ -122,10 +129,14 @@ export const WeddingQuestionnaireModal = ({
     region: 'lisboa',
     season: 'summer',
     priorities: [],
-    budget: 15000
+    budget: 15000,
+    selectedPlanId: null,
+    billingType: 'monthly',
+    desiredDomain: '',
+    wantsDomain: false,
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   const calculateBudget = () => {
@@ -146,7 +157,44 @@ export const WeddingQuestionnaireModal = ({
     return Math.round(adjustedTotal);
   };
 
-  const handleNext = () => {
+  const handleCheckoutIfNeeded = async () => {
+    // Check if user selected a paid plan
+    const isPaidPlan = weddingData.selectedPlanId && 
+      await supabase.from('subscription_plans').select('name').eq('id', weddingData.selectedPlanId).single()
+        .then(r => r.data?.name !== 'basic');
+
+    if (isPaidPlan) {
+      setCheckoutLoading(true);
+      try {
+        const { data: planData } = await supabase
+          .from('subscription_plans')
+          .select('stripe_monthly_price_id, stripe_onetime_price_id')
+          .eq('id', weddingData.selectedPlanId!)
+          .single();
+
+        const priceId = weddingData.billingType === 'monthly' 
+          ? planData?.stripe_monthly_price_id 
+          : planData?.stripe_onetime_price_id;
+
+        if (priceId) {
+          const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+            body: {
+              price_id: priceId,
+              mode: weddingData.billingType === 'monthly' ? 'subscription' : 'payment',
+            },
+          });
+          if (error) throw error;
+          if (data?.url) window.open(data.url, '_blank');
+        }
+      } catch (err) {
+        console.error('Checkout error:', err);
+      } finally {
+        setCheckoutLoading(false);
+      }
+    }
+  };
+
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -160,6 +208,10 @@ export const WeddingQuestionnaireModal = ({
         isSetupComplete: true
       };
       saveWeddingData(completeWeddingData);
+      
+      // Trigger checkout if paid plan selected
+      await handleCheckoutIfNeeded();
+      
       onComplete();
     }
   };
@@ -346,6 +398,23 @@ export const WeddingQuestionnaireModal = ({
           </div>
         </div>
       )
+    },
+    
+    // Step 7: Choose Plan & Domain
+    {
+      title: "Escolha o Seu Plano",
+      content: (
+        <PlanSelectionStep
+          selectedPlanId={weddingData.selectedPlanId}
+          billingType={weddingData.billingType}
+          desiredDomain={weddingData.desiredDomain}
+          wantsDomain={weddingData.wantsDomain}
+          onPlanChange={(id) => setWeddingData(prev => ({ ...prev, selectedPlanId: id }))}
+          onBillingTypeChange={(type) => setWeddingData(prev => ({ ...prev, billingType: type }))}
+          onDomainChange={(domain) => setWeddingData(prev => ({ ...prev, desiredDomain: domain }))}
+          onWantsDomainChange={(wants) => setWeddingData(prev => ({ ...prev, wantsDomain: wants }))}
+        />
+      )
     }
   ];
 
@@ -378,6 +447,7 @@ export const WeddingQuestionnaireModal = ({
               {currentStep === 3 && <MapPin className="w-5 h-5" />}
               {currentStep === 4 && <Sparkles className="w-5 h-5" />}
               {currentStep === 5 && <DollarSign className="w-5 h-5" />}
+              {currentStep === 6 && <CreditCard className="w-5 h-5" />}
               {steps[currentStep].title}
             </h3>
             {steps[currentStep].content}
@@ -394,8 +464,8 @@ export const WeddingQuestionnaireModal = ({
               {t('questionnaire.back')}
             </Button>
             
-            <Button onClick={handleNext} className="btn-gradient">
-              {currentStep === totalSteps - 1 ? t('questionnaire.finish') : t('questionnaire.next')}
+            <Button onClick={handleNext} className="btn-gradient" disabled={checkoutLoading}>
+              {checkoutLoading ? 'A processar...' : (currentStep === totalSteps - 1 ? t('questionnaire.finish') : t('questionnaire.next'))}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
