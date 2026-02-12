@@ -30,28 +30,28 @@ interface RoleGuideData {
 
 const ROLE_GUIDES: Record<string, RoleGuideData> = {
   padrinho: {
-    title: "Manual do Padrinho",
+    title: "Guia do Padrinho 💫",
     icon: Crown,
-    intro: "Como padrinho, você tem um papel especial e de grande honra neste casamento.",
+    intro: "Que honra ter sido escolhido como padrinho! Aqui ficam algumas dicas para aproveitar ao máximo este dia especial.",
     responsibilities: [
-      "Apoiar o noivo emocionalmente antes e durante a cerimónia",
-      "Guardar as alianças até ao momento da troca",
-      "Ser testemunha oficial do casamento",
-      "Preparar um brinde ou discurso na recepção",
+      "Estar ao lado do noivo e apoiá-lo com carinho",
+      "Guardar as alianças com cuidado até à troca",
+      "Ser testemunha oficial deste momento único",
+      "Se quiser, preparar um brinde ou umas palavras na recepção",
     ],
     dos: [
-      "Chegar cedo ao ensaio e à cerimónia",
-      "Preparar um discurso curto e emotivo (2-3 minutos)",
-      "Ajudar a receber os convidados",
-      "Estar disponível para o que o noivo precisar",
-      "Vestir-se de acordo com o dress code",
+      "Chegar com tempo ao ensaio e à cerimónia — sem stress!",
+      "Se for fazer um discurso, 2-3 minutinhos bastam 😊",
+      "Dar uma mão a receber os convidados",
+      "Perguntar ao noivo se precisa de alguma coisa",
+      "Seguir o dress code combinado",
     ],
     donts: [
-      "Chegar atrasado à cerimónia ou ao ensaio",
-      "Fazer um discurso demasiado longo ou com piadas inadequadas",
-      "Esquecer as alianças — verifique duas vezes!",
-      "Exagerar nas bebidas antes do discurso",
-      "Usar o telemóvel durante a cerimónia",
+      "Não te preocupes demais — mas tenta não te atrasar 😅",
+      "Discursos muito longos podem perder a magia — keep it short!",
+      "Verifica as alianças duas vezes, por precaução",
+      "Guarda as celebrações para depois do discurso 🥂",
+      "Telemóvel em silêncio durante a cerimónia",
     ],
     faq: [
       { q: "Preciso levar um presente além de ser padrinho?", a: "Não é obrigatório, mas é um gesto bonito. Pode ser algo simbólico e pessoal." },
@@ -61,28 +61,28 @@ const ROLE_GUIDES: Record<string, RoleGuideData> = {
     ],
   },
   madrinha: {
-    title: "Manual da Madrinha",
+    title: "Guia da Madrinha 💫",
     icon: Crown,
-    intro: "Como madrinha, você é o braço direito da noiva neste dia tão especial.",
+    intro: "Que bom que vais ser madrinha! A noiva confia em ti e vai ser um dia incrível juntas.",
     responsibilities: [
-      "Apoiar a noiva emocionalmente antes e durante a cerimónia",
-      "Ajudar com o vestido, véu e bouquet no dia",
-      "Ser testemunha oficial do casamento",
-      "Coordenar com as damas de honor se houver",
+      "Estar por perto e dar apoio à noiva com carinho",
+      "Ajudar com os últimos retoques no dia (vestido, véu, bouquet)",
+      "Ser testemunha oficial deste momento",
+      "Coordenar com as damas de honor, se houver",
     ],
     dos: [
-      "Estar disponível para a noiva nos dias que antecedem o casamento",
-      "Levar um kit de emergência (alfinetes, lenços, maquilhagem extra)",
-      "Ajudar a organizar a despedida de solteira",
-      "Manter a calma e transmitir tranquilidade à noiva",
+      "Estar disponível nos dias antes — a noiva vai adorar a tua companhia",
+      "Levar um kit de emergência (alfinetes, lenços, maquilhagem extra) 💄",
+      "Ajudar com a despedida de solteira, se quiseres",
+      "Transmitir calma e boas energias à noiva",
       "Seguir o dress code combinado",
     ],
     donts: [
-      "Usar vestido branco ou muito similar ao da noiva",
-      "Chamar mais atenção do que a noiva",
-      "Chegar atrasada ao getting ready",
-      "Stressar a noiva com problemas de última hora",
-      "Esquecer de carregar o telemóvel (para coordenação)",
+      "Evitar branco ou tons muito parecidos com o da noiva",
+      "O destaque é dela — e tu vais brilhar no teu papel!",
+      "Tenta não te atrasar ao getting ready",
+      "Não stresses a noiva com imprevistos — resolve discretamente 🤫",
+      "Manter o telemóvel carregado (para coordenação)",
     ],
     faq: [
       { q: "Que cor de vestido devo usar?", a: "Combine com a noiva. Geralmente há uma paleta de cores definida. Evite branco, creme ou cores muito chamativas." },
@@ -120,28 +120,28 @@ const ROLE_GUIDES: Record<string, RoleGuideData> = {
     ],
   },
   celebrante: {
-    title: "Manual do Celebrante",
+    title: "Guia do Celebrante 🎤",
     icon: Mic,
-    intro: "Como celebrante, você conduz o momento mais importante do dia — a cerimónia.",
+    intro: "Que responsabilidade bonita! Vais conduzir o momento mais emocionante do dia. Aqui ficam umas dicas para te sentires preparado(a).",
     responsibilities: [
-      "Preparar e conduzir toda a cerimónia",
-      "Reunir com os noivos para alinhar o texto e tom",
-      "Participar no ensaio da cerimónia",
-      "Garantir que os votos e rituais decorrem conforme planeado",
+      "Preparar e conduzir a cerimónia com o coração",
+      "Combinar com os noivos o texto e o tom",
+      "Participar no ensaio — ajuda imenso!",
+      "Garantir que tudo flui com naturalidade",
     ],
     dos: [
-      "Reunir com os noivos pelo menos uma vez antes do dia",
-      "Ensaiar o texto e a postura com antecedência",
-      "Manter o tom adequado ao estilo do casal",
-      "Verificar o equipamento de som antes da cerimónia",
-      "Ter uma cópia impressa do texto como backup",
+      "Reunir com os noivos pelo menos uma vez antes — vão adorar",
+      "Ensaiar o texto em voz alta e cronometrar",
+      "Adaptar o tom ao estilo do casal (formal, descontraído, emotivo...)",
+      "Testar o som e microfone antes de começar 🎙️",
+      "Ter uma cópia impressa como backup — segurança nunca é demais",
     ],
     donts: [
-      "Improvisar sem aprovação prévia dos noivos",
-      "Ultrapassar o tempo combinado da cerimónia",
-      "Fazer piadas inadequadas ou constrangedoras",
-      "Esquecer de testar o microfone",
-      "Chegar em cima da hora",
+      "Evitar improvisar sem combinar antes com os noivos",
+      "Tentar não ultrapassar o tempo combinado",
+      "Piadas? Sim, mas leves e de bom gosto 😊",
+      "Não te esqueças de testar o microfone!",
+      "Chegar com tempo — nada de correrias",
     ],
     faq: [
       { q: "Qual a duração ideal da cerimónia?", a: "Entre 20 a 40 minutos é o mais comum. Combine com os noivos." },
@@ -261,9 +261,9 @@ export function WeddingEventRoleGuide({ role, themeColor }: WeddingEventRoleGuid
           {/* Responsibilities */}
           <AccordionItem value="responsibilities">
             <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-              <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2">
                 <Icon className="w-4 h-4" style={{ color: themeColor }} />
-                As Suas Responsabilidades
+                O Teu Papel
               </span>
             </AccordionTrigger>
             <AccordionContent>
@@ -283,7 +283,7 @@ export function WeddingEventRoleGuide({ role, themeColor }: WeddingEventRoleGuid
             <AccordionTrigger className="text-sm font-semibold hover:no-underline">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                O Que Fazer
+                Dicas Úteis ✨
               </span>
             </AccordionTrigger>
             <AccordionContent>
@@ -302,15 +302,15 @@ export function WeddingEventRoleGuide({ role, themeColor }: WeddingEventRoleGuid
           <AccordionItem value="donts">
             <AccordionTrigger className="text-sm font-semibold hover:no-underline">
               <span className="flex items-center gap-2">
-                <XCircle className="w-4 h-4 text-destructive" />
-                O Que Não Fazer
+                <XCircle className="w-4 h-4 text-amber-500" />
+                Cuidados a Ter 💡
               </span>
             </AccordionTrigger>
             <AccordionContent>
               <ul className="space-y-2">
                 {guide.donts.map((item, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-destructive" />
+                    <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" />
                     {item}
                   </li>
                 ))}
