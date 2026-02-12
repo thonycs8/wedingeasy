@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_profiles: {
+        Row: {
+          billing_address: Json | null
+          billing_email: string | null
+          billing_name: string | null
+          created_at: string
+          id: string
+          stripe_customer_id: string | null
+          tax_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          billing_name?: string | null
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          billing_name?: string | null
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       budget_categories: {
         Row: {
           budgeted_amount: number | null
@@ -469,6 +505,56 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          payment_type: string
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_id: string | null
+          user_id: string
+          wedding_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          payment_type?: string
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_id?: string | null
+          user_id: string
+          wedding_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          payment_type?: string
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_id?: string | null
+          user_id?: string
+          wedding_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photos: {
         Row: {
           category: string | null
@@ -707,6 +793,65 @@ export type Database = {
           },
         ]
       }
+      service_subscriptions: {
+        Row: {
+          amount: number
+          auto_renew: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          interval: string
+          reference_id: string | null
+          service_type: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+          wedding_id: string
+        }
+        Insert: {
+          amount?: number
+          auto_renew?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          interval?: string
+          reference_id?: string | null
+          service_type: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+          wedding_id: string
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          interval?: string
+          reference_id?: string | null
+          service_type?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_subscriptions_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           created_at: string | null
@@ -753,6 +898,7 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          billing_type: string
           created_at: string | null
           description: string | null
           display_name: string
@@ -761,11 +907,16 @@ export type Database = {
           max_collaborators: number | null
           max_guests: number | null
           name: string
+          one_time_price: number | null
           price: number | null
           sort_order: number | null
+          stripe_monthly_price_id: string | null
+          stripe_onetime_price_id: string | null
+          stripe_product_id: string | null
           updated_at: string | null
         }
         Insert: {
+          billing_type?: string
           created_at?: string | null
           description?: string | null
           display_name: string
@@ -774,11 +925,16 @@ export type Database = {
           max_collaborators?: number | null
           max_guests?: number | null
           name: string
+          one_time_price?: number | null
           price?: number | null
           sort_order?: number | null
+          stripe_monthly_price_id?: string | null
+          stripe_onetime_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          billing_type?: string
           created_at?: string | null
           description?: string | null
           display_name?: string
@@ -787,8 +943,12 @@ export type Database = {
           max_collaborators?: number | null
           max_guests?: number | null
           name?: string
+          one_time_price?: number | null
           price?: number | null
           sort_order?: number | null
+          stripe_monthly_price_id?: string | null
+          stripe_onetime_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1260,32 +1420,44 @@ export type Database = {
       }
       wedding_subscriptions: {
         Row: {
+          billing_type: string | null
           created_at: string | null
           expires_at: string | null
           id: string
+          paid_amount: number | null
+          payment_date: string | null
           plan_id: string
           starts_at: string | null
           status: string | null
+          stripe_subscription_id: string | null
           updated_at: string | null
           wedding_id: string
         }
         Insert: {
+          billing_type?: string | null
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
           plan_id: string
           starts_at?: string | null
           status?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           wedding_id: string
         }
         Update: {
+          billing_type?: string | null
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
           plan_id?: string
           starts_at?: string | null
           status?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           wedding_id?: string
         }
