@@ -1052,6 +1052,7 @@ export type Database = {
           gallery_urls: string[]
           hero_message: string | null
           id: string
+          intro_text: string | null
           is_published: boolean
           party_time: string | null
           reception_venue_address: string | null
@@ -1084,6 +1085,7 @@ export type Database = {
           gallery_urls?: string[]
           hero_message?: string | null
           id?: string
+          intro_text?: string | null
           is_published?: boolean
           party_time?: string | null
           reception_venue_address?: string | null
@@ -1116,6 +1118,7 @@ export type Database = {
           gallery_urls?: string[]
           hero_message?: string | null
           id?: string
+          intro_text?: string | null
           is_published?: boolean
           party_time?: string | null
           reception_venue_address?: string | null

@@ -104,6 +104,15 @@ export default function WeddingEvent() {
         </div>
       </section>
 
+      {/* Intro Text */}
+      {(landing as any).intro_text && (
+        <section className="py-10 px-4 text-center">
+          <p className="max-w-2xl mx-auto text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
+            {(landing as any).intro_text}
+          </p>
+        </section>
+      )}
+
       {/* Verse */}
       {landing.show_verse && landing.verse_text && (
         <>
