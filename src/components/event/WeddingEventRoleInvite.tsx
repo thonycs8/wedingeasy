@@ -23,6 +23,46 @@ const ROLE_CONFIG: Record<string, { icon: typeof Heart; label: string }> = {
   "convidado de honra": { icon: Star, label: "Convidado de Honra" },
 };
 
+// ── Smart Role Label Deduplication ────────────────────────────────
+
+const PLURAL_MAP: Record<string, string> = {
+  "Celebrante": "Celebrantes",
+  "Padrinho": "Padrinhos",
+  "Madrinha": "Madrinhas",
+  "Dama de Honor": "Damas de Honor",
+  "Pajem": "Pajens",
+  "Florista": "Floristas",
+  "Portador das Alianças": "Portadores das Alianças",
+  "Convidado de Honra": "Convidados de Honra",
+};
+
+const GENDERED_PAIRS: [string, string][] = [
+  ["Padrinho", "Madrinha"],
+  ["Dama de Honor", "Pajem"],
+];
+
+function smartRoleLabels(roleLabels: string[], isCouple: boolean): string[] {
+  if (!isCouple || roleLabels.length <= 1) return roleLabels;
+
+  // All same → plural
+  if (roleLabels.every((r) => r === roleLabels[0])) {
+    return [PLURAL_MAP[roleLabels[0]] || roleLabels[0]];
+  }
+
+  // Known gendered pair → "X & Y"
+  if (roleLabels.length === 2) {
+    for (const [a, b] of GENDERED_PAIRS) {
+      const set = new Set(roleLabels);
+      if (set.has(a) && set.has(b)) {
+        return [`${a} & ${b}`];
+      }
+    }
+  }
+
+  // Different roles → keep separate
+  return roleLabels;
+}
+
 function formatName(slug: string) {
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -79,6 +119,8 @@ interface AcceptedViewProps {
 }
 
 function AcceptedView({ names, roleLabels, isCouple, themeColor }: AcceptedViewProps) {
+  const displayLabels = smartRoleLabels(roleLabels, isCouple);
+
   return (
     <div className="text-center py-10 px-4">
       <CelebrationOverlay themeColor={themeColor} />
@@ -92,7 +134,7 @@ function AcceptedView({ names, roleLabels, isCouple, themeColor }: AcceptedViewP
         </div>
 
         <h2 className="text-3xl sm:text-4xl font-serif text-foreground mb-3 animate-fade-in">
-          {isCouple ? "Convite Aceite!" : "Convite Aceite!"}
+          Convite Aceite!
         </h2>
 
         <p className="text-lg text-muted-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
@@ -102,7 +144,7 @@ function AcceptedView({ names, roleLabels, isCouple, themeColor }: AcceptedViewP
         </p>
 
         <div className="flex flex-wrap justify-center gap-2 mb-4 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-          {roleLabels.map((label, i) => (
+          {displayLabels.map((label, i) => (
             <Badge
               key={i}
               className="text-lg px-6 py-2 text-primary-foreground"
@@ -114,10 +156,11 @@ function AcceptedView({ names, roleLabels, isCouple, themeColor }: AcceptedViewP
           ))}
         </div>
 
-        <p className="text-muted-foreground text-sm mb-6 animate-fade-in" style={{ animationDelay: "0.6s" }}>
+        <p className="text-muted-foreground text-sm mb-8 animate-fade-in" style={{ animationDelay: "0.6s" }}>
           A sua presença e função estão confirmadas. Estamos ansiosos!
         </p>
 
+        {/* Role guide appears after accepting */}
         <div className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
           <WeddingEventRoleGuide role={roleLabels[0]} themeColor={themeColor} />
         </div>
@@ -213,7 +256,7 @@ export function WeddingEventRoleInvite({ guestName, role, themeColor, eventCode 
       </p>
 
       <div className="flex flex-wrap justify-center gap-2 mb-6">
-        {roleLabels.map((label, i) => (
+        {smartRoleLabels(roleLabels, isCouple).map((label, i) => (
           <Badge
             key={i}
             className="text-lg px-6 py-2 text-primary-foreground"
@@ -225,11 +268,6 @@ export function WeddingEventRoleInvite({ guestName, role, themeColor, eventCode 
       </div>
 
       <p className="text-muted-foreground text-sm mb-6">neste casamento especial</p>
-
-      {/* Role Guide */}
-      <div className="mb-8">
-        <WeddingEventRoleGuide role={roles[0]} themeColor={themeColor} />
-      </div>
 
       {/* Accept button */}
       <Button
