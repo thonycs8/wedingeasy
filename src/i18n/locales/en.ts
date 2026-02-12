@@ -110,6 +110,14 @@ export const enTranslations = {
     "landing.features.timelineDesc": "Personalized timeline so you don't forget anything",
     "landing.features.calculator": "Advanced Calculator",
     "landing.features.calculatorDesc": "Real prices based on region and wedding style",
+    "landing.features.eventPage": "Event Page",
+    "landing.features.eventPageDesc": "Public landing page with countdown, map, RSVP and gallery",
+    "landing.features.roleInvites": "Personalized Invites",
+    "landing.features.roleInvitesDesc": "Unique invitations for best men, bridesmaids and special roles",
+    "landing.features.collaborators": "Team Collaboration",
+    "landing.features.collaboratorsDesc": "Invite partners, celebrants and planners to plan together",
+    "landing.features.choices": "Wedding Choices",
+    "landing.features.choicesDesc": "Organize decisions about colors, menu, music and vendors",
 
     "landing.benefits.title": "Everything You Need For the Perfect Wedding",
     "landing.benefits.subtitle": "Professional tools to plan every detail",
@@ -117,6 +125,8 @@ export const enTranslations = {
     "landing.benefits.stress": "Eliminate stress with automatic planning",
     "landing.benefits.budget": "Budget based on real Portuguese market data",
     "landing.benefits.organized": "Keep everything organized on one platform",
+    "landing.benefits.eventPageBenefit": "Public event page with automatic RSVP and countdown",
+    "landing.benefits.rolesBenefit": "Personalized invitations with interactive role manual",
 
     "landing.problem.title": "Finally, A Planner Made For Portugal",
     "landing.calculator.title": "Smart Calculator",
