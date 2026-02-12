@@ -1,187 +1,231 @@
 
-# Plano Completo: Administracao Total do WeddingEasy
+# Plano: Sistema de Pagamentos com Stripe + Perfil de Pagamento + Recorrencia de Servicos
 
 ## Resumo
 
-Este plano cobre 3 areas de desenvolvimento e 1 pesquisa de mercado:
-
-1. **Editor Admin para Landing Pages de Convites por Papel** -- controlo total sobre cada secao, icones, mensagens, configuracoes dos convites personalizados
-2. **Editor Admin para Manuais por Papel** -- gerir o conteudo dos guias (responsabilidades, dicas, cuidados, FAQ) para cada papel
-3. **Auditoria de funcionalidades que faltam no Admin** -- identificar e adicionar tudo o que so existe do lado do cliente
-4. **Pesquisa de mercado e avaliacao do app**
-
----
-
-## 1. Editor Admin de Landing Pages de Convites por Papel
-
-O componente `AdminRoleInvitesManager.tsx` atual e apenas de leitura (ver detalhes, copiar link). Precisa de ser transformado num editor completo.
-
-### O que sera editavel por convite/convidado:
-- **Nome do convidado** (campo editavel)
-- **Papeis especiais** (adicionar/remover papeis do array `special_role`)
-- **Lado** (noivo/noiva/nenhum)
-- **Estado de confirmacao** (marcar como aceite/pendente manualmente)
-- **Couple pair** (associar/desassociar casais)
-
-### Configuracoes globais dos convites por papel (por casamento):
-- **Icones por papel** -- editar qual icone aparece para cada papel (Crown, Star, Heart, etc.)
-- **Labels/nomes dos papeis** -- personalizar o texto que aparece no badge
-- **Mensagem de convite** -- o texto "Voce foi convidado(a) para ser..."
-- **Mensagem de aceitacao** -- o texto apos aceitar
-- **Mensagem familiar** -- textos personalizados para papeis familiares
-- **Cor do tema** (herda da landing page mas pode ser override)
-- **Botao de aceitar** -- texto e visibilidade
-- **Animacao de celebracao** -- ativar/desativar
-
-### Implementacao tecnica:
-- Expandir o `Dialog` de detalhes em `AdminRoleInvitesManager.tsx` para um editor multi-tab
-- Tab "Dados" -- editar nome, papeis, lado, confirmacao
-- Tab "Convite" -- preview e configuracao da aparencia do convite
-- Tab "Casal" -- gerir emparelhamento
-- Salvar alteracoes via `supabase.from("guests").update(...)` 
-- Para configuracoes globais por casamento, criar uma nova tabela `wedding_role_invite_config` ou usar JSON em `wedding_landing_pages`
-
-### Ficheiros afetados:
-- `src/components/admin/AdminRoleInvitesManager.tsx` -- refatorar completamente
-- Possivel migracao SQL para tabela de configuracao
+Implementar um sistema completo de pagamentos usando **Stripe** que inclui:
+1. Integracao Stripe no projeto
+2. Perfil de pagamento do utilizador (dados de faturacao + metodos de pagamento)
+3. Modelo hibrido: assinaturas mensais + compra unica (2 anos acesso vitalicio)
+4. Pagamento no momento de criar evento (escolha de plano)
+5. Pergunta sobre dominio personalizado durante a criacao do evento
+6. Sistema de recorrencia para servicos (ex: dominio anual com renovacao automatica ou manual)
 
 ---
 
-## 2. Editor Admin para Manuais por Papel
+## Fase 1: Ativar Stripe
 
-Atualmente os manuais estao hardcoded em `WeddingEventRoleGuide.tsx` no objeto `ROLE_GUIDES`. O admin precisa de poder editar cada secao.
+- Usar a integracao nativa do Lovable com Stripe (tool `enable_stripe`)
+- Isto vai configurar os secrets e disponibilizar as ferramentas de Stripe
+- Apos ativacao, teremos acesso a criacao de produtos, precos, clientes e checkout sessions
 
-### O que sera editavel por papel:
-- **Titulo do guia** (ex: "Guia do Padrinho")
-- **Intro** -- texto de introducao
-- **Responsabilidades** -- lista editavel (adicionar/remover/reordenar)
-- **Dicas Uteis** -- lista editavel
-- **Cuidados a Ter** -- lista editavel
-- **FAQ** -- pares pergunta/resposta editaveis
+---
 
-### Abordagem:
-- **Opcao escolhida**: Criar uma tabela `role_guides` no banco de dados para armazenar os guias personalizaveis, com fallback para os defaults hardcoded
-- Novo componente `AdminRoleGuidesManager.tsx`
-- Interface: lista dos papeis com botao de editar, abrindo dialog com formulario para cada secao
-- O componente `WeddingEventRoleGuide.tsx` passa a consultar primeiro a BD e so usa os defaults se nao houver dados
+## Fase 2: Base de Dados - Novas Tabelas e Alteracoes
 
-### Tabela `role_guides`:
+### 2.1 Tabela `billing_profiles` (dados de faturacao do utilizador)
 ```text
-id          uuid PK
-role_key    text (padrinho, madrinha, celebrante, etc.)
-title       text
-intro       text
-responsibilities  text[] (array)
-dos         text[] (array)
-donts       text[] (array)
-faq         jsonb (array de {q, a})
-updated_at  timestamptz
-updated_by  uuid
+id              uuid PK
+user_id         uuid NOT NULL (ref auth.users)
+stripe_customer_id  text (ID do cliente no Stripe)
+billing_name    text
+billing_email   text
+tax_id          text (NIF/VAT)
+billing_address jsonb (morada, cidade, codigo postal, pais)
+created_at      timestamptz
+updated_at      timestamptz
+```
+- RLS: utilizador so ve/edita o seu proprio perfil; admins veem todos
+
+### 2.2 Tabela `payment_history` (historico de pagamentos)
+```text
+id                  uuid PK
+user_id             uuid NOT NULL
+wedding_id          uuid (nullable, para pagamentos associados a eventos)
+stripe_payment_id   text
+stripe_invoice_id   text
+amount              numeric
+currency            text DEFAULT 'eur'
+status              text (succeeded, pending, failed, refunded)
+description         text
+payment_type        text (subscription, one_time, service, domain_renewal)
+created_at          timestamptz
+```
+- RLS: utilizador ve os seus; admins veem todos
+
+### 2.3 Tabela `service_subscriptions` (recorrencia de servicos como dominios)
+```text
+id              uuid PK
+user_id         uuid NOT NULL
+wedding_id      uuid NOT NULL
+service_type    text (domain, premium_template, etc.)
+reference_id    uuid (ID do dominio ou servico associado)
+stripe_subscription_id  text
+auto_renew      boolean DEFAULT true
+amount          numeric
+interval        text (yearly, monthly)
+current_period_start  timestamptz
+current_period_end    timestamptz
+status          text (active, cancelled, expired, past_due)
+created_at      timestamptz
+updated_at      timestamptz
+```
+- RLS: utilizador gere os seus; admins gerem todos
+
+### 2.4 Alterar `subscription_plans`
+- Adicionar coluna `one_time_price` numeric (preco de compra unica para 2 anos)
+- Adicionar coluna `billing_type` text DEFAULT 'both' (monthly, one_time, both)
+
+### 2.5 Alterar `wedding_subscriptions`
+- Adicionar coluna `stripe_subscription_id` text
+- Adicionar coluna `billing_type` text (monthly, one_time)
+- Adicionar coluna `paid_amount` numeric
+- Adicionar coluna `payment_date` timestamptz
+
+---
+
+## Fase 3: Edge Functions para Stripe
+
+### 3.1 `create-checkout-session`
+- Recebe: plan_id, billing_type (monthly/one_time), wedding_id (opcional), include_domain (boolean)
+- Cria/recupera Stripe Customer baseado no billing_profile
+- Cria Stripe Checkout Session com:
+  - Mode `subscription` para mensal
+  - Mode `payment` para compra unica
+  - Line items adicionais para dominio se solicitado
+- Retorna URL do Stripe Checkout
+
+### 3.2 `stripe-webhook`
+- Recebe eventos do Stripe (checkout.session.completed, invoice.paid, subscription.cancelled, etc.)
+- Atualiza `wedding_subscriptions`, `payment_history`, `service_subscriptions`
+- Ativa o plano automaticamente apos pagamento confirmado
+
+### 3.3 `manage-billing`
+- Cria Stripe Customer Portal session para o utilizador gerir metodos de pagamento, faturas, cancelar subscricoes
+
+### 3.4 `create-domain-subscription`
+- Cria uma subscricao Stripe recorrente anual para dominio personalizado
+- Associa ao `service_subscriptions`
+
+---
+
+## Fase 4: Frontend - Perfil de Pagamento
+
+### 4.1 Expandir `UserProfile.tsx`
+Adicionar nova seccao "Dados de Faturacao" com:
+- Nome de faturacao
+- Email de faturacao
+- NIF/VAT
+- Morada de faturacao (rua, cidade, codigo postal, pais)
+- Botao "Gerir Metodos de Pagamento" (abre Stripe Customer Portal)
+- Historico de pagamentos (lista de transacoes)
+
+---
+
+## Fase 5: Frontend - Escolha de Plano ao Criar Evento
+
+### 5.1 Modificar `WeddingQuestionnaireModal.tsx`
+Adicionar novo step apos o resumo do orcamento:
+
+**Step 7: Escolha o Seu Plano**
+- 3 cards (Basico gratuito, Avancado, Profissional)
+- Cada card mostra: features incluidas, preco mensal E preco unico (2 anos)
+- Toggle "Mensal" / "Pagamento Unico (2 anos)"
+- Destaque no melhor valor (preco unico)
+
+**Step 8: Dominio Personalizado**
+- Pergunta "Deseja um dominio personalizado para o seu evento?"
+- Input para o dominio desejado (ex: joana-e-pedro.wedding)
+- Info sobre preco anual do dominio
+- Toggle "Renovacao automatica"
+- Opcao "Agora nao, talvez depois"
+
+**Step 9: Checkout**
+- Se escolheu plano pago ou dominio, redireciona para Stripe Checkout
+- Se escolheu plano gratuito sem dominio, vai direto para dashboard
+
+### 5.2 Atualizar `UpgradeModal.tsx`
+- Remover "Em breve" dos botoes
+- Adicionar logica de checkout real com redirecionamento para Stripe
+- Mostrar precos atualizados da BD (nao hardcoded)
+- Opcao mensal e pagamento unico
+
+---
+
+## Fase 6: Sistema de Recorrencia para Servicos
+
+### 6.1 Componente `ServiceSubscriptions.tsx`
+Seccao no perfil do utilizador ou dashboard com:
+- Lista de servicos recorrentes ativos (dominios, etc.)
+- Status de cada subscricao
+- Toggle de renovacao automatica (on/off)
+- Data da proxima renovacao
+- Botao para cancelar
+
+### 6.2 Logica de Renovacao
+- **Automatica**: Stripe cobra automaticamente na data de renovacao
+- **Manual**: Stripe envia email de lembrete, utilizador tem X dias para pagar manualmente
+- Webhook `invoice.payment_failed` marca como `past_due`
+- Webhook `customer.subscription.deleted` marca como `expired`
+- Admin ve tudo no painel de Dominios e pode intervir
+
+---
+
+## Fase 7: Admin - Gestao de Pagamentos
+
+### 7.1 Novo tab "Faturacao" no AdminPanel
+- Overview de receita (MRR, pagamentos unicos, dominios)
+- Lista de todos os pagamentos
+- Filtros por tipo, estado, periodo
+- Ver detalhes de subscricao de qualquer casamento
+- Capacidade de atribuir plano manualmente (upgrade/downgrade gratis para suporte)
+
+---
+
+## Detalhes Tecnicos
+
+### Precos Sugeridos (ajustaveis no admin)
+| Plano | Mensal | Compra Unica (2 anos) |
+|---|---|---|
+| Basico | Gratis | Gratis |
+| Avancado | 19.99 EUR/mes | 149.99 EUR |
+| Profissional | 78.99 EUR/mes | 499.99 EUR |
+| Dominio | - | ~15-25 EUR/ano |
+
+### Fluxo de Pagamento
+```text
+Criar Evento -> Questionario -> Escolher Plano -> Dominio? -> Stripe Checkout -> Webhook -> Ativar Plano -> Dashboard
 ```
 
-### Ficheiros afetados:
-- Novo: `src/components/admin/AdminRoleGuidesManager.tsx`
-- Editar: `src/components/event/WeddingEventRoleGuide.tsx` (buscar dados da BD)
-- Editar: `src/components/admin/AdminLandingPagesManager.tsx` (adicionar tab "Manuais")
-- Migracao SQL para criar tabela + RLS
+### Seguranca
+- Stripe secrets armazenados como edge function secrets (nunca no frontend)
+- Webhook verificado com assinatura Stripe
+- Dados de cartao NUNCA passam pelo nosso servidor (Stripe Checkout hosted)
+- RLS em todas as tabelas de billing
 
----
+### Ficheiros a Criar/Modificar
+**Novos:**
+- `supabase/functions/create-checkout-session/index.ts`
+- `supabase/functions/stripe-webhook/index.ts`
+- `supabase/functions/manage-billing/index.ts`
+- Migracao SQL para novas tabelas
 
-## 3. Auditoria: Funcionalidades que faltam no Admin
+**Modificados:**
+- `src/components/UserProfile.tsx` (seccao faturacao)
+- `src/components/WeddingQuestionnaireModal.tsx` (steps de plano + dominio)
+- `src/components/shared/UpgradeModal.tsx` (checkout real)
+- `src/pages/AdminPanel.tsx` (tab Faturacao)
+- `subscription_plans` (novos campos)
+- `wedding_subscriptions` (novos campos)
 
-Apos analisar o dashboard do cliente vs o painel admin, aqui esta o que **ja existe** e o que **falta**:
+### Sequencia de Implementacao
+1. Ativar Stripe (tool)
+2. Migracoes de BD (tabelas + alteracoes)
+3. Edge functions (checkout, webhook, billing)
+4. Frontend do questionario (escolha de plano + dominio)
+5. Perfil de pagamento do utilizador
+6. UpgradeModal funcional
+7. Recorrencia de servicos
+8. Admin tab Faturacao
 
-### Ja existe no Admin:
-- Visao Geral (stats)
-- Gestao de Utilizadores (suspender, bloquear, eliminar RGPD)
-- Gestao de Eventos (ativar/desativar, eliminar RGPD)
-- Gestao de Admins
-- Gestao de Modulos/Planos
-- Gestao de Parceiros e Servicos
-- Gestao de Dominios
-- Editor de Landing Pages (5 tabs)
-- Convites por Papel (leitura)
-
-### Falta no Admin (existe so do lado do cliente):
-| Funcionalidade | Componente Cliente | Prioridade |
-|---|---|---|
-| **Gerir Convidados** por casamento | `GuestManagerRefactored` | Alta |
-| **Gerir Orcamento** por casamento | `BudgetManagerRefactored` | Alta |
-| **Gerir Cronograma/Tarefas** por casamento | `TimelineManagerRefactored` | Alta |
-| **Gerir Escolhas do Casamento** | `WeddingChoices` | Media |
-| **Gerir Colaboradores** por casamento | `CollaboratorsManager` | Media |
-| **Gerir Detalhes do Casamento** (nomes, data) | `WeddingDetailsEditor` | Alta |
-| **Gerir Notificacoes** | `NotificationCenter` | Baixa |
-| **Gerir Reservas de Servicos** | `ServicesMarketplace` | Media |
-| **Gerir Subscricoes/Planos** por casamento | Parcial em Modulos | Media |
-
-### Proposta de implementacao:
-Criar um novo tab no Admin chamado **"Suporte ao Evento"** que, ao selecionar um casamento da lista, abre um painel com sub-tabs para gerir cada area desse casamento especifico:
-
-- Sub-tab **Detalhes** -- editar nomes do casal, data, orcamento estimado, regiao, estilo
-- Sub-tab **Convidados** -- ver/editar/adicionar/remover convidados
-- Sub-tab **Orcamento** -- ver/editar categorias e despesas
-- Sub-tab **Cronograma** -- ver/editar/marcar tarefas como concluidas
-- Sub-tab **Escolhas** -- ver/editar decisoes do casamento
-- Sub-tab **Colaboradores** -- ver/adicionar/remover colaboradores
-- Sub-tab **Subscricao** -- ver/mudar plano do casamento
-
-### Ficheiros novos:
-- `src/components/admin/AdminEventSupport.tsx` (componente principal)
-- Integrado como novo tab no `AdminPanel.tsx`
-
----
-
-## 4. Pesquisa de Mercado: Valor do WeddingEasy
-
-### Analise do Mercado de Wedding Planning Apps
-
-**Concorrentes diretos:**
-- **Zola** (EUA) -- avaliado em ~600M USD (2023), mas inclui registry e e-commerce
-- **The Knot / WeddingWire** (Knot Worldwide) -- avaliado em ~1B USD, marketplace focus
-- **Zankyou** (Europa) -- presente em 23 paises, modelo freemium + marketplace
-- **Casamentos.pt** (Portugal) -- diretorio de fornecedores, sem ferramenta de planeamento robusta
-- **Joy** (EUA) -- app gratuito de planeamento + website, financiado em ~25M USD
-
-**Diferenciadores do WeddingEasy:**
-- Sistema de convites personalizados por papel (unico no mercado)
-- Landing page publica com RSVP integrado
-- Manuais interativos por papel da cerimonia
-- Gestao multi-casamento com colaboradores
-- Sistema de papeis familiares com mensagens personalizadas
-- Marketplace de servicos integrado
-- Multi-idioma (PT/EN) com foco no mercado lusofono
-- Sistema de planos e subscricoes ja implementado
-
-**Modelos de receita possiveis:**
-- Freemium (plano basico gratuito + planos pagos com mais funcionalidades)
-- Comissao sobre marketplace de servicos (10-15%)
-- Dominios personalizados (venda de dominios .wedding, etc.)
-- Templates premium para landing pages
-
-**Estimativa de valor:**
-
-Para um MVP funcional com esta amplitude de funcionalidades, considerando:
-- Mercado de casamentos em Portugal: ~35.000 casamentos/ano
-- Mercado lusofono (PT + BR + PALOP): ~1.2M casamentos/ano
-- Ticket medio de casamento PT: 15.000-25.000 EUR
-
-| Cenario | Premissa | Valor Estimado |
-|---|---|---|
-| Venda da tecnologia (acqui-hire) | Stack moderna, codigo limpo, features unicas | 50.000 - 150.000 EUR |
-| Venda com base de utilizadores (1.000+ casamentos ativos) | Receita recorrente comprovada | 200.000 - 500.000 EUR |
-| Venda com tracao no mercado (5.000+ casamentos, marketplace ativo) | MRR comprovado de 5-10k EUR | 500.000 - 2.000.000 EUR |
-| Escala internacional (multi-pais) | Produto validado em varios mercados | 2.000.000 - 10.000.000 EUR |
-
-**Nota:** Estes valores sao estimativas baseadas em comparaveis do mercado europeu de SaaS vertical. O valor real depende de metricas como MRR, crescimento, retencao e base de utilizadores ativos.
-
----
-
-## Sequencia de Implementacao
-
-1. **Fase 1** -- Editor de Convites por Papel no Admin (AdminRoleInvitesManager upgrade)
-2. **Fase 2** -- Tabela + Editor de Manuais por Papel (role_guides + AdminRoleGuidesManager)
-3. **Fase 3** -- Modulo "Suporte ao Evento" no Admin (AdminEventSupport com todas as sub-tabs)
-4. **Fase 4** -- Integracao final e testes
-
-### Estimativa: 3-4 iteracoes de desenvolvimento para cobrir tudo.
+**Estimativa: 3-4 iteracoes de desenvolvimento.**
