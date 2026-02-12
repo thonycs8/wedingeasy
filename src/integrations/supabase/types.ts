@@ -243,33 +243,51 @@ export type Database = {
       }
       custom_domains: {
         Row: {
+          admin_notes: string | null
           created_at: string
+          desired_domain: string | null
           domain: string
           expires_at: string | null
           id: string
           notes: string | null
+          order_status: string
+          price: number | null
+          request_message: string | null
+          requested_by: string | null
           ssl_status: string
           status: string
           updated_at: string
           wedding_id: string
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string
+          desired_domain?: string | null
           domain: string
           expires_at?: string | null
           id?: string
           notes?: string | null
+          order_status?: string
+          price?: number | null
+          request_message?: string | null
+          requested_by?: string | null
           ssl_status?: string
           status?: string
           updated_at?: string
           wedding_id: string
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string
+          desired_domain?: string | null
           domain?: string
           expires_at?: string | null
           id?: string
           notes?: string | null
+          order_status?: string
+          price?: number | null
+          request_message?: string | null
+          requested_by?: string | null
           ssl_status?: string
           status?: string
           updated_at?: string
