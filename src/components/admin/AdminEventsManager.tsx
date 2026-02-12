@@ -6,22 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Search } from "lucide-react";
+import { Search, Trash2, MoreHorizontal, AlertTriangle, Calendar, CalendarOff } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -52,6 +49,9 @@ export const AdminEventsManager = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<WeddingEvent | null>(null);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,17 +61,9 @@ export const AdminEventsManager = () => {
   const fetchData = async () => {
     try {
       const [weddingsRes, subsRes, plansRes] = await Promise.all([
-        supabase
-          .from("wedding_data")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("wedding_subscriptions")
-          .select("id, wedding_id, plan_id, subscription_plans(display_name)"),
-        supabase
-          .from("subscription_plans")
-          .select("id, display_name, name")
-          .order("sort_order"),
+        supabase.from("wedding_data").select("*").order("created_at", { ascending: false }),
+        supabase.from("wedding_subscriptions").select("id, wedding_id, plan_id, subscription_plans(display_name)"),
+        supabase.from("subscription_plans").select("id, display_name, name").order("sort_order"),
       ]);
 
       if (weddingsRes.error) throw weddingsRes.error;
@@ -100,11 +92,7 @@ export const AdminEventsManager = () => {
       setPlans(plansRes.data || []);
     } catch (error) {
       console.error("Erro ao carregar eventos:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os eventos",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível carregar os eventos", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -120,36 +108,25 @@ export const AdminEventsManager = () => {
       if (error) throw error;
 
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === event.id ? { ...e, is_active: !e.is_active } : e
-        )
+        prev.map((e) => (e.id === event.id ? { ...e, is_active: !e.is_active } : e))
       );
 
-      toast({
-        title: "Sucesso",
-        description: `Evento ${!event.is_active ? "ativado" : "desativado"}`,
-      });
+      toast({ title: "Sucesso", description: `Evento ${!event.is_active ? "ativado" : "desativado"}` });
     } catch (error) {
       console.error("Erro ao atualizar evento:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o evento",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível atualizar o evento", variant: "destructive" });
     }
   };
 
   const changePlan = async (event: WeddingEvent, planId: string) => {
     try {
       if (event.subscription_id) {
-        // Update existing subscription
         const { error } = await supabase
           .from("wedding_subscriptions")
           .update({ plan_id: planId })
           .eq("id", event.subscription_id);
         if (error) throw error;
       } else {
-        // Create new subscription
         const { error } = await supabase
           .from("wedding_subscriptions")
           .insert({ wedding_id: event.id, plan_id: planId });
@@ -159,25 +136,41 @@ export const AdminEventsManager = () => {
       const plan = plans.find((p) => p.id === planId);
       setEvents((prev) =>
         prev.map((e) =>
-          e.id === event.id
-            ? { ...e, plan_id: planId, plan_name: plan?.display_name || null }
-            : e
+          e.id === event.id ? { ...e, plan_id: planId, plan_name: plan?.display_name || null } : e
         )
       );
 
-      toast({
-        title: "Sucesso",
-        description: `Plano atualizado para ${plan?.display_name}`,
-      });
+      toast({ title: "Sucesso", description: `Plano atualizado para ${plan?.display_name}` });
     } catch (error) {
       console.error("Erro ao alterar plano:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível alterar o plano",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível alterar o plano", variant: "destructive" });
     }
   };
+
+  const deleteEvent = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase.rpc("admin_delete_wedding_cascade", {
+        _wedding_id: deleteTarget.id,
+      });
+
+      if (error) throw error;
+
+      setEvents((prev) => prev.filter((e) => e.id !== deleteTarget.id));
+      toast({ title: "Evento eliminado", description: "Todos os dados do evento foram removidos permanentemente." });
+    } catch (error: any) {
+      console.error("Erro ao eliminar evento:", error);
+      toast({ title: "Erro", description: error.message || "Não foi possível eliminar o evento", variant: "destructive" });
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+      setConfirmText("");
+    }
+  };
+
+  const getEventLabel = (e: WeddingEvent) =>
+    [e.partner_name, e.couple_name].filter(Boolean).join(" & ") || "Sem nome";
 
   const filtered = events.filter((e) => {
     if (!search) return true;
@@ -189,98 +182,185 @@ export const AdminEventsManager = () => {
     );
   });
 
+  const activeCount = events.filter((e) => e.is_active).length;
+
   if (loading) {
     return <div className="text-muted-foreground">Carregando...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Eventos</CardTitle>
-            <CardDescription>
-              {events.length} eventos · {events.filter((e) => e.is_active).length} ativos
-            </CardDescription>
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{events.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Eventos criados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Ativos</CardTitle>
+            <Calendar className="w-5 h-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">{activeCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Inativos</CardTitle>
+            <CalendarOff className="w-5 h-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-muted-foreground">{events.length - activeCount}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle>Eventos</CardTitle>
+              <CardDescription>{events.length} eventos · {activeCount} ativos</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por nome ou código..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar por nome ou código..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Casal</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Convidados</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Plano</TableHead>
-                <TableHead>Ativo</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Nenhum evento encontrado
-                  </TableCell>
+                  <TableHead>Casal</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Convidados</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead>Ativo</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ) : (
-                filtered.map((event) => (
-                  <TableRow key={event.id} className={!event.is_active ? "opacity-60" : ""}>
-                    <TableCell className="font-medium">
-                      {[event.partner_name, event.couple_name].filter(Boolean).join(" & ") || "Sem nome"}
-                    </TableCell>
-                    <TableCell>
-                      {event.wedding_date
-                        ? format(new Date(event.wedding_date), "dd MMM yyyy", { locale: pt })
-                        : "—"}
-                    </TableCell>
-                    <TableCell>{event.guest_count ?? "—"}</TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {event.event_code}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={event.plan_id || ""}
-                        onValueChange={(value) => changePlan(event, value)}
-                      >
-                        <SelectTrigger className="w-32 h-8 text-xs">
-                          <SelectValue placeholder="Sem plano" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {plans.map((plan) => (
-                            <SelectItem key={plan.id} value={plan.id}>
-                              {plan.display_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={event.is_active}
-                        onCheckedChange={() => toggleActive(event)}
-                      />
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      Nenhum evento encontrado
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                ) : (
+                  filtered.map((event) => (
+                    <TableRow key={event.id} className={!event.is_active ? "opacity-60" : ""}>
+                      <TableCell className="font-medium">{getEventLabel(event)}</TableCell>
+                      <TableCell>
+                        {event.wedding_date
+                          ? format(new Date(event.wedding_date), "dd MMM yyyy", { locale: pt })
+                          : "—"}
+                      </TableCell>
+                      <TableCell>{event.guest_count ?? "—"}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-2 py-1 rounded">{event.event_code}</code>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={event.plan_id || ""}
+                          onValueChange={(value) => changePlan(event, value)}
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue placeholder="Sem plano" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {plans.map((plan) => (
+                              <SelectItem key={plan.id} value={plan.id}>{plan.display_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Switch checked={event.is_active} onCheckedChange={() => toggleActive(event)} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => toggleActive(event)}>
+                              {event.is_active ? (
+                                <><CalendarOff className="w-4 h-4 mr-2" /> Desativar</>
+                              ) : (
+                                <><Calendar className="w-4 h-4 mr-2" /> Ativar</>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeleteTarget(event)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Eliminar Evento
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={() => { setDeleteTarget(null); setConfirmText(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Eliminar Evento Permanentemente
+            </DialogTitle>
+            <DialogDescription>
+              ATENÇÃO: Esta ação é IRREVERSÍVEL. Todos os dados do evento "{deleteTarget ? getEventLabel(deleteTarget) : ""}" serão permanentemente eliminados: convidados, orçamento, cronograma, fotos, landing page, domínios e colaboradores. Escreva <strong>APAGAR</strong> para confirmar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2">
+            <Input
+              placeholder='Escreva "APAGAR" para confirmar'
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setConfirmText(""); }}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteEvent}
+              disabled={deleteLoading || confirmText !== "APAGAR"}
+            >
+              {deleteLoading ? "A eliminar..." : "Eliminar Permanentemente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
