@@ -36,7 +36,7 @@ const faqSections = [
       },
       {
         q: "Posso exportar a lista de convidados?",
-        a: "Sim! Exporte a lista em formato PDF com todas as informações relevantes — confirmações, restrições alimentares, números de mesa e muito mais. Perfeito para partilhar com fornecedores.",
+        a: "Sim! Com o plano Profissional, pode exportar a lista de convidados em PDF com todos os detalhes: nome, confirmação de presença, restrições alimentares, mesa atribuída, lado (noivo/noiva), faixa etária e notas. Ideal para partilhar com o catering, o organizador do evento ou qualquer fornecedor. A exportação PDF também está disponível para orçamento, cronograma e papéis de cerimónia.",
       },
       {
         q: "O que é o custo por convidado?",
