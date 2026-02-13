@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, Crown, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Calendar, Crown, Activity, ExternalLink } from "lucide-react";
+
 
 interface OverviewStats {
   totalUsers: number;
@@ -101,6 +103,9 @@ export const AdminOverview = () => {
     },
   ];
 
+  const baseUrl = window.location.origin;
+  const featuresUrl = `${baseUrl}/features`;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -119,6 +124,45 @@ export const AdminOverview = () => {
           </Card>
         ))}
       </div>
+
+      {/* Links para investidores */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Links para Investidores</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <div>
+              <p className="font-medium text-sm">Página de Funcionalidades</p>
+              <p className="text-xs text-muted-foreground break-all">{featuresUrl}</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(featuresUrl);
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" /> Copiar
+            </Button>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <div>
+              <p className="font-medium text-sm">Página de Planos</p>
+              <p className="text-xs text-muted-foreground break-all">{baseUrl}/pricing</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(`${baseUrl}/pricing`);
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" /> Copiar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
