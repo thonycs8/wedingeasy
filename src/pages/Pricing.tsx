@@ -190,11 +190,11 @@ export default function Pricing() {
                     <div className="border-t pt-4 space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Convidados</span>
-                        <strong>{plan.max_guests === null ? "Ilimitados" : `Até ${plan.max_guests}`}</strong>
+                        <strong>{plan.max_guests === null || plan.max_guests === -1 ? "Ilimitados" : `Até ${plan.max_guests}`}</strong>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Colaboradores</span>
-                        <strong>{plan.max_collaborators === null ? "Ilimitados" : `Até ${plan.max_collaborators}`}</strong>
+                        <strong>{plan.max_collaborators === null || plan.max_collaborators === -1 ? "Ilimitados" : `Até ${plan.max_collaborators}`}</strong>
                       </div>
                     </div>
 
@@ -243,7 +243,7 @@ export default function Pricing() {
                   <TableCell>Máx. Convidados</TableCell>
                   {plans.map(p => (
                     <TableCell key={p.id} className="text-center font-medium">
-                      {p.max_guests === null ? "Ilimitados" : p.max_guests}
+                      {p.max_guests === null || p.max_guests === -1 ? "Ilimitados" : p.max_guests}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -251,7 +251,7 @@ export default function Pricing() {
                   <TableCell>Máx. Colaboradores</TableCell>
                   {plans.map(p => (
                     <TableCell key={p.id} className="text-center font-medium">
-                      {p.max_collaborators === null ? "Ilimitados" : p.max_collaborators}
+                      {p.max_collaborators === null || p.max_collaborators === -1 ? "Ilimitados" : p.max_collaborators}
                     </TableCell>
                   ))}
                 </TableRow>
