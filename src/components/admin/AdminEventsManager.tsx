@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Trash2, MoreHorizontal, AlertTriangle, Calendar, CalendarOff } from "lucide-react";
+import { Search, Trash2, MoreHorizontal, AlertTriangle, Calendar, CalendarOff, Users, ChevronDown, ChevronUp, Ban, RefreshCw } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -21,6 +21,15 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+
+interface Collaborator {
+  id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+  is_suspended: boolean;
+  profiles: { first_name: string | null; last_name: string | null; email: string | null } | null;
+}
 
 interface WeddingEvent {
   id: string;
@@ -52,11 +61,55 @@ export const AdminEventsManager = () => {
   const [deleteTarget, setDeleteTarget] = useState<WeddingEvent | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [collabLoading, setCollabLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const loadCollaborators = async (weddingId: string) => {
+    if (expandedEvent === weddingId) {
+      setExpandedEvent(null);
+      return;
+    }
+    setExpandedEvent(weddingId);
+    setCollabLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("wedding_collaborators")
+        .select("id, user_id, role, joined_at, is_suspended, wedding_id")
+        .eq("wedding_id", weddingId);
+      if (error) throw error;
+      // Fetch profiles separately
+      const userIds = (data || []).map(c => c.user_id);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, first_name, last_name, email").in("user_id", userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      const enriched = (data || []).map(c => ({ ...c, profiles: profileMap.get(c.user_id) || null }));
+      setCollaborators(enriched);
+    } catch {
+      toast({ title: "Erro ao carregar colaboradores", variant: "destructive" });
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const toggleSuspend = async (collab: Collaborator) => {
+    const newState = !collab.is_suspended;
+    const { error } = await supabase.from("wedding_collaborators").update({ is_suspended: newState }).eq("id", collab.id);
+    if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
+    setCollaborators(prev => prev.map(c => c.id === collab.id ? { ...c, is_suspended: newState } : c));
+    toast({ title: newState ? "Colaborador suspenso" : "Colaborador reativado" });
+  };
+
+  const removeCollab = async (collab: Collaborator) => {
+    const { error } = await supabase.from("wedding_collaborators").delete().eq("id", collab.id);
+    if (error) { toast({ title: "Erro ao remover", variant: "destructive" }); return; }
+    setCollaborators(prev => prev.filter(c => c.id !== collab.id));
+    toast({ title: "Colaborador removido" });
+  };
 
   const fetchData = async () => {
     try {
@@ -263,7 +316,8 @@ export const AdminEventsManager = () => {
                   </TableRow>
                 ) : (
                   filtered.map((event) => (
-                    <TableRow key={event.id} className={!event.is_active ? "opacity-60" : ""}>
+                    <React.Fragment key={event.id}>
+                    <TableRow className={!event.is_active ? "opacity-60" : ""}>
                       <TableCell className="font-medium">{getEventLabel(event)}</TableCell>
                       <TableCell>
                         {event.wedding_date
@@ -300,6 +354,9 @@ export const AdminEventsManager = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => loadCollaborators(event.id)}>
+                              <Users className="w-4 h-4 mr-2" /> Gerir Colaboradores
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toggleActive(event)}>
                               {event.is_active ? (
                                 <><CalendarOff className="w-4 h-4 mr-2" /> Desativar</>
@@ -318,6 +375,67 @@ export const AdminEventsManager = () => {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
+                    {/* Collaborators expandable row */}
+                    {expandedEvent === event.id && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="bg-muted/30 p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold flex items-center gap-2">
+                                <Users className="w-4 h-4" /> Colaboradores
+                              </h4>
+                              <Button variant="ghost" size="sm" onClick={() => setExpandedEvent(null)}>
+                                <ChevronUp className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {collabLoading ? (
+                              <p className="text-sm text-muted-foreground">Carregando...</p>
+                            ) : collaborators.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">Nenhum colaborador</p>
+                            ) : (
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Papel</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {collaborators.map(c => (
+                                    <TableRow key={c.id} className={c.is_suspended ? "opacity-60" : ""}>
+                                      <TableCell className="text-sm font-medium">
+                                        {c.profiles ? `${c.profiles.first_name || ""} ${c.profiles.last_name || ""}`.trim() || "—" : "—"}
+                                      </TableCell>
+                                      <TableCell className="text-sm">{c.profiles?.email || "—"}</TableCell>
+                                      <TableCell><Badge variant="outline" className="text-xs capitalize">{c.role}</Badge></TableCell>
+                                      <TableCell>
+                                        <Badge variant={c.is_suspended ? "destructive" : "default"} className="text-xs">
+                                          {c.is_suspended ? "Suspenso" : "Ativo"}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1">
+                                          <Button variant="ghost" size="sm" onClick={() => toggleSuspend(c)} title={c.is_suspended ? "Reativar" : "Suspender"}>
+                                            {c.is_suspended ? <RefreshCw className="w-4 h-4" /> : <Ban className="w-4 h-4 text-muted-foreground" />}
+                                          </Button>
+                                          <Button variant="ghost" size="sm" onClick={() => removeCollab(c)} title="Remover">
+                                            <Trash2 className="w-4 h-4 text-destructive" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </React.Fragment>
                   ))
                 )}
               </TableBody>
