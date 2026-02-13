@@ -22,6 +22,8 @@ import AdminPanel from "./pages/AdminPanel";
 import GuestList from "./pages/GuestList";
 import WeddingEvent from "./pages/WeddingEvent";
 import ResetPassword from "./pages/ResetPassword";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -45,6 +47,8 @@ const App = () => (
                 <Route path="/guest-list" element={<GuestList />} />
                 <Route path="/evento/:eventCode" element={<WeddingEvent />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/pricing" element={<Pricing />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

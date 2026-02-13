@@ -122,6 +122,7 @@ const LandingPage = () => {
           
           {!isMobile && (
             <div className="flex items-center gap-4">
+              <Button variant="ghost" onClick={() => navigate('/pricing')}>Planos</Button>
               <Button variant="ghost" onClick={() => navigate('/user-guide')}>Manual de Uso</Button>
               <Button variant="ghost" onClick={() => navigate('/faq')}>FAQ</Button>
               <Button variant="outline" onClick={() => navigate('/auth')}>Entrar / Registar</Button>
@@ -142,6 +143,7 @@ const LandingPage = () => {
                   </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 mt-8">
+                  <Button variant="ghost" onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} className="justify-start">Planos</Button>
                   <Button variant="ghost" onClick={() => { navigate('/user-guide'); setMobileMenuOpen(false); }} className="justify-start">Manual de Uso</Button>
                   <Button variant="ghost" onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="justify-start">FAQ</Button>
                   <Button variant="outline" onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} className="justify-start">Entrar / Registar</Button>
