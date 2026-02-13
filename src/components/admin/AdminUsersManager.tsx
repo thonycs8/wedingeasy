@@ -633,7 +633,7 @@ export const AdminUsersManager = () => {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              ⚠️ Este link é de uso único e expira após utilização. Envie-o de forma segura ao utilizador.
+              ⚠️ Este link expira em 30 minutos. O utilizador terá de confirmar o seu email antes de redefinir a senha. Envie-o de forma segura.
             </p>
           </div>
 

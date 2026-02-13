@@ -177,29 +177,43 @@ Deno.serve(async (req) => {
           });
         }
 
-        const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-          type: "recovery",
-          email: targetUser.user.email,
-          options: {
-            redirectTo: `${req.headers.get("origin") || "https://wedingeasy.lovable.app"}/auth`,
-          },
-        });
+        // Generate a secure random token
+        const tokenBytes = new Uint8Array(32);
+        crypto.getRandomValues(tokenBytes);
+        const resetToken = Array.from(tokenBytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
 
-        if (linkError) {
-          return new Response(JSON.stringify({ error: "Failed to generate reset link", details: linkError.message }), {
+        // Store token in database with 30 min expiry
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+        
+        const { error: insertError } = await adminClient
+          .from("password_reset_tokens")
+          .insert({
+            user_id: target_user_id,
+            token: resetToken,
+            email: targetUser.user.email,
+            expires_at: expiresAt,
+            created_by: user.id,
+          });
+
+        if (insertError) {
+          return new Response(JSON.stringify({ error: "Failed to create reset token", details: insertError.message }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        // The generated link contains the token - extract it to build the proper URL
-        const actionLink = linkData?.properties?.action_link || "";
+        // Build the reset URL
+        const origin = req.headers.get("origin") || "https://wedingeasy.lovable.app";
+        const resetLink = `${origin}/reset-password?token=${resetToken}`;
 
         return new Response(JSON.stringify({ 
           success: true, 
           action: "reset_link_generated",
-          reset_link: actionLink,
+          reset_link: resetLink,
           email: targetUser.user.email,
+          expires_at: expiresAt,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
