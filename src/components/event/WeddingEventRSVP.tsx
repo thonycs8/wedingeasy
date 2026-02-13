@@ -86,7 +86,7 @@ export function WeddingEventRSVP({ eventCode, themeColor, initialGuestName }: RS
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             disabled={status === "loading"}
-            className="text-center"
+            className="text-center capitalize"
           />
           {errorMsg && <p className="text-destructive text-sm text-center">{errorMsg}</p>}
           <div className="flex gap-3">
