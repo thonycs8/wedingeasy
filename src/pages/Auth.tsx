@@ -51,16 +51,32 @@ export default function Auth() {
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
 
+  // Password reset state (when user arrives via reset link)
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
   useEffect(() => {
-    // Check if user is already logged in
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResettingPassword(true);
+        setError('');
+      } else if (event === 'SIGNED_IN' && !isResettingPassword) {
+        navigate('/dashboard');
+      }
+    });
+
+    // Check if user is already logged in (but not in recovery mode)
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !isResettingPassword) {
         navigate('/dashboard');
       }
     };
     checkUser();
-  }, [navigate]);
+
+    return () => subscription.unsubscribe();
+  }, [navigate, isResettingPassword]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +200,101 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (newPassword.length < 6) {
+        setError('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        setError('As senhas não coincidem.');
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      toast({
+        title: "Senha redefinida com sucesso!",
+        description: "Pode agora entrar com a nova senha.",
+      });
+      setIsResettingPassword(false);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Erro ao redefinir senha. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password reset form (when arriving via reset link)
+  if (isResettingPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <Heart className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold text-primary">weddingeasy</h1>
+            </div>
+            <div>
+              <CardTitle className="text-xl">Redefinir Senha</CardTitle>
+              <CardDescription>
+                Insira a sua nova senha abaixo
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova Senha</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
+                <Input
+                  id="confirm-new-password"
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Redefinir Senha
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
