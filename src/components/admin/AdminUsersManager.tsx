@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, ShieldBan, ShieldCheck, Trash2, UserX, UserCheck, MoreHorizontal, AlertTriangle } from "lucide-react";
+import { Search, ShieldBan, ShieldCheck, Trash2, UserX, UserCheck, MoreHorizontal, AlertTriangle, Mail, KeyRound, Copy, ExternalLink } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -50,6 +51,16 @@ export const AdminUsersManager = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Email change state
+  const [emailDialogUser, setEmailDialogUser] = useState<UserWithWedding | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // Password reset state
+  const [resetLinkDialog, setResetLinkDialog] = useState<{ user: UserWithWedding; link: string; email: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState<string | null>(null);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -124,7 +135,6 @@ export const AdminUsersManager = () => {
 
       if (error) throw error;
 
-      // If blocking, also ban from auth
       if (newStatus === "blocked") {
         const { error: banError } = await supabase.functions.invoke("admin-manage-user", {
           body: { action: "ban", target_user_id: user.user_id },
@@ -132,7 +142,6 @@ export const AdminUsersManager = () => {
         if (banError) console.error("Ban error:", banError);
       }
 
-      // If activating from blocked, unban
       if (newStatus === "active" && user.status === "blocked") {
         const { error: unbanError } = await supabase.functions.invoke("admin-manage-user", {
           body: { action: "unban", target_user_id: user.user_id },
@@ -183,6 +192,58 @@ export const AdminUsersManager = () => {
       setConfirmAction(null);
       setConfirmText("");
     }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!emailDialogUser || !newEmail.trim()) return;
+    setEmailLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+        body: { action: "update_email", target_user_id: emailDialogUser.user_id, new_email: newEmail.trim() },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === emailDialogUser.user_id ? { ...u, email: newEmail.trim() } : u
+        )
+      );
+
+      toast({ title: "Email atualizado", description: `Email alterado para ${newEmail.trim()}` });
+      setEmailDialogUser(null);
+      setNewEmail("");
+    } catch (error: any) {
+      console.error("Erro ao atualizar email:", error);
+      toast({ title: "Erro", description: error.message || "Não foi possível atualizar o email", variant: "destructive" });
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleGenerateResetLink = async (user: UserWithWedding) => {
+    setResetLoading(user.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+        body: { action: "generate_reset_link", target_user_id: user.user_id },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setResetLinkDialog({ user, link: data.reset_link, email: data.email });
+    } catch (error: any) {
+      console.error("Erro ao gerar link:", error);
+      toast({ title: "Erro", description: error.message || "Não foi possível gerar o link de redefinição", variant: "destructive" });
+    } finally {
+      setResetLoading(null);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado!", description: "Link copiado para a área de transferência" });
   };
 
   const handleConfirm = () => {
@@ -400,6 +461,20 @@ export const AdminUsersManager = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              {/* Email & Password support actions */}
+                              <DropdownMenuItem onClick={() => { setEmailDialogUser(user); setNewEmail(user.email || ""); }}>
+                                <Mail className="w-4 h-4 mr-2" /> Alterar Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleGenerateResetLink(user)}
+                                disabled={resetLoading === user.user_id}
+                              >
+                                <KeyRound className="w-4 h-4 mr-2" />
+                                {resetLoading === user.user_id ? "A gerar..." : "Gerar Link Redefinição Senha"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+
+                              {/* Status actions */}
                               {user.status === "active" && (
                                 <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend", user })}>
                                   <UserX className="w-4 h-4 mr-2" /> Suspender
@@ -472,6 +547,98 @@ export const AdminUsersManager = () => {
             >
               {actionLoading ? "A processar..." : config?.buttonLabel}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Email Dialog */}
+      <Dialog open={!!emailDialogUser} onOpenChange={() => { setEmailDialogUser(null); setNewEmail(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5" /> Alterar Email
+            </DialogTitle>
+            <DialogDescription>
+              Alterar o email de {[emailDialogUser?.first_name, emailDialogUser?.last_name].filter(Boolean).join(" ") || "utilizador"}.
+              O novo email será confirmado automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm text-muted-foreground">Email atual</Label>
+              <p className="text-sm font-medium">{emailDialogUser?.email || "—"}</p>
+            </div>
+            <div>
+              <Label htmlFor="new-email">Novo email</Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="novo@email.com"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setEmailDialogUser(null); setNewEmail(""); }}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleUpdateEmail}
+              disabled={emailLoading || !newEmail.trim() || newEmail.trim() === emailDialogUser?.email}
+            >
+              {emailLoading ? "A atualizar..." : "Atualizar Email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Link Dialog */}
+      <Dialog open={!!resetLinkDialog} onOpenChange={() => setResetLinkDialog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5" /> Link de Redefinição de Senha
+            </DialogTitle>
+            <DialogDescription>
+              Link gerado para <strong>{resetLinkDialog?.email}</strong>. Copie e envie ao utilizador para que possa redefinir a senha.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="p-3 rounded-lg border bg-muted/50">
+              <p className="text-xs text-muted-foreground mb-1 font-medium">Link de redefinição:</p>
+              <p className="text-xs break-all font-mono select-all">{resetLinkDialog?.link}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => resetLinkDialog && copyToClipboard(resetLinkDialog.link)}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copiar Link
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => resetLinkDialog && window.open(resetLinkDialog.link, "_blank")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" /> Abrir Link
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              ⚠️ Este link é de uso único e expira após utilização. Envie-o de forma segura ao utilizador.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setResetLinkDialog(null)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
