@@ -1118,6 +1118,7 @@ export type Database = {
           id: string
           invitation_accepted_at: string | null
           invited_by: string | null
+          is_suspended: boolean
           joined_at: string
           role: Database["public"]["Enums"]["wedding_role"]
           user_id: string
@@ -1127,6 +1128,7 @@ export type Database = {
           id?: string
           invitation_accepted_at?: string | null
           invited_by?: string | null
+          is_suspended?: boolean
           joined_at?: string
           role?: Database["public"]["Enums"]["wedding_role"]
           user_id: string
@@ -1136,6 +1138,7 @@ export type Database = {
           id?: string
           invitation_accepted_at?: string | null
           invited_by?: string | null
+          is_suspended?: boolean
           joined_at?: string
           role?: Database["public"]["Enums"]["wedding_role"]
           user_id?: string

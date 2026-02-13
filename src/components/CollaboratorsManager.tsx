@@ -33,7 +33,9 @@ import {
   Mail,
   Loader2,
   Clock,
-  Settings
+  Settings,
+  Ban,
+  RefreshCw
 } from "lucide-react";
 
 interface Collaborator {
@@ -41,6 +43,7 @@ interface Collaborator {
   user_id: string;
   role: string;
   joined_at: string;
+  is_suspended?: boolean;
   profiles: {
     first_name: string;
     last_name: string;
@@ -425,6 +428,29 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
     }
   };
 
+  const toggleSuspendCollaborator = async (collaborator: Collaborator) => {
+    if (collaborator.user_id === user?.id) {
+      toast({ title: t('common.error'), description: 'Não pode suspender a si mesmo', variant: "destructive" });
+      return;
+    }
+    if (['noivo', 'noiva'].includes(collaborator.role) || collaborator.id.startsWith('owner-')) {
+      toast({ title: t('common.error'), description: 'Não é possível suspender owners', variant: "destructive" });
+      return;
+    }
+    try {
+      const newState = !collaborator.is_suspended;
+      const { error } = await supabase
+        .from('wedding_collaborators')
+        .update({ is_suspended: newState })
+        .eq('id', collaborator.id);
+      if (error) throw error;
+      toast({ title: newState ? 'Colaborador suspenso' : 'Colaborador reativado' });
+      loadWeddingData();
+    } catch {
+      toast({ title: t('common.error'), description: 'Erro ao alterar estado', variant: "destructive" });
+    }
+  };
+
   const sendInvitation = async () => {
     // Validate email
     try {
@@ -775,7 +801,7 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
             ) : (
               <div className="space-y-2">
                 {collaborators.map((collaborator) => (
-                  <Card key={collaborator.id}>
+                  <Card key={collaborator.id} className={collaborator.is_suspended ? "opacity-60" : ""}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -799,6 +825,9 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                           <Badge variant={collaborator.role === 'noivo' || collaborator.role === 'noiva' ? 'default' : 'secondary'}>
                             {t(`roles.${collaborator.role}`)}
                           </Badge>
+                          {collaborator.is_suspended && (
+                            <Badge variant="destructive" className="text-xs">Suspenso</Badge>
+                          )}
                           {/* Show Admin badge for noiva and celebrante */}
                           {(collaborator.role === 'noiva' || collaborator.role === 'celebrante') && (
                             <Badge variant="destructive" className="gap-1">
@@ -813,10 +842,22 @@ export const CollaboratorsManager = ({ open, onOpenChange }: CollaboratorsManage
                               Owner
                             </Badge>
                           )}
-                          {/* Only admins can edit/remove non-admin collaborators */}
-                          {!['noivo', 'noiva', 'celebrante'].includes(collaborator.role) && 
+                          {/* Only admins can edit/remove/suspend non-admin collaborators */}
+                          {!['noivo', 'noiva'].includes(collaborator.role) && 
                            !collaborator.id.startsWith('owner-') && (
                             <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleSuspendCollaborator(collaborator)}
+                                title={collaborator.is_suspended ? "Reativar" : "Suspender"}
+                              >
+                                {collaborator.is_suspended ? (
+                                  <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                                ) : (
+                                  <Ban className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
