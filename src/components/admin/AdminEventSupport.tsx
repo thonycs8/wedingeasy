@@ -28,6 +28,8 @@ interface WeddingItem {
   style: string | null;
   region: string | null;
   is_active: boolean | null;
+  user_id: string;
+  owner_email?: string | null;
 }
 
 export const AdminEventSupport = () => {
@@ -56,10 +58,19 @@ export const AdminEventSupport = () => {
     try {
       const { data, error } = await supabase
         .from("wedding_data")
-        .select("id, couple_name, partner_name, wedding_date, event_code, estimated_budget, guest_count, style, region, is_active")
+        .select("id, couple_name, partner_name, wedding_date, event_code, estimated_budget, guest_count, style, region, is_active, user_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setWeddings(data || []);
+
+      // Fetch owner emails in bulk
+      const userIds = [...new Set((data || []).map(w => w.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, email")
+        .in("user_id", userIds);
+      const emailMap = new Map((profiles || []).map(p => [p.user_id, p.email]));
+
+      setWeddings((data || []).map(w => ({ ...w, owner_email: emailMap.get(w.user_id) || null })));
     } catch {
       toast({ title: "Erro ao carregar casamentos", variant: "destructive" });
     } finally {
@@ -81,6 +92,12 @@ export const AdminEventSupport = () => {
       supabase.from("wedding_subscriptions").select("*, subscription_plans(name, display_name)").eq("wedding_id", w.id).maybeSingle(),
       supabase.from("subscription_plans").select("*").eq("is_active", true).order("sort_order"),
     ]);
+    // Also fetch owner email if not already loaded
+    if (!w.owner_email) {
+      const { data: ownerProfile } = await supabase.from("profiles").select("email").eq("user_id", w.user_id).maybeSingle();
+      w.owner_email = ownerProfile?.email || null;
+      setSelected({ ...w, owner_email: ownerProfile?.email || null });
+    }
     setGuests(gRes.data || []);
     setCategories(cRes.data || []);
     setExpenses(eRes.data || []);
@@ -176,6 +193,7 @@ export const AdminEventSupport = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Casal</TableHead>
+                  <TableHead>Email Admin</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Estado</TableHead>
@@ -186,6 +204,7 @@ export const AdminEventSupport = () => {
                 {filteredWeddings.map(w => (
                   <TableRow key={w.id}>
                     <TableCell className="font-medium">{getCoupleLabel(w)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{w.owner_email || "—"}</TableCell>
                     <TableCell>{w.wedding_date ? new Date(w.wedding_date).toLocaleDateString("pt-PT") : "—"}</TableCell>
                     <TableCell><code className="text-xs bg-muted px-2 py-0.5 rounded">{w.event_code}</code></TableCell>
                     <TableCell><Badge variant={w.is_active ? "default" : "outline"}>{w.is_active ? "Ativo" : "Inativo"}</Badge></TableCell>
@@ -211,7 +230,7 @@ export const AdminEventSupport = () => {
         </Button>
         <div>
           <h3 className="text-lg font-semibold">{getCoupleLabel(selected)}</h3>
-          <p className="text-sm text-muted-foreground">Código: {selected.event_code}</p>
+          <p className="text-sm text-muted-foreground">Código: {selected.event_code} • Admin: {selected.owner_email || "—"}</p>
         </div>
       </div>
 
@@ -439,20 +458,57 @@ export const AdminEventSupport = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Papel</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead>Desde</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {collaborators.map((c: any) => {
                     const profile = c.profiles;
                     return (
-                      <TableRow key={c.id}>
+                      <TableRow key={c.id} className={c.is_suspended ? "opacity-60" : ""}>
                         <TableCell className="font-medium">
                           {profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "—" : "—"}
                         </TableCell>
                         <TableCell className="text-sm">{profile?.email || "—"}</TableCell>
                         <TableCell><Badge variant="outline" className="text-xs capitalize">{c.role}</Badge></TableCell>
+                        <TableCell>
+                          <Badge variant={c.is_suspended ? "destructive" : "default"} className="text-xs">
+                            {c.is_suspended ? "Suspenso" : "Ativo"}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-sm">{new Date(c.joined_at).toLocaleDateString("pt-PT")}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                const { error } = await supabase.from("wedding_collaborators").update({ is_suspended: !c.is_suspended }).eq("id", c.id);
+                                if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
+                                setCollaborators(prev => prev.map(x => x.id === c.id ? { ...x, is_suspended: !c.is_suspended } : x));
+                                toast({ title: c.is_suspended ? "Colaborador reativado" : "Colaborador suspenso" });
+                              }}
+                              title={c.is_suspended ? "Reativar" : "Suspender"}
+                            >
+                              {c.is_suspended ? <RefreshCw className="w-4 h-4" /> : <Clock className="w-4 h-4 text-muted-foreground" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                const { error } = await supabase.from("wedding_collaborators").delete().eq("id", c.id);
+                                if (error) { toast({ title: "Erro ao remover", variant: "destructive" }); return; }
+                                setCollaborators(prev => prev.filter(x => x.id !== c.id));
+                                toast({ title: "Colaborador removido" });
+                              }}
+                              title="Remover"
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
