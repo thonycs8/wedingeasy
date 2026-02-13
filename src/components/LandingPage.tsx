@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { LanguageCurrencySelector } from "@/components/LanguageCurrencySelector"
 import { SignupModal } from "@/components/SignupModal";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const LandingPage = () => {
   const { t } = useTranslation();
@@ -36,6 +37,13 @@ const LandingPage = () => {
   const [showSignup, setShowSignup] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const featuresRef = useScrollReveal();
+  const featuresGridRef = useScrollReveal();
+  const problemRef = useScrollReveal();
+  const problemCardRef = useScrollReveal();
+  const testimonialsRef = useScrollReveal();
+  const testimonialsGridRef = useScrollReveal();
+  const ctaRef = useScrollReveal();
 
   const features = [
     {
@@ -116,7 +124,7 @@ const LandingPage = () => {
       <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border py-4">
         <div className="container mx-auto flex justify-between items-center px-4">
           <div className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-primary" />
+            <Heart className="w-8 h-8 text-primary animate-heartbeat" />
             <span className="text-xl font-bold text-primary">{t('landing.brand')}</span>
           </div>
           
@@ -180,7 +188,7 @@ const LandingPage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Button 
                 size="lg" 
-                className="btn-gradient text-lg px-8 py-4 h-auto"
+                className="btn-gradient text-lg px-8 py-4 h-auto animate-gentle-glow"
                 onClick={() => setShowSignup(true)}
               >
                 {t('landing.hero.cta')}
@@ -223,7 +231,7 @@ const LandingPage = () => {
       {/* Features Section */}
       <section className="py-20 bg-card">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 scroll-reveal" ref={featuresRef}>
             <h2 className="text-4xl font-bold text-foreground mb-4">
               {t('landing.benefits.title')}
             </h2>
@@ -232,9 +240,9 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children" ref={featuresGridRef}>
             {features.map((feature, index) => (
-              <Card key={index} className="card-romantic animate-scale-in text-center" style={{animationDelay: `${index * 0.05}s`}}>
+              <Card key={index} className="card-romantic text-center">
                 <CardContent className="p-6">
                   <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <feature.icon className="w-7 h-7 text-primary" />
@@ -252,7 +260,7 @@ const LandingPage = () => {
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="animate-fade-in-up">
+            <div className="scroll-reveal-left" ref={problemRef}>
               <h2 className="text-4xl font-bold text-foreground mb-6">
                 {t('landing.problem.title')}
               </h2>
@@ -266,18 +274,20 @@ const LandingPage = () => {
               </div>
             </div>
             
-            <Card className="card-romantic p-8 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-              <div className="text-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Target className="w-10 h-10 text-primary" />
+            <div className="scroll-reveal-right" ref={problemCardRef}>
+              <Card className="card-romantic p-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Target className="w-10 h-10 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4">{t('landing.calculator.title')}</h3>
+                  <p className="text-muted-foreground mb-6">{t('landing.calculator.desc')}</p>
+                  <Button className="btn-gradient w-full animate-gentle-glow" onClick={() => setShowSignup(true)}>
+                    {t('landing.calculator.cta')}
+                  </Button>
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{t('landing.calculator.title')}</h3>
-                <p className="text-muted-foreground mb-6">{t('landing.calculator.desc')}</p>
-                <Button className="btn-gradient w-full" onClick={() => setShowSignup(true)}>
-                  {t('landing.calculator.cta')}
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
@@ -285,7 +295,7 @@ const LandingPage = () => {
       {/* Testimonials */}
       <section className="py-20 bg-card">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 scroll-reveal" ref={testimonialsRef}>
             <h2 className="text-4xl font-bold text-foreground mb-4">
               {t('landing.testimonials.title')}
             </h2>
@@ -294,9 +304,9 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children" ref={testimonialsGridRef}>
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="card-romantic animate-scale-in" style={{animationDelay: `${index * 0.1}s`}}>
+              <Card key={index} className="card-romantic">
                 <CardContent className="p-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
@@ -318,7 +328,7 @@ const LandingPage = () => {
       {/* Final CTA */}
       <section className="py-20 bg-gradient-to-r from-primary to-accent">
         <div className="container mx-auto px-6 text-center">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto scroll-reveal" ref={ctaRef}>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               {t('landing.cta.title')}
             </h2>
@@ -328,7 +338,7 @@ const LandingPage = () => {
             <Button 
               size="lg" 
               variant="secondary"
-              className="text-lg px-8 py-4 h-auto bg-white text-primary hover:bg-white/90"
+              className="text-lg px-8 py-4 h-auto bg-white text-primary hover:bg-white/90 animate-gentle-glow"
               onClick={() => setShowSignup(true)}
             >
               {t('landing.cta.button')}
