@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, target_user_id } = await req.json();
+    const body = await req.json();
+    const { action, target_user_id } = body;
 
     if (!target_user_id) {
       return new Response(JSON.stringify({ error: "target_user_id is required" }), {
@@ -71,7 +72,6 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "delete": {
-        // 1. Delete all user data via RPC (uses admin's JWT for auth)
         const { error: dataError } = await userClient.rpc("admin_delete_user_data", {
           _target_user_id: target_user_id,
         });
@@ -84,7 +84,6 @@ Deno.serve(async (req) => {
           });
         }
 
-        // 2. Delete auth user using service role
         const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(target_user_id);
 
         if (authDeleteError) {
@@ -102,7 +101,7 @@ Deno.serve(async (req) => {
 
       case "ban": {
         const { error } = await adminClient.auth.admin.updateUserById(target_user_id, {
-          ban_duration: "876600h", // ~100 years
+          ban_duration: "876600h",
         });
 
         if (error) {
@@ -134,8 +133,80 @@ Deno.serve(async (req) => {
         });
       }
 
+      case "update_email": {
+        const { new_email } = body;
+        if (!new_email) {
+          return new Response(JSON.stringify({ error: "new_email is required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Update email in auth
+        const { error: emailError } = await adminClient.auth.admin.updateUserById(target_user_id, {
+          email: new_email,
+          email_confirm: true,
+        });
+
+        if (emailError) {
+          return new Response(JSON.stringify({ error: "Failed to update email", details: emailError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Also update email in profiles table
+        await adminClient
+          .from("profiles")
+          .update({ email: new_email })
+          .eq("user_id", target_user_id);
+
+        return new Response(JSON.stringify({ success: true, action: "email_updated", new_email }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "generate_reset_link": {
+        // Get the user's email first
+        const { data: targetUser, error: getUserError } = await adminClient.auth.admin.getUserById(target_user_id);
+
+        if (getUserError || !targetUser?.user?.email) {
+          return new Response(JSON.stringify({ error: "Failed to get user email", details: getUserError?.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+          type: "recovery",
+          email: targetUser.user.email,
+          options: {
+            redirectTo: `${req.headers.get("origin") || "https://wedingeasy.lovable.app"}/auth`,
+          },
+        });
+
+        if (linkError) {
+          return new Response(JSON.stringify({ error: "Failed to generate reset link", details: linkError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // The generated link contains the token - extract it to build the proper URL
+        const actionLink = linkData?.properties?.action_link || "";
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          action: "reset_link_generated",
+          reset_link: actionLink,
+          email: targetUser.user.email,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       default:
-        return new Response(JSON.stringify({ error: "Invalid action. Use: delete, ban, unban" }), {
+        return new Response(JSON.stringify({ error: "Invalid action. Use: delete, ban, unban, update_email, generate_reset_link" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
