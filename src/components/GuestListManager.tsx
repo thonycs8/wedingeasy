@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWeddingData } from "@/contexts/WeddingContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useWeddingId } from "@/hooks/useWeddingId";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Guest {
@@ -61,7 +62,7 @@ const GuestListManager = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { weddingData } = useWeddingData();
-
+  const { weddingId } = useWeddingId();
   const [loading, setLoading] = useState(true);
   const [guests, setGuests] = useState<Guest[]>([]);
 
@@ -73,12 +74,13 @@ const GuestListManager = () => {
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
 
   const loadGuests = async () => {
-    if (!user) return;
+    if (!user || !weddingId) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("guests")
         .select("*")
+        .eq("wedding_id", weddingId)
         .order("name");
 
       if (error) throw error;
@@ -125,9 +127,9 @@ const GuestListManager = () => {
   };
 
   useEffect(() => {
-    if (user) void loadGuests();
+    if (user && weddingId) void loadGuests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, weddingId]);
 
   const filteredGuests = useMemo(() => {
     return guests.filter((guest) => {
