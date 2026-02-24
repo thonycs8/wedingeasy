@@ -76,15 +76,33 @@ export const AdminUsersManager = () => {
 
       if (error) throw error;
 
-      const [weddingsRes, subsRes] = await Promise.all([
+      const [weddingsRes, subsRes, collabRes] = await Promise.all([
         supabase.from("wedding_data").select("id, user_id, couple_name, partner_name"),
         supabase.from("wedding_subscriptions").select("wedding_id, subscription_plans(display_name)"),
+        supabase.from("wedding_collaborators").select("user_id, wedding_id, role"),
       ]);
 
-      const weddingMap = new Map<string, string>();
+      // Build a map of wedding_id -> wedding name
+      const weddingIdNameMap = new Map<string, string>();
       (weddingsRes.data || []).forEach((w: any) => {
         const name = [w.partner_name, w.couple_name].filter(Boolean).join(" & ");
-        weddingMap.set(w.user_id, name || "Sem nome");
+        weddingIdNameMap.set(w.id, name || "Sem nome");
+      });
+
+      // Map user_id -> wedding name (owners first, then collaborators)
+      const weddingMap = new Map<string, string>();
+      (weddingsRes.data || []).forEach((w: any) => {
+        const name = weddingIdNameMap.get(w.id) || "Sem nome";
+        weddingMap.set(w.user_id, name);
+      });
+      // Add collaborators that aren't already owners
+      (collabRes.data || []).forEach((c: any) => {
+        if (!weddingMap.has(c.user_id)) {
+          const name = weddingIdNameMap.get(c.wedding_id);
+          if (name) {
+            weddingMap.set(c.user_id, `${name} (${c.role})`);
+          }
+        }
       });
 
       const planMap = new Map<string, string>();
