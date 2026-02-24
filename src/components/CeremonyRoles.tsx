@@ -82,20 +82,22 @@ export const CeremonyRoles = () => {
   const [newRoleName, setNewRoleName] = useState("");
 
   useEffect(() => {
-    if (user) {
+    if (user && weddingId) {
       loadRoles();
       loadCustomRoles();
     }
-  }, [user]);
+  }, [user, weddingId]);
 
   const loadRoles = async () => {
     if (!user) return;
 
     try {
+      if (!weddingId) return;
+
       const { data, error } = await supabase
         .from("guests")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("wedding_id", weddingId)
         .not("special_role", "is", null)
         .order("special_role");
 
