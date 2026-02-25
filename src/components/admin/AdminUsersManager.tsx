@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, ShieldBan, ShieldCheck, Trash2, UserX, UserCheck, MoreHorizontal, AlertTriangle, Mail, KeyRound, Copy, ExternalLink } from "lucide-react";
+import { Search, ShieldBan, ShieldCheck, Trash2, UserX, UserCheck, MoreHorizontal, AlertTriangle, Mail, KeyRound, Copy, ExternalLink, Pencil } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -30,7 +33,17 @@ interface UserWithWedding {
   status_reason: string | null;
   created_at: string;
   wedding_name: string | null;
+  wedding_id: string | null;
   plan_name: string | null;
+  plan_id: string | null;
+  subscription_id: string | null;
+  preferred_language: string | null;
+}
+
+interface Plan {
+  id: string;
+  display_name: string;
+  name: string;
 }
 
 type ConfirmAction = {
@@ -44,8 +57,14 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   blocked: { label: "Bloqueado", variant: "destructive" },
 };
 
+const LANGUAGES = [
+  { value: "pt", label: "Português" },
+  { value: "en", label: "English" },
+];
+
 export const AdminUsersManager = () => {
   const [users, setUsers] = useState<UserWithWedding[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -56,6 +75,14 @@ export const AdminUsersManager = () => {
   const [emailDialogUser, setEmailDialogUser] = useState<UserWithWedding | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
+
+  // Profile edit state
+  const [editProfileUser, setEditProfileUser] = useState<UserWithWedding | null>(null);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editLanguage, setEditLanguage] = useState("pt");
+  const [editProfileLoading, setEditProfileLoading] = useState(false);
 
   // Password reset state
   const [resetLinkDialog, setResetLinkDialog] = useState<{ user: UserWithWedding; link: string; email: string } | null>(null);
@@ -76,56 +103,68 @@ export const AdminUsersManager = () => {
 
       if (error) throw error;
 
-      const [weddingsRes, subsRes, collabRes] = await Promise.all([
+      const [weddingsRes, subsRes, collabRes, plansRes] = await Promise.all([
         supabase.from("wedding_data").select("id, user_id, couple_name, partner_name"),
-        supabase.from("wedding_subscriptions").select("wedding_id, subscription_plans(display_name)"),
+        supabase.from("wedding_subscriptions").select("id, wedding_id, plan_id, subscription_plans(display_name)"),
         supabase.from("wedding_collaborators").select("user_id, wedding_id, role"),
+        supabase.from("subscription_plans").select("id, display_name, name").order("sort_order"),
       ]);
 
-      // Build a map of wedding_id -> wedding name
+      setPlans(plansRes.data || []);
+
+      // Build wedding maps
       const weddingIdNameMap = new Map<string, string>();
       (weddingsRes.data || []).forEach((w: any) => {
         const name = [w.partner_name, w.couple_name].filter(Boolean).join(" & ");
         weddingIdNameMap.set(w.id, name || "Sem nome");
       });
 
-      // Map user_id -> wedding name (owners first, then collaborators)
-      const weddingMap = new Map<string, string>();
+      // Map user_id -> { wedding_name, wedding_id }
+      const weddingMap = new Map<string, { name: string; weddingId: string }>();
       (weddingsRes.data || []).forEach((w: any) => {
         const name = weddingIdNameMap.get(w.id) || "Sem nome";
-        weddingMap.set(w.user_id, name);
+        weddingMap.set(w.user_id, { name, weddingId: w.id });
       });
-      // Add collaborators that aren't already owners
       (collabRes.data || []).forEach((c: any) => {
         if (!weddingMap.has(c.user_id)) {
           const name = weddingIdNameMap.get(c.wedding_id);
           if (name) {
-            weddingMap.set(c.user_id, `${name} (${c.role})`);
+            weddingMap.set(c.user_id, { name: `${name} (${c.role})`, weddingId: c.wedding_id });
           }
         }
       });
 
-      const planMap = new Map<string, string>();
+      // Map wedding_id -> subscription info
+      const subMap = new Map<string, { plan_name: string; plan_id: string; subscription_id: string }>();
       (subsRes.data || []).forEach((s: any) => {
-        const wedding = (weddingsRes.data || []).find((w: any) => w.id === s.wedding_id);
-        if (wedding) {
-          planMap.set(wedding.user_id, s.subscription_plans?.display_name || "—");
-        }
+        subMap.set(s.wedding_id, {
+          plan_name: s.subscription_plans?.display_name || "—",
+          plan_id: s.plan_id,
+          subscription_id: s.id,
+        });
       });
 
-      const enriched: UserWithWedding[] = (profiles || []).map((p: any) => ({
-        id: p.id,
-        user_id: p.user_id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        email: p.email,
-        phone: p.phone,
-        status: p.status || "active",
-        status_reason: p.status_reason,
-        created_at: p.created_at,
-        wedding_name: weddingMap.get(p.user_id) || null,
-        plan_name: planMap.get(p.user_id) || null,
-      }));
+      const enriched: UserWithWedding[] = (profiles || []).map((p: any) => {
+        const wedding = weddingMap.get(p.user_id);
+        const sub = wedding ? subMap.get(wedding.weddingId) : null;
+        return {
+          id: p.id,
+          user_id: p.user_id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          phone: p.phone,
+          status: p.status || "active",
+          status_reason: p.status_reason,
+          created_at: p.created_at,
+          wedding_name: wedding?.name || null,
+          wedding_id: wedding?.weddingId || null,
+          plan_name: sub?.plan_name || null,
+          plan_id: sub?.plan_id || null,
+          subscription_id: sub?.subscription_id || null,
+          preferred_language: p.preferred_language || "pt",
+        };
+      });
 
       setUsers(enriched);
     } catch (error) {
@@ -133,6 +172,39 @@ export const AdminUsersManager = () => {
       toast({ title: "Erro", description: "Não foi possível carregar os utilizadores", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const changePlan = async (user: UserWithWedding, planId: string) => {
+    if (!user.wedding_id) {
+      toast({ title: "Sem evento", description: "Este utilizador não tem evento associado", variant: "destructive" });
+      return;
+    }
+    try {
+      if (user.subscription_id) {
+        const { error } = await supabase
+          .from("wedding_subscriptions")
+          .update({ plan_id: planId })
+          .eq("id", user.subscription_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("wedding_subscriptions")
+          .insert({ wedding_id: user.wedding_id, plan_id: planId });
+        if (error) throw error;
+      }
+
+      const plan = plans.find((p) => p.id === planId);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === user.user_id ? { ...u, plan_id: planId, plan_name: plan?.display_name || null } : u
+        )
+      );
+
+      toast({ title: "Sucesso", description: `Plano atualizado para ${plan?.display_name}` });
+    } catch (error) {
+      console.error("Erro ao alterar plano:", error);
+      toast({ title: "Erro", description: "Não foi possível alterar o plano", variant: "destructive" });
     }
   };
 
@@ -238,6 +310,48 @@ export const AdminUsersManager = () => {
     } finally {
       setEmailLoading(false);
     }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!editProfileUser) return;
+    setEditProfileLoading(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: editFirstName.trim() || null,
+          last_name: editLastName.trim() || null,
+          phone: editPhone.trim() || null,
+          preferred_language: editLanguage,
+        })
+        .eq("user_id", editProfileUser.user_id);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === editProfileUser.user_id
+            ? { ...u, first_name: editFirstName.trim() || null, last_name: editLastName.trim() || null, phone: editPhone.trim() || null, preferred_language: editLanguage }
+            : u
+        )
+      );
+
+      toast({ title: "Perfil atualizado" });
+      setEditProfileUser(null);
+    } catch (error: any) {
+      console.error("Erro ao atualizar perfil:", error);
+      toast({ title: "Erro", description: error.message || "Não foi possível atualizar o perfil", variant: "destructive" });
+    } finally {
+      setEditProfileLoading(false);
+    }
+  };
+
+  const openEditProfile = (user: UserWithWedding) => {
+    setEditProfileUser(user);
+    setEditFirstName(user.first_name || "");
+    setEditLastName(user.last_name || "");
+    setEditPhone(user.phone || "");
+    setEditLanguage(user.preferred_language || "pt");
   };
 
   const handleGenerateResetLink = async (user: UserWithWedding) => {
@@ -423,6 +537,7 @@ export const AdminUsersManager = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Evento</TableHead>
                   <TableHead>Plano</TableHead>
+                  <TableHead>Idioma</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Registo</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -431,13 +546,14 @@ export const AdminUsersManager = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       Nenhum utilizador encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((user) => {
                     const statusCfg = STATUS_CONFIG[user.status] || STATUS_CONFIG.active;
+                    const langLabel = LANGUAGES.find(l => l.value === user.preferred_language)?.label || user.preferred_language || "—";
                     return (
                       <TableRow key={user.id} className={user.status !== "active" ? "opacity-70" : ""}>
                         <TableCell className="font-medium">
@@ -452,11 +568,26 @@ export const AdminUsersManager = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {user.plan_name ? (
-                            <Badge variant="secondary" className="text-xs">{user.plan_name}</Badge>
+                          {user.wedding_id ? (
+                            <Select
+                              value={user.plan_id || ""}
+                              onValueChange={(value) => changePlan(user, value)}
+                            >
+                              <SelectTrigger className="w-32 h-8 text-xs">
+                                <SelectValue placeholder="Sem plano" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {plans.map((plan) => (
+                                  <SelectItem key={plan.id} value={plan.id}>{plan.display_name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           ) : (
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{langLabel}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusCfg.variant} className="text-xs">
@@ -479,6 +610,10 @@ export const AdminUsersManager = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              {/* Profile edit */}
+                              <DropdownMenuItem onClick={() => openEditProfile(user)}>
+                                <Pencil className="w-4 h-4 mr-2" /> Editar Perfil
+                              </DropdownMenuItem>
                               {/* Email & Password support actions */}
                               <DropdownMenuItem onClick={() => { setEmailDialogUser(user); setNewEmail(user.email || ""); }}>
                                 <Mail className="w-4 h-4 mr-2" /> Alterar Email
@@ -608,6 +743,74 @@ export const AdminUsersManager = () => {
               disabled={emailLoading || !newEmail.trim() || newEmail.trim() === emailDialogUser?.email}
             >
               {emailLoading ? "A atualizar..." : "Atualizar Email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={!!editProfileUser} onOpenChange={() => setEditProfileUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5" /> Editar Perfil
+            </DialogTitle>
+            <DialogDescription>
+              Editar dados de {[editProfileUser?.first_name, editProfileUser?.last_name].filter(Boolean).join(" ") || editProfileUser?.email || "utilizador"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-first-name">Primeiro Nome</Label>
+                <Input
+                  id="edit-first-name"
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                  placeholder="Nome"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-last-name">Apelido</Label>
+                <Input
+                  id="edit-last-name"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                  placeholder="Apelido"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-phone">Telefone</Label>
+              <Input
+                id="edit-phone"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+351 900 000 000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-language">Idioma Preferido</Label>
+              <Select value={editLanguage} onValueChange={setEditLanguage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditProfileUser(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateProfile} disabled={editProfileLoading}>
+              {editProfileLoading ? "A guardar..." : "Guardar Alterações"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -703,6 +703,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          preferred_language: string | null
           status: string
           status_changed_at: string | null
           status_changed_by: string | null
@@ -717,6 +718,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          preferred_language?: string | null
           status?: string
           status_changed_at?: string | null
           status_changed_by?: string | null
@@ -731,6 +733,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          preferred_language?: string | null
           status?: string
           status_changed_at?: string | null
           status_changed_by?: string | null
