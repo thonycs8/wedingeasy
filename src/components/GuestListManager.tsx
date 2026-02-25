@@ -40,6 +40,7 @@ interface Guest {
   table_number?: number | null;
   side?: "noivo" | "noiva" | null;
   age_band?: "0_4" | "5_10" | "11_plus" | "adult" | null;
+  special_role?: string[] | null;
 }
 
 const isVirtualGuest = (id: string) => id.includes("-virtual");
@@ -198,6 +199,7 @@ const GuestListManager = () => {
     if ("side" in patch) dbPatch.side = patch.side ?? null;
     if ("age_band" in patch) dbPatch.age_band = patch.age_band ?? null;
     if ("printed_invitation" in patch) dbPatch.printed_invitation = patch.printed_invitation ?? false;
+    if ("special_role" in patch) dbPatch.special_role = patch.special_role ?? null;
 
     try {
       const { error } = await supabase.from("guests").update(dbPatch).eq("id", guestId);
@@ -225,6 +227,7 @@ const GuestListManager = () => {
     if ("side" in patch) dbPatch.side = patch.side ?? null;
     if ("age_band" in patch) dbPatch.age_band = patch.age_band ?? null;
     if ("printed_invitation" in patch) dbPatch.printed_invitation = patch.printed_invitation ?? false;
+    if ("special_role" in patch) dbPatch.special_role = patch.special_role ?? null;
 
     try {
       const { error } = await supabase.from("guests").update(dbPatch).in("id", ids);
@@ -381,6 +384,7 @@ const GuestListManager = () => {
                 <TableHead>Categoria</TableHead>
                 <TableHead>Lado</TableHead>
                 <TableHead>Faixa</TableHead>
+                <TableHead>Papel Cerimónia</TableHead>
                 <TableHead className="text-center">Conf.</TableHead>
                 <TableHead className="text-center">+1</TableHead>
                 <TableHead className="text-center">Conv.</TableHead>
@@ -390,13 +394,13 @@ const GuestListManager = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
                     A carregar convidados...
                   </TableCell>
                 </TableRow>
               ) : filteredGuests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
                     Nenhum convidado encontrado.
                   </TableCell>
                 </TableRow>
@@ -500,6 +504,36 @@ const GuestListManager = () => {
                             <SelectItem value="5_10">{getAgeBandLabel("5_10")}</SelectItem>
                             <SelectItem value="11_plus">{getAgeBandLabel("11_plus")}</SelectItem>
                             <SelectItem value="adult">{getAgeBandLabel("adult")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      <TableCell>
+                        <Select
+                          value={guest.special_role?.[0] || "none"}
+                          onValueChange={(v) => {
+                            const newRole = v === "none" ? null : [v];
+                            updateGuest(guest.id, { special_role: newRole } as Partial<Guest>);
+                          }}
+                          disabled={disabled}
+                        >
+                          <SelectTrigger className="w-44 bg-background">
+                            <SelectValue placeholder="Sem papel" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-[100]">
+                            <SelectItem value="none">Sem papel</SelectItem>
+                            <SelectItem value="Padrinho">Padrinho</SelectItem>
+                            <SelectItem value="Madrinha">Madrinha</SelectItem>
+                            <SelectItem value="Pai do Noivo">Pai do Noivo</SelectItem>
+                            <SelectItem value="Mãe do Noivo">Mãe do Noivo</SelectItem>
+                            <SelectItem value="Pai da Noiva">Pai da Noiva</SelectItem>
+                            <SelectItem value="Mãe da Noiva">Mãe da Noiva</SelectItem>
+                            <SelectItem value="Dama de Honor">Dama de Honor</SelectItem>
+                            <SelectItem value="Pajem">Pajem</SelectItem>
+                            <SelectItem value="Florista">Florista</SelectItem>
+                            <SelectItem value="Portador das Alianças">Portador das Alianças</SelectItem>
+                            <SelectItem value="Celebrante">Celebrante</SelectItem>
+                            <SelectItem value="Convidado de Honra">Convidado de Honra</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
