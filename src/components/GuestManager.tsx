@@ -106,16 +106,18 @@ export const GuestManager = () => {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && weddingId) {
       loadGuests();
     }
-  }, [user]);
+  }, [user, weddingId]);
 
   const loadGuests = async () => {
+    if (!weddingId) return;
     try {
       const { data, error } = await supabase
         .from('guests')
         .select('*')
+        .eq('wedding_id', weddingId)
         .order('name');
 
       if (error) throw error;
