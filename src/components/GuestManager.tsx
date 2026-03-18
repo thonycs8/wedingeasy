@@ -822,6 +822,24 @@ export const GuestManager = () => {
                     </div>
 
                     <div>
+                      <Label htmlFor="family_group">Família / Grupo</Label>
+                      <Input
+                        id="family_group"
+                        value={formData.family_group}
+                        onChange={(e) => setFormData(prev => ({ ...prev, family_group: e.target.value }))}
+                        placeholder="Ex: Família Silva, Família Costa..."
+                        list="family-suggestions"
+                      />
+                      <datalist id="family-suggestions">
+                        {Array.from(new Set(guests.filter(g => g.family_group).map(g => g.family_group!))).map(fg => (
+                          <option key={fg} value={fg} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <Label htmlFor="special_role">Função Especial</Label>
                       <Select 
                         value={formData.special_role || undefined} 
@@ -847,17 +865,17 @@ export const GuestManager = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="table_number">Número da Mesa</Label>
-                    <Input
-                      id="table_number"
-                      type="number"
-                      value={formData.table_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, table_number: e.target.value }))}
-                      placeholder="Ex: 1, 2, 3..."
-                    />
+                    <div>
+                      <Label htmlFor="table_number">Número da Mesa</Label>
+                      <Input
+                        id="table_number"
+                        type="number"
+                        value={formData.table_number}
+                        onChange={(e) => setFormData(prev => ({ ...prev, table_number: e.target.value }))}
+                        placeholder="Ex: 1, 2, 3..."
+                      />
+                    </div>
                   </div>
 
                   <div>
