@@ -396,7 +396,7 @@ const GuestListManager = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                     A carregar convidados...
                   </TableCell>
                 </TableRow>
