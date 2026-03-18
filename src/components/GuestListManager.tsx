@@ -41,6 +41,7 @@ interface Guest {
   side?: "noivo" | "noiva" | null;
   age_band?: "0_4" | "5_10" | "11_plus" | "adult" | null;
   special_role?: string[] | null;
+  family_group?: string | null;
 }
 
 const isVirtualGuest = (id: string) => id.includes("-virtual");
@@ -200,6 +201,7 @@ const GuestListManager = () => {
     if ("age_band" in patch) dbPatch.age_band = patch.age_band ?? null;
     if ("printed_invitation" in patch) dbPatch.printed_invitation = patch.printed_invitation ?? false;
     if ("special_role" in patch) dbPatch.special_role = patch.special_role ?? null;
+    if ("family_group" in patch) dbPatch.family_group = (patch as any).family_group ?? null;
 
     try {
       const { error } = await supabase.from("guests").update(dbPatch).eq("id", guestId);
@@ -373,6 +375,12 @@ const GuestListManager = () => {
           </div>
         )}
 
+        <datalist id="family-group-suggestions">
+          {Array.from(new Set(guests.filter(g => g.family_group).map(g => g.family_group!))).sort().map(fg => (
+            <option key={fg} value={fg} />
+          ))}
+        </datalist>
+
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -385,6 +393,7 @@ const GuestListManager = () => {
                 <TableHead>Lado</TableHead>
                 <TableHead>Faixa</TableHead>
                 <TableHead>Papel Cerimónia</TableHead>
+                <TableHead>Família</TableHead>
                 <TableHead className="text-center">Conf.</TableHead>
                 <TableHead className="text-center">+1</TableHead>
                 <TableHead className="text-center">Conv.</TableHead>
@@ -394,13 +403,13 @@ const GuestListManager = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                     A carregar convidados...
                   </TableCell>
                 </TableRow>
               ) : filteredGuests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                     Nenhum convidado encontrado.
                   </TableCell>
                 </TableRow>
@@ -536,6 +545,18 @@ const GuestListManager = () => {
                             <SelectItem value="Convidado de Honra">Convidado de Honra</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+
+                      <TableCell>
+                        <Input
+                          value={guest.family_group || ""}
+                          onChange={(e) => setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, family_group: e.target.value } : g)))}
+                          onBlur={(e) => updateGuest(guest.id, { family_group: e.target.value.trim() || null } as Partial<Guest>)}
+                          disabled={disabled}
+                          className="min-w-[10rem] bg-background"
+                          placeholder="Ex: Família Silva"
+                          list="family-group-suggestions"
+                        />
                       </TableCell>
 
                       <TableCell className="text-center">
