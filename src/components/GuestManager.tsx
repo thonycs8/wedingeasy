@@ -1079,21 +1079,36 @@ export const GuestManager = () => {
               </DialogContent>
             </Dialog>
 
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex-1 sm:flex-none"
-              onClick={() => exportGuestListPDF(guests, currency, {
-                coupleName: weddingData?.couple.name,
-                partnerName: weddingData?.couple.partnerName,
-                weddingDate: weddingData?.wedding.date
-              })}
-              disabled={guests.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Exportar PDF</span>
-              <span className="sm:hidden">PDF</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  disabled={guests.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Exportar PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-background z-[100]">
+                <DropdownMenuItem onClick={() => exportGuestListPDF(guests, currency, {
+                  coupleName: weddingData?.couple.name,
+                  partnerName: weddingData?.couple.partnerName,
+                  weddingDate: weddingData?.wedding.date
+                })}>
+                  Por Lado (Noivo/Noiva)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportGuestListByFamilyPDF(guests, currency, {
+                  coupleName: weddingData?.couple.name,
+                  partnerName: weddingData?.couple.partnerName,
+                  weddingDate: weddingData?.wedding.date
+                })}>
+                  Por Família
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Quick Actions */}
