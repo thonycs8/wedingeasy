@@ -1347,6 +1347,7 @@ export const GuestManager = () => {
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">Todos ({filteredGuests.length})</TabsTrigger>
+            <TabsTrigger value="family">Por Família</TabsTrigger>
             <TabsTrigger value="special">Funções Especiais ({specialCategories.length})</TabsTrigger>
           </TabsList>
 
