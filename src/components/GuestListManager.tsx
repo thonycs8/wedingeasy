@@ -402,7 +402,7 @@ const GuestListManager = () => {
                 </TableRow>
               ) : filteredGuests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                     Nenhum convidado encontrado.
                   </TableCell>
                 </TableRow>
