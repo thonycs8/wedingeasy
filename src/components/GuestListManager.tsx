@@ -386,6 +386,7 @@ const GuestListManager = () => {
                 <TableHead>Lado</TableHead>
                 <TableHead>Faixa</TableHead>
                 <TableHead>Papel Cerimónia</TableHead>
+                <TableHead>Família</TableHead>
                 <TableHead className="text-center">Conf.</TableHead>
                 <TableHead className="text-center">+1</TableHead>
                 <TableHead className="text-center">Conv.</TableHead>
