@@ -374,6 +374,12 @@ const GuestListManager = () => {
           </div>
         )}
 
+        <datalist id="family-group-suggestions">
+          {Array.from(new Set(guests.filter(g => g.family_group).map(g => g.family_group!))).sort().map(fg => (
+            <option key={fg} value={fg} />
+          ))}
+        </datalist>
+
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
