@@ -186,6 +186,7 @@ export const GuestManager = () => {
         special_role: formData.special_role ? [formData.special_role] : null,
         table_number: formData.table_number ? parseInt(formData.table_number) : null,
         relationship: formData.relationship || null,
+        family_group: formData.family_group.trim() || null,
         user_id: user.id,
         wedding_id: weddingId
       };
