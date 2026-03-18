@@ -103,8 +103,10 @@ export const GuestManager = () => {
     printed_invitation: false,
     special_role: '',
     table_number: '',
-    relationship: ''
+    relationship: '',
+    family_group: ''
   });
+  const [viewMode, setViewMode] = useState<'side' | 'family'>('side');
 
   useEffect(() => {
     if (user && weddingId) {
