@@ -20,6 +20,7 @@ export interface Guest {
   relationship: string | null;
   printed_invitation: boolean;
   couple_pair_id: string | null;
+  family_group: string | null;
   created_at: string;
   updated_at: string;
 }
