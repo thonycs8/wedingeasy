@@ -358,7 +358,8 @@ export const GuestManager = () => {
       printed_invitation: guest.printed_invitation || false,
       special_role: (Array.isArray(guest.special_role) ? guest.special_role[0] : guest.special_role) || '',
       table_number: guest.table_number?.toString() || '',
-      relationship: guest.relationship || ''
+      relationship: guest.relationship || '',
+      family_group: guest.family_group || ''
     });
     setEditingGuest(guest);
     setShowAddModal(true);
