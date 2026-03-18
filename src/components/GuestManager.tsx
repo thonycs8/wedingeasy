@@ -1556,6 +1556,95 @@ export const GuestManager = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="family" className="space-y-4">
+            {(() => {
+              const familyGroups: Record<string, Guest[]> = {};
+              const ungrouped: Guest[] = [];
+              filteredGuests.forEach(g => {
+                if (g.family_group) {
+                  if (!familyGroups[g.family_group]) familyGroups[g.family_group] = [];
+                  familyGroups[g.family_group].push(g);
+                } else {
+                  ungrouped.push(g);
+                }
+              });
+              const sortedFamilies = Object.keys(familyGroups).sort();
+              
+              return (
+                <div className="space-y-4">
+                  {sortedFamilies.map(family => (
+                    <div key={family} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          {family}
+                        </h3>
+                        <Badge variant="secondary">{familyGroups[family].length}</Badge>
+                      </div>
+                      <div className="grid gap-2">
+                        {familyGroups[family].map(guest => {
+                          const CategoryIcon = getCategoryIcon(guest.category);
+                          return (
+                            <div key={guest.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <CategoryIcon className="w-4 h-4 text-primary shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate">{guest.name}</p>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span>{getCategoryLabel(guest.category)}</span>
+                                    {guest.side && <span>• {getSideLabel(guest.side)}</span>}
+                                    <span>• {guest.confirmed ? '✓ Confirmado' : 'Pendente'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button size="sm" variant="ghost" onClick={() => editGuest(guest)} disabled={guest.id.includes('-virtual')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  {ungrouped.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-muted-foreground">Convidados Individuais</h3>
+                        <Badge variant="secondary">{ungrouped.length}</Badge>
+                      </div>
+                      <div className="grid gap-2">
+                        {ungrouped.map(guest => (
+                          <div key={guest.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{guest.name}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{getCategoryLabel(guest.category)}</span>
+                                  {guest.side && <span>• {getSideLabel(guest.side)}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <Button size="sm" variant="ghost" onClick={() => editGuest(guest)} disabled={guest.id.includes('-virtual')}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {sortedFamilies.length === 0 && ungrouped.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground">Nenhum convidado encontrado</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </TabsContent>
+
           <TabsContent value="special" className="space-y-6">
             {specialCategories.length === 0 ? (
               <div className="text-center py-8">
