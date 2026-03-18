@@ -191,6 +191,101 @@ export const exportGuestListPDF = (guests: Guest[], currency: string, headerData
   doc.save('lista-convidados.pdf');
 };
 
+export const exportGuestListByFamilyPDF = (guests: Guest[], currency: string, headerData?: WeddingHeaderData) => {
+  const doc = new jsPDF();
+  
+  let startY = addWeddingHeader(doc, 'Lista de Convidados por Família', headerData);
+
+  const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
+    switch (ageBand) {
+      case '0_4': return 'Bebé (0–4)';
+      case '5_10': return 'Criança (5–10)';
+      case '11_plus': return 'Adolescente (11+)';
+      case 'adult': default: return 'Adulto';
+    }
+  };
+
+  // Include couple
+  const allGuests: Guest[] = [...guests];
+  if (headerData?.coupleName) {
+    allGuests.unshift({ name: headerData.coupleName, category: 'honor_guests', confirmed: true, plus_one: false, special_role: 'Noivo', side: 'noivo', age_band: 'adult', family_group: null });
+  }
+  if (headerData?.partnerName) {
+    allGuests.unshift({ name: headerData.partnerName, category: 'honor_guests', confirmed: true, plus_one: false, special_role: 'Noiva', side: 'noiva', age_band: 'adult', family_group: null });
+  }
+
+  // Group by family
+  const familyGroups: Record<string, Guest[]> = {};
+  const ungrouped: Guest[] = [];
+  allGuests.forEach(g => {
+    if (g.family_group) {
+      if (!familyGroups[g.family_group]) familyGroups[g.family_group] = [];
+      familyGroups[g.family_group].push(g);
+    } else {
+      ungrouped.push(g);
+    }
+  });
+
+  doc.setFontSize(10);
+  doc.text(`Data de Exportação: ${new Date().toLocaleDateString('pt-PT')}`, 14, startY);
+  doc.text(`Total: ${allGuests.length} convidados | Famílias: ${Object.keys(familyGroups).length}`, 14, startY + 6);
+  doc.text(`Confirmados: ${allGuests.filter(g => g.confirmed).length}`, 14, startY + 12);
+
+  startY += 20;
+  let currentY = startY;
+
+  const renderFamilySection = (title: string, members: Guest[], y: number) => {
+    if (members.length === 0) return y;
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text(title, 14, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Nome', 'Faixa', 'Função', 'Lado', 'Confirmado', '+1', 'Mesa']],
+      body: members.map(g => [
+        g.name,
+        getAgeBandLabel(g.age_band),
+        g.special_role ? (Array.isArray(g.special_role) ? g.special_role.join(', ') : g.special_role) : '-',
+        g.side === 'noivo' ? 'Noivo' : g.side === 'noiva' ? 'Noiva' : '-',
+        g.confirmed ? 'Sim' : 'Não',
+        g.plus_one ? 'Sim' : 'Não',
+        g.table_number?.toString() || '-',
+      ]),
+      headStyles: { fillColor: [219, 39, 119], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [253, 242, 248] },
+      styles: { fontSize: 8, cellPadding: 3 },
+    });
+
+    return (doc as any).lastAutoTable.finalY + 8;
+  };
+
+  const sortedFamilies = Object.keys(familyGroups).sort();
+  for (const family of sortedFamilies) {
+    currentY = renderFamilySection(family, familyGroups[family], currentY);
+  }
+
+  if (ungrouped.length > 0) {
+    currentY = renderFamilySection('Convidados Individuais', ungrouped, currentY);
+  }
+
+  // Footer
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.text(
+      `Página ${i} de ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+
+  doc.save('lista-convidados-familias.pdf');
+};
+
 export const exportBudgetPDF = (categories: BudgetCategory[], currency: string, headerData?: WeddingHeaderData) => {
   const doc = new jsPDF();
   

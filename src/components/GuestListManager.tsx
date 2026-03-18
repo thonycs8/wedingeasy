@@ -41,6 +41,7 @@ interface Guest {
   side?: "noivo" | "noiva" | null;
   age_band?: "0_4" | "5_10" | "11_plus" | "adult" | null;
   special_role?: string[] | null;
+  family_group?: string | null;
 }
 
 const isVirtualGuest = (id: string) => id.includes("-virtual");
