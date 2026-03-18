@@ -58,6 +58,7 @@ interface Guest {
   special_role?: string | string[];
   side?: 'noivo' | 'noiva' | null;
   age_band?: '0_4' | '5_10' | '11_plus' | 'adult' | null;
+  family_group?: string | null;
 }
 
 interface BudgetCategory {
