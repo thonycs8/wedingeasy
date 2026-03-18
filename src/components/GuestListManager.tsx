@@ -201,6 +201,7 @@ const GuestListManager = () => {
     if ("age_band" in patch) dbPatch.age_band = patch.age_band ?? null;
     if ("printed_invitation" in patch) dbPatch.printed_invitation = patch.printed_invitation ?? false;
     if ("special_role" in patch) dbPatch.special_role = patch.special_role ?? null;
+    if ("family_group" in patch) dbPatch.family_group = (patch as any).family_group ?? null;
 
     try {
       const { error } = await supabase.from("guests").update(dbPatch).eq("id", guestId);
