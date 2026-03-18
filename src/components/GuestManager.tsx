@@ -57,6 +57,7 @@ interface Guest {
   relationship?: string;
   side?: 'noivo' | 'noiva' | null;
   age_band?: '0_4' | '5_10' | '11_plus' | 'adult' | null;
+  family_group?: string | null;
 }
 
 export const GuestManager = () => {
