@@ -43,6 +43,7 @@ export interface GuestCreate {
   special_role?: string[] | null;
   relationship?: string | null;
   printed_invitation?: boolean;
+  family_group?: string | null;
 }
 
 // Tipo para atualização de Guest (campos parciais)

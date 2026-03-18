@@ -380,7 +380,8 @@ export const GuestManager = () => {
       printed_invitation: false,
       special_role: '',
       table_number: '',
-      relationship: ''
+      relationship: '',
+      family_group: ''
     });
     setEditingGuest(null);
     setShowAddModal(false);
