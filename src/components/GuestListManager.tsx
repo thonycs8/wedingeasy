@@ -540,6 +540,18 @@ const GuestListManager = () => {
                         </Select>
                       </TableCell>
 
+                      <TableCell>
+                        <Input
+                          value={guest.family_group || ""}
+                          onChange={(e) => setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, family_group: e.target.value } : g)))}
+                          onBlur={(e) => updateGuest(guest.id, { family_group: e.target.value.trim() || null } as Partial<Guest>)}
+                          disabled={disabled}
+                          className="min-w-[10rem] bg-background"
+                          placeholder="Ex: Família Silva"
+                          list="family-group-suggestions"
+                        />
+                      </TableCell>
+
                       <TableCell className="text-center">
                         <Switch
                           checked={guest.confirmed}
