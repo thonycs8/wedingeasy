@@ -267,7 +267,12 @@ export default function WeddingEvent() {
       )}
 
       {/* Footer */}
-      <footer className="py-8 text-center">
+      <footer className="py-8 text-center relative z-10">
+        <img
+          src={weddingLogoKA}
+          alt="K & A"
+          className="w-14 h-14 mx-auto mb-3 opacity-30 object-contain"
+        />
         <Heart className="w-5 h-5 text-muted-foreground/50 mx-auto mb-2" />
         <p className="text-xs text-muted-foreground/50">Powered by weddingeasy</p>
       </footer>
