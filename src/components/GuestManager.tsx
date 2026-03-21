@@ -389,7 +389,7 @@ export const GuestManager = () => {
     setShowAddModal(false);
   };
 
-  const filteredGuests = guests.filter(guest => {
+  const filteredGuests = sortGuestsByCategory(guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || guest.category === filterCategory;
@@ -403,7 +403,7 @@ export const GuestManager = () => {
       (filterSide !== 'none' && guest.side === filterSide);
     
     return matchesSearch && matchesCategory && matchesStatus && matchesSide;
-  });
+  }));
 
   const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
     switch (ageBand) {
