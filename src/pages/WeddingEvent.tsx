@@ -98,7 +98,20 @@ export default function WeddingEvent() {
   const sameVenue = landing.same_venue ?? true;
 
   return (
-    <div className="min-h-screen bg-background" style={fontFamily ? { fontFamily } : undefined}>
+    <div className="min-h-screen bg-background relative overflow-hidden" style={fontFamily ? { fontFamily } : undefined}>
+      {/* Decorative lavender branches — hidden on small screens */}
+      <img
+        src={lavenderLeft}
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block fixed left-0 top-1/4 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+      />
+      <img
+        src={lavenderRight}
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block fixed right-0 top-1/3 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+      />
       {/* Hero */}
       <section
         className="relative min-h-[60vh] flex items-center justify-center text-center px-4"
