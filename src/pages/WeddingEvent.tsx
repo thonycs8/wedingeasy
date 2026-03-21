@@ -104,13 +104,13 @@ export default function WeddingEvent() {
         src={lavenderLeft}
         alt=""
         aria-hidden="true"
-        className="hidden md:block fixed left-0 top-1/4 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+        className="hidden md:block fixed left-0 top-[15%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
       />
       <img
         src={lavenderRight}
         alt=""
         aria-hidden="true"
-        className="hidden md:block fixed right-0 top-1/3 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+        className="hidden md:block fixed right-0 top-[20%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
       />
       {/* Hero */}
       <section
