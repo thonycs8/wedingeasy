@@ -14,6 +14,7 @@ import { useWeddingData } from "@/contexts/WeddingContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeddingId } from "@/hooks/useWeddingId";
 import { supabase } from "@/integrations/supabase/client";
+import { sortGuestsByCategory } from "@/utils/guestCategorySort";
 
 interface Guest {
   id: string;
