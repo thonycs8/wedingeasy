@@ -108,7 +108,7 @@ export const GuestManagerRefactored = () => {
 
   // Filtered guests
   const filteredGuests = useMemo(() => {
-    return guests.filter(guest => {
+    const filtered = guests.filter(guest => {
       const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = filterCategory === 'all' || guest.category === filterCategory;
@@ -122,6 +122,7 @@ export const GuestManagerRefactored = () => {
       
       return matchesSearch && matchesCategory && matchesStatus && matchesSide;
     });
+    return sortGuestsByCategory(filtered);
   }, [guests, searchTerm, filterCategory, filterStatus, filterSide]);
 
   // Guests by side
