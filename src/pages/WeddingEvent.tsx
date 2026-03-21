@@ -12,6 +12,9 @@ import { WeddingEventGallery } from "@/components/event/WeddingEventGallery";
 import { Heart, Clock, Shirt } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getThemeById } from "@/config/weddingThemes";
+import lavenderLeft from "@/assets/wedding-lavender-left.png";
+import lavenderRight from "@/assets/wedding-lavender-right.png";
+import weddingLogoKA from "@/assets/wedding-logo-ka.png";
 import { decodeInviteToken } from "@/utils/inviteToken";
 
 export default function WeddingEvent() {
@@ -95,7 +98,20 @@ export default function WeddingEvent() {
   const sameVenue = landing.same_venue ?? true;
 
   return (
-    <div className="min-h-screen bg-background" style={fontFamily ? { fontFamily } : undefined}>
+    <div className="min-h-screen bg-background relative overflow-hidden" style={fontFamily ? { fontFamily } : undefined}>
+      {/* Decorative lavender branches — hidden on small screens */}
+      <img
+        src={lavenderLeft}
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block fixed left-0 top-1/4 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+      />
+      <img
+        src={lavenderRight}
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block fixed right-0 top-1/3 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+      />
       {/* Hero */}
       <section
         className="relative min-h-[60vh] flex items-center justify-center text-center px-4"
@@ -251,7 +267,12 @@ export default function WeddingEvent() {
       )}
 
       {/* Footer */}
-      <footer className="py-8 text-center">
+      <footer className="py-8 text-center relative z-10">
+        <img
+          src={weddingLogoKA}
+          alt="K & A"
+          className="w-14 h-14 mx-auto mb-3 opacity-30 object-contain"
+        />
         <Heart className="w-5 h-5 text-muted-foreground/50 mx-auto mb-2" />
         <p className="text-xs text-muted-foreground/50">Powered by weddingeasy</p>
       </footer>
