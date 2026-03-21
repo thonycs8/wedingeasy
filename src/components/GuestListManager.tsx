@@ -14,6 +14,7 @@ import { useWeddingData } from "@/contexts/WeddingContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeddingId } from "@/hooks/useWeddingId";
 import { supabase } from "@/integrations/supabase/client";
+import { sortGuestsByCategory } from "@/utils/guestCategorySort";
 
 interface Guest {
   id: string;
@@ -134,7 +135,7 @@ const GuestListManager = () => {
   }, [user, weddingId]);
 
   const filteredGuests = useMemo(() => {
-    return guests.filter((guest) => {
+    const filtered = guests.filter((guest) => {
       const matchesSearch =
         guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (!!guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -153,6 +154,7 @@ const GuestListManager = () => {
 
       return matchesSearch && matchesCategory && matchesStatus && matchesSide;
     });
+    return sortGuestsByCategory(filtered);
   }, [filterCategory, filterSide, filterStatus, guests, searchTerm]);
 
   const toggleGuestSelection = (guestId: string, checked: boolean) => {

@@ -9,6 +9,7 @@ import { Users, Plus, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { exportGuestListPDF } from '@/utils/pdfExport';
+import { sortGuestsByCategory } from '@/utils/guestCategorySort';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
 import { useGuests } from '@/hooks/queries/useGuests';
@@ -108,7 +109,7 @@ export const GuestManagerRefactored = () => {
 
   // Filtered guests
   const filteredGuests = useMemo(() => {
-    return guests.filter(guest => {
+    const filtered = guests.filter(guest => {
       const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = filterCategory === 'all' || guest.category === filterCategory;
@@ -122,6 +123,7 @@ export const GuestManagerRefactored = () => {
       
       return matchesSearch && matchesCategory && matchesStatus && matchesSide;
     });
+    return sortGuestsByCategory(filtered);
   }, [guests, searchTerm, filterCategory, filterStatus, filterSide]);
 
   // Guests by side

@@ -37,6 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { exportGuestListPDF, exportGuestListByFamilyPDF } from '@/utils/pdfExport';
+import { sortGuestsByCategory } from '@/utils/guestCategorySort';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
@@ -388,7 +389,7 @@ export const GuestManager = () => {
     setShowAddModal(false);
   };
 
-  const filteredGuests = guests.filter(guest => {
+  const filteredGuests = sortGuestsByCategory(guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || guest.category === filterCategory;
@@ -402,7 +403,7 @@ export const GuestManager = () => {
       (filterSide !== 'none' && guest.side === filterSide);
     
     return matchesSearch && matchesCategory && matchesStatus && matchesSide;
-  });
+  }));
 
   const getAgeBandLabel = (ageBand?: Guest['age_band']) => {
     switch (ageBand) {
