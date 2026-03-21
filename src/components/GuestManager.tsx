@@ -37,6 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { exportGuestListPDF, exportGuestListByFamilyPDF } from '@/utils/pdfExport';
+import { sortGuestsByCategory } from '@/utils/guestCategorySort';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
