@@ -9,6 +9,7 @@ import { Users, Plus, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { exportGuestListPDF } from '@/utils/pdfExport';
+import { sortGuestsByCategory } from '@/utils/guestCategorySort';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useWeddingData } from '@/contexts/WeddingContext';
 import { useGuests } from '@/hooks/queries/useGuests';
