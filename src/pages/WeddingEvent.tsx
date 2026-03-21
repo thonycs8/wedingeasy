@@ -104,13 +104,13 @@ export default function WeddingEvent() {
         src={lavenderLeft}
         alt=""
         aria-hidden="true"
-        className="hidden md:block fixed left-0 top-1/4 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+        className="hidden md:block fixed left-0 top-[15%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
       />
       <img
         src={lavenderRight}
         alt=""
         aria-hidden="true"
-        className="hidden md:block fixed right-0 top-1/3 w-20 lg:w-28 opacity-40 pointer-events-none select-none z-0"
+        className="hidden md:block fixed right-0 top-[20%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
       />
       {/* Hero */}
       <section
@@ -267,13 +267,12 @@ export default function WeddingEvent() {
       )}
 
       {/* Footer */}
-      <footer className="py-8 text-center relative z-10">
+      <footer className="py-10 text-center relative z-10">
         <img
           src={weddingLogoKA}
           alt="K & A"
-          className="w-14 h-14 mx-auto mb-3 opacity-30 object-contain"
+          className="w-28 h-28 mx-auto mb-4 opacity-60 object-contain"
         />
-        <Heart className="w-5 h-5 text-muted-foreground/50 mx-auto mb-2" />
         <p className="text-xs text-muted-foreground/50">Powered by weddingeasy</p>
       </footer>
     </div>
