@@ -12,6 +12,9 @@ import { WeddingEventGallery } from "@/components/event/WeddingEventGallery";
 import { Heart, Clock, Shirt } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getThemeById } from "@/config/weddingThemes";
+import lavenderLeft from "@/assets/wedding-lavender-left.png";
+import lavenderRight from "@/assets/wedding-lavender-right.png";
+import weddingLogoKA from "@/assets/wedding-logo-ka.png";
 import { decodeInviteToken } from "@/utils/inviteToken";
 
 export default function WeddingEvent() {
