@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 interface CountdownProps {
   weddingDate: string;
@@ -7,6 +8,8 @@ interface CountdownProps {
 
 export function WeddingEventCountdown({ weddingDate, themeColor }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const prevSeconds = useRef(timeLeft.seconds);
+  const sectionRef = useScrollReveal();
 
   useEffect(() => {
     const target = new Date(weddingDate).getTime();
@@ -23,22 +26,27 @@ export function WeddingEventCountdown({ weddingDate, themeColor }: CountdownProp
     return () => clearInterval(interval);
   }, [weddingDate]);
 
+  useEffect(() => {
+    prevSeconds.current = timeLeft.seconds;
+  }, [timeLeft.seconds]);
+
   const units = [
     { value: timeLeft.days, label: "Dias" },
     { value: timeLeft.hours, label: "Horas" },
     { value: timeLeft.minutes, label: "Minutos" },
-    { value: timeLeft.seconds, label: "Segundos" },
+    { value: timeLeft.seconds, label: "Segundos", pulse: true },
   ];
 
   return (
-    <section className="py-12 px-4">
+    <section className="py-12 px-4 scroll-reveal" ref={sectionRef}>
       <h2 className="text-2xl font-serif text-center text-foreground mb-8">Contagem Regressiva</h2>
       <div className="flex justify-center gap-4 sm:gap-8">
         {units.map((u) => (
           <div key={u.label} className="flex flex-col items-center">
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary-foreground shadow-lg"
+              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary-foreground shadow-lg transition-transform ${u.pulse ? "animate-digit-pulse" : ""}`}
               style={{ backgroundColor: themeColor }}
+              key={u.pulse ? u.value : undefined}
             >
               {u.value}
             </div>
