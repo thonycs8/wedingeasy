@@ -27,6 +27,7 @@ import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
 
 const App = () => (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <SettingsProvider>
