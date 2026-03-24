@@ -61,6 +61,7 @@ const App = () => (
       </SettingsProvider>
     </AuthProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
