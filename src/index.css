@@ -304,4 +304,55 @@
     animation: shimmer 4s ease-in-out infinite;
     -webkit-background-clip: text;
   }
+
+  /* Countdown digit pulse */
+  @keyframes digit-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .animate-digit-pulse {
+    animation: digit-pulse 0.4s ease-out;
+  }
+
+  /* Scroll indicator bounce */
+  @keyframes scroll-bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(8px); opacity: 1; }
+  }
+  .animate-scroll-bounce {
+    animation: scroll-bounce 2s ease-in-out infinite;
+  }
+
+  /* Confetti hearts */
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Lightbox fade */
+  @keyframes lightbox-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-lightbox-in {
+    animation: lightbox-in 0.3s ease-out;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal,
+    .scroll-reveal-left,
+    .scroll-reveal-right {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .animate-digit-pulse,
+    .animate-scroll-bounce,
+    .animate-float,
+    .animate-heartbeat,
+    .animate-gentle-glow {
+      animation: none;
+    }
+  }
 }

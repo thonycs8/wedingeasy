@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, X, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 interface RSVPProps {
   eventCode: string;
@@ -11,11 +12,32 @@ interface RSVPProps {
   initialGuestName?: string;
 }
 
+function CelebrationHearts() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden" aria-hidden="true">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <Heart
+          key={i}
+          className="absolute text-pink-400/60"
+          style={{
+            left: `${8 + Math.random() * 84}%`,
+            top: "-5%",
+            width: `${16 + Math.random() * 20}px`,
+            animation: `confetti-fall ${2 + Math.random() * 2}s ease-in ${Math.random() * 1.5}s forwards`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function WeddingEventRSVP({ eventCode, themeColor, initialGuestName }: RSVPProps) {
   const [guestName, setGuestName] = useState(initialGuestName?.replace(/-/g, " ") || "");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [confirmed, setConfirmed] = useState<boolean | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const sectionRef = useScrollReveal();
 
   const handleRSVP = async (willAttend: boolean) => {
     if (!guestName.trim()) {
@@ -46,35 +68,42 @@ export function WeddingEventRSVP({ eventCode, themeColor, initialGuestName }: RS
 
     setStatus("success");
     setConfirmed(willAttend);
+    if (willAttend) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 4000);
+    }
   };
 
   if (status === "success") {
     return (
-      <section className="py-12 px-4">
-        <Card className="max-w-md mx-auto border-border shadow-lg">
-          <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div
-              className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-primary-foreground"
-              style={{ backgroundColor: themeColor }}
-            >
-              {confirmed ? <Heart className="w-8 h-8" /> : <X className="w-8 h-8" />}
-            </div>
-            <h3 className="text-xl font-serif text-foreground">
-              {confirmed ? "Presença Confirmada!" : "Resposta Registada"}
-            </h3>
-            <p className="text-muted-foreground">
-              {confirmed
-                ? `Obrigado, ${guestName}! Estamos ansiosos por celebrar consigo.`
-                : `Obrigado por nos informar, ${guestName}. Sentiremos a sua falta!`}
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      <>
+        {showCelebration && <CelebrationHearts />}
+        <section className="py-12 px-4">
+          <Card className="max-w-md mx-auto border-border shadow-lg animate-scale-in">
+            <CardContent className="pt-8 pb-8 text-center space-y-4">
+              <div
+                className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-primary-foreground"
+                style={{ backgroundColor: themeColor }}
+              >
+                {confirmed ? <Heart className="w-8 h-8" /> : <X className="w-8 h-8" />}
+              </div>
+              <h3 className="text-xl font-serif text-foreground">
+                {confirmed ? "Presença Confirmada!" : "Resposta Registada"}
+              </h3>
+              <p className="text-muted-foreground">
+                {confirmed
+                  ? `Obrigado, ${guestName}! Estamos ansiosos por celebrar consigo.`
+                  : `Obrigado por nos informar, ${guestName}. Sentiremos a sua falta!`}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+      </>
     );
   }
 
   return (
-    <section className="py-12 px-4">
+    <section className="py-12 px-4 scroll-reveal" ref={sectionRef}>
       <h2 className="text-2xl font-serif text-center text-foreground mb-2">Confirme a sua Presença</h2>
       <p className="text-center text-muted-foreground mb-8 text-sm">
         Insira o seu primeiro e último nome
