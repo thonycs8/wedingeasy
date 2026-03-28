@@ -33,26 +33,45 @@ export function WeddingEventCountdown({ weddingDate, themeColor }: CountdownProp
   const units = [
     { value: timeLeft.days, label: "Dias" },
     { value: timeLeft.hours, label: "Horas" },
-    { value: timeLeft.minutes, label: "Minutos" },
-    { value: timeLeft.seconds, label: "Segundos", pulse: true },
+    { value: timeLeft.minutes, label: "Min" },
+    { value: timeLeft.seconds, label: "Seg", pulse: true },
   ];
 
   return (
-    <section className="py-12 px-4 scroll-reveal" ref={sectionRef}>
-      <h2 className="text-2xl font-serif text-center text-foreground mb-8">Contagem Regressiva</h2>
-      <div className="flex justify-center gap-4 sm:gap-8">
-        {units.map((u) => (
-          <div key={u.label} className="flex flex-col items-center">
-            <div
-              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary-foreground shadow-lg transition-transform ${u.pulse ? "animate-digit-pulse" : ""}`}
-              style={{ backgroundColor: themeColor }}
-              key={u.pulse ? u.value : undefined}
-            >
-              {u.value}
+    <section className="py-20 px-4 scroll-reveal" ref={sectionRef}>
+      <div className="max-w-2xl mx-auto text-center">
+        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3 font-light">Faltam</p>
+        <div className="flex justify-center gap-3 sm:gap-6">
+          {units.map((u) => (
+            <div key={u.label} className="flex flex-col items-center group">
+              <div className="relative">
+                {/* Glow effect behind */}
+                <div
+                  className="absolute inset-0 rounded-3xl blur-xl opacity-20 transition-opacity group-hover:opacity-40"
+                  style={{ backgroundColor: themeColor }}
+                />
+                <div
+                  className={`relative w-[72px] h-[88px] sm:w-[90px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center backdrop-blur-sm border border-white/10 shadow-2xl transition-transform duration-300 group-hover:-translate-y-1 ${u.pulse ? "animate-digit-pulse" : ""}`}
+                  style={{
+                    background: `linear-gradient(145deg, ${themeColor}18, ${themeColor}08)`,
+                    borderColor: `${themeColor}25`,
+                  }}
+                  key={u.pulse ? u.value : undefined}
+                >
+                  <span
+                    className="text-3xl sm:text-4xl font-light tabular-nums"
+                    style={{ color: themeColor }}
+                  >
+                    {String(u.value).padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
+              <span className="mt-3 text-[10px] sm:text-xs tracking-[0.15em] uppercase text-muted-foreground/70 font-light">
+                {u.label}
+              </span>
             </div>
-            <span className="mt-2 text-xs sm:text-sm text-muted-foreground">{u.label}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
