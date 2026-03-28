@@ -41,6 +41,7 @@ export default function WeddingEvent() {
   const verseRef = useScrollReveal();
   const roleRef = useScrollReveal();
   const customMsgRef = useScrollReveal();
+  const introRef = useScrollReveal();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["wedding-event", eventCode],
@@ -69,9 +70,12 @@ export default function WeddingEvent() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-center">
-          <Heart className="w-12 h-12 text-primary mx-auto mb-4 animate-float" />
-          <p className="text-muted-foreground">A carregar o evento...</p>
+        <div className="text-center">
+          <div className="relative inline-block">
+            <Heart className="w-10 h-10 text-primary animate-heartbeat" />
+            <div className="absolute inset-0 blur-xl bg-primary/20 rounded-full animate-pulse" />
+          </div>
+          <p className="text-muted-foreground/60 mt-6 text-sm tracking-wide font-light">A carregar...</p>
         </div>
       </div>
     );
@@ -81,9 +85,9 @@ export default function WeddingEvent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center max-w-md">
-          <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-serif text-foreground mb-2">Evento não encontrado</h1>
-          <p className="text-muted-foreground">O link que utilizou é inválido ou o evento ainda não foi publicado.</p>
+          <Heart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-6" />
+          <h1 className="text-2xl font-serif text-foreground mb-3">Evento não encontrado</h1>
+          <p className="text-muted-foreground/60 font-light">O link que utilizou é inválido ou o evento ainda não foi publicado.</p>
         </div>
       </div>
     );
@@ -112,21 +116,21 @@ export default function WeddingEvent() {
       </Helmet>
 
       <div className="min-h-screen bg-background relative overflow-hidden" style={fontFamily ? { fontFamily } : undefined}>
-        {/* Decorative lavender branches */}
+        {/* Decorative lavender branches - subtle */}
         <img
           src={lavenderLeft}
           alt=""
           aria-hidden="true"
-          className="hidden md:block fixed left-0 top-[15%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
+          className="hidden lg:block fixed left-0 top-[20%] w-36 xl:w-48 opacity-50 pointer-events-none select-none z-0"
         />
         <img
           src={lavenderRight}
           alt=""
           aria-hidden="true"
-          className="hidden md:block fixed right-0 top-[20%] w-32 lg:w-44 xl:w-52 opacity-70 pointer-events-none select-none z-0"
+          className="hidden lg:block fixed right-0 top-[25%] w-36 xl:w-48 opacity-50 pointer-events-none select-none z-0"
         />
 
-        {/* Hero with parallax + scroll indicator */}
+        {/* Hero */}
         <WeddingEventHero
           coupleNames={coupleNames}
           heroMessage={landing.hero_message}
@@ -135,112 +139,119 @@ export default function WeddingEvent() {
           heroOverlay={heroOverlay}
         />
 
-        {/* Intro Text */}
-        {(landing as any).intro_text && (
-          <section className="py-10 px-4 text-center">
-            <p className="max-w-2xl mx-auto text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
-              {(landing as any).intro_text}
-            </p>
-          </section>
-        )}
+        {/* Content container */}
+        <div className="relative z-10">
+          {/* Intro Text */}
+          {(landing as any).intro_text && (
+            <div ref={introRef} className="scroll-reveal">
+              <section className="py-16 px-4 text-center">
+                <p className="max-w-xl mx-auto text-lg text-muted-foreground/70 leading-relaxed whitespace-pre-line font-light">
+                  {(landing as any).intro_text}
+                </p>
+              </section>
+            </div>
+          )}
 
-        {/* Verse */}
-        {landing.show_verse && landing.verse_text && (
-          <div ref={verseRef} className="scroll-reveal">
-            <WeddingEventVerse text={landing.verse_text} themeColor={themeColor} />
-            <WeddingOrnament color={themeColor} />
-          </div>
-        )}
+          {/* Verse */}
+          {landing.show_verse && landing.verse_text && (
+            <div ref={verseRef} className="scroll-reveal">
+              <WeddingEventVerse text={landing.verse_text} themeColor={themeColor} />
+              <WeddingOrnament color={themeColor} />
+            </div>
+          )}
 
-        {/* Role invite */}
-        {role && guest && (
-          <div ref={roleRef} className="scroll-reveal">
-            <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} eventCode={eventCode} side={side} groomName={wedding.couple_name || ''} brideName={wedding.partner_name || ''} />
-            <WeddingOrnament color={themeColor} />
-          </div>
-        )}
+          {/* Role invite */}
+          {role && guest && (
+            <div ref={roleRef} className="scroll-reveal">
+              <WeddingEventRoleInvite guestName={guest} role={role} themeColor={themeColor} eventCode={eventCode} side={side} groomName={wedding.couple_name || ''} brideName={wedding.partner_name || ''} />
+              <WeddingOrnament color={themeColor} />
+            </div>
+          )}
 
-        {/* Countdown */}
-        {landing.show_countdown && wedding.wedding_date && (
-          <>
-            <WeddingEventCountdown weddingDate={wedding.wedding_date} themeColor={themeColor} />
-            <WeddingOrnament color={themeColor} />
-          </>
-        )}
+          {/* Countdown */}
+          {landing.show_countdown && wedding.wedding_date && (
+            <>
+              <WeddingEventCountdown weddingDate={wedding.wedding_date} themeColor={themeColor} />
+              <WeddingOrnament color={themeColor} />
+            </>
+          )}
 
-        {/* Video */}
-        {landing.show_video && landing.video_url && (
-          <>
-            <WeddingEventVideo videoUrl={landing.video_url} />
-            <WeddingOrnament color={themeColor} />
-          </>
-        )}
+          {/* Video */}
+          {landing.show_video && landing.video_url && (
+            <>
+              <WeddingEventVideo videoUrl={landing.video_url} />
+              <WeddingOrnament color={themeColor} />
+            </>
+          )}
 
-        {/* Event Details — styled cards */}
-        {(landing.venue_name || landing.ceremony_time || landing.party_time || landing.dress_code) && (
-          <WeddingEventDetails
-            ceremonyTime={landing.ceremony_time}
-            partyTime={landing.party_time}
-            dressCode={landing.dress_code}
-            receptionVenueName={landing.reception_venue_name}
-            sameVenue={sameVenue}
-            themeColor={themeColor}
-          />
-        )}
+          {/* Event Details */}
+          {(landing.venue_name || landing.ceremony_time || landing.party_time || landing.dress_code) && (
+            <>
+              <WeddingEventDetails
+                ceremonyTime={landing.ceremony_time}
+                partyTime={landing.party_time}
+                dressCode={landing.dress_code}
+                receptionVenueName={landing.reception_venue_name}
+                sameVenue={sameVenue}
+                themeColor={themeColor}
+              />
+              <WeddingOrnament color={themeColor} />
+            </>
+          )}
 
-        {/* Gallery with lightbox */}
-        {landing.show_gallery && landing.gallery_urls && landing.gallery_urls.length > 0 && (
-          <>
-            <WeddingOrnament color={themeColor} />
-            <WeddingEventGallery urls={landing.gallery_urls} />
-          </>
-        )}
+          {/* Gallery */}
+          {landing.show_gallery && landing.gallery_urls && landing.gallery_urls.length > 0 && (
+            <>
+              <WeddingEventGallery urls={landing.gallery_urls} />
+              <WeddingOrnament color={themeColor} />
+            </>
+          )}
 
-        {/* Map - Ceremony */}
-        {landing.show_map && landing.venue_name && (
-          <>
-            <WeddingOrnament color={themeColor} />
+          {/* Map - Ceremony */}
+          {landing.show_map && landing.venue_name && (
+            <>
+              <WeddingEventMap
+                venueName={landing.venue_name}
+                venueAddress={landing.venue_address || ""}
+                lat={landing.venue_lat ? Number(landing.venue_lat) : null}
+                lng={landing.venue_lng ? Number(landing.venue_lng) : null}
+                label={!sameVenue ? "Local da Cerimónia" : "Localização"}
+              />
+            </>
+          )}
+
+          {/* Map - Reception */}
+          {landing.show_map && !sameVenue && landing.reception_venue_name && (
             <WeddingEventMap
-              venueName={landing.venue_name}
-              venueAddress={landing.venue_address || ""}
-              lat={landing.venue_lat ? Number(landing.venue_lat) : null}
-              lng={landing.venue_lng ? Number(landing.venue_lng) : null}
-              label={!sameVenue ? "Local da Cerimónia" : "Localização"}
+              venueName={landing.reception_venue_name}
+              venueAddress={landing.reception_venue_address || ""}
+              label="Local do Copo d'Água"
             />
-          </>
-        )}
+          )}
 
-        {/* Map - Reception */}
-        {landing.show_map && !sameVenue && landing.reception_venue_name && (
-          <WeddingEventMap
-            venueName={landing.reception_venue_name}
-            venueAddress={landing.reception_venue_address || ""}
-            label="Local do Copo d'Água"
-          />
-        )}
+          {/* Custom Message */}
+          {landing.custom_message && (
+            <div ref={customMsgRef} className="scroll-reveal">
+              <WeddingOrnament color={themeColor} />
+              <section className="py-16 px-4 text-center">
+                <p className="max-w-lg mx-auto text-muted-foreground/70 italic text-lg leading-relaxed font-light">
+                  "{landing.custom_message}"
+                </p>
+              </section>
+            </div>
+          )}
 
-        {/* Custom Message */}
-        {landing.custom_message && (
-          <div ref={customMsgRef} className="scroll-reveal">
-            <WeddingOrnament color={themeColor} />
-            <section className="py-12 px-4 text-center">
-              <p className="max-w-lg mx-auto text-muted-foreground italic text-lg leading-relaxed">
-                "{landing.custom_message}"
-              </p>
-            </section>
-          </div>
-        )}
+          {/* RSVP */}
+          {landing.show_rsvp && eventCode && (
+            <>
+              <WeddingOrnament color={themeColor} />
+              <WeddingEventRSVP eventCode={eventCode} themeColor={themeColor} initialGuestName={guest || undefined} />
+            </>
+          )}
 
-        {/* RSVP with celebration */}
-        {landing.show_rsvp && eventCode && (
-          <>
-            <WeddingOrnament color={themeColor} />
-            <WeddingEventRSVP eventCode={eventCode} themeColor={themeColor} initialGuestName={guest || undefined} />
-          </>
-        )}
-
-        {/* Footer */}
-        <WeddingEventFooter coupleNames={coupleNames} weddingDate={weddingDate} themeColor={themeColor} />
+          {/* Footer */}
+          <WeddingEventFooter coupleNames={coupleNames} weddingDate={weddingDate} themeColor={themeColor} />
+        </div>
       </div>
     </>
   );
